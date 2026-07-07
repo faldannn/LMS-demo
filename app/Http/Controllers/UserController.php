@@ -59,6 +59,12 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
         $user->update($data);
 
         $this->activityLogService->logCrud('user_update', $user, "User {$user->username} diperbarui");

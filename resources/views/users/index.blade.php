@@ -61,7 +61,8 @@
                         <td><code>{{ $user->username }}</code></td>
                         <td>
                             @php $roleColors = ['kepala_sekolah'=>'#ede9fe|#5b21b6','guru'=>'var(--color-brand-50)|var(--color-brand-600)','siswa'=>'var(--color-brand-50)|#0058ff']; @endphp
-                            @php [$bg,$fg] = explode('|', $roleColors[$user->role] ?? '#f1f5f9|#64748b'); @endphp
+                            @php $roleKey = $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role; @endphp
+                            @php [$bg,$fg] = explode('|', $roleColors[$roleKey] ?? '#f1f5f9|#64748b'); @endphp
                             <span class="badge" style="background:{{ $bg }};color:{{ $fg }}">{{ $user->getRoleLabel() }}</span>
                         </td>
                         <td style="font-size:13px">{{ $user->email ?? '-' }}</td>

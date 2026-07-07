@@ -105,7 +105,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         registerMasterDataRoutes('semesters', SemesterController::class, false);
         Route::resource('semesters', SemesterController::class);
 
-        Route::resource('users', UserController::class);
+        Route::resource('users', UserController::class)->except(['show']);
         Route::put('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
