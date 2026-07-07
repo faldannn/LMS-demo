@@ -112,7 +112,7 @@
                                             @endswitch
                                         </span>
                                     </td>
-                                    <td style="font-family:'JetBrains Mono',monospace;font-size:13px">{{ $detail->check_in ?? '-' }}</td>
+                                    <td style="font-family:'JetBrains Mono',monospace;font-size:13px">{{ $detail->check_in ? $detail->check_in->format('H:i') : '-' }}</td>
                                     <td style="font-size:12px;color:#64748b">{{ $detail->notes ?? '-' }}</td>
                                 </tr>
                             @empty

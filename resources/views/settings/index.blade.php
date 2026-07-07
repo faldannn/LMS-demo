@@ -82,15 +82,21 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Latitude Sekolah</label>
-                            <input type="number" step="any" name="geofence_lat" class="form-control" value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
+                            <input type="number" step="any" id="geofence_lat" name="geofence_lat" class="form-control" value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Longitude Sekolah</label>
-                            <input type="number" step="any" name="geofence_lng" class="form-control" value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
+                            <input type="number" step="any" id="geofence_lng" name="geofence_lng" class="form-control" value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Radius (meter)</label>
                             <input type="number" name="geofence_radius" class="form-control" value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000" required>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button type="button" id="btnGetLocation" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-geo-alt"></i> Ambil Lokasi Saat Ini
+                            </button>
+                            <span id="locationStatus" class="ms-2 small text-muted"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Min. Deteksi Wajah</label>
@@ -138,3 +144,49 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('btnGetLocation');
+    const status = document.getElementById('locationStatus');
+    const latInput = document.getElementById('geofence_lat');
+    const lngInput = document.getElementById('geofence_lng');
+
+    if (btn) {
+        btn.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                status.textContent = 'Geolocation tidak didukung oleh browser Anda.';
+                status.className = 'ms-2 small text-danger';
+                return;
+            }
+
+            btn.disabled = true;
+            status.textContent = 'Mendapatkan lokasi...';
+            status.className = 'ms-2 small text-muted';
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    latInput.value = position.coords.latitude.toFixed(6);
+                    lngInput.value = position.coords.longitude.toFixed(6);
+                    status.textContent = 'Lokasi berhasil diambil!';
+                    status.className = 'ms-2 small text-success';
+                    btn.disabled = false;
+                },
+                function(error) {
+                    console.error(error);
+                    status.textContent = 'Gagal mendapatkan lokasi: ' + error.message;
+                    status.className = 'ms-2 small text-danger';
+                    btn.disabled = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+    }
+});
+</script>
+@endpush

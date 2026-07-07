@@ -49,7 +49,7 @@
                         <div style="width:120px">
                             <input type="time" name="details[{{ $student->id }}][check_in]"
                                 class="form-control form-control-sm"
-                                value="{{ old("details.{$student->id}.check_in", $det?->check_in) }}"
+                                value="{{ old("details.{$student->id}.check_in", $det?->check_in ? $det->check_in->format('H:i') : '') }}"
                                 placeholder="Jam masuk">
                         </div>
                         <div style="width:180px">

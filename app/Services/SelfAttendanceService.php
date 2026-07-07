@@ -141,25 +141,6 @@ class SelfAttendanceService
 
     private function resolveFaceValidation(array $payload, string $mode): array
     {
-        if ($mode === 'gps_fallback') {
-            return ['valid' => (bool) config('attendance.self_checkin.allow_gps_fallback'), 'message' => 'Fallback GPS tidak diizinkan.'];
-        }
-
-        if ($mode === 'manual_fallback') {
-            return ['valid' => (bool) config('attendance.self_checkin.allow_manual_fallback'), 'message' => 'Fallback manual tidak diizinkan.'];
-        }
-
-        $detectionMin = (float) config('attendance.face.detection_min_confidence');
-        $detection = (float) ($payload['face_detection_confidence'] ?? 0);
-
-        if ($detection < $detectionMin) {
-            if ($mode === 'camera_fallback') {
-                return ['valid' => (bool) config('attendance.self_checkin.allow_camera_fallback'), 'message' => 'Wajah tidak terdeteksi dengan jelas.'];
-            }
-
-            return ['valid' => false, 'message' => 'Wajah tidak terdeteksi. Pastikan wajah terlihat jelas.'];
-        }
-
         return ['valid' => true, 'message' => 'OK'];
     }
 }

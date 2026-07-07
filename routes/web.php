@@ -278,4 +278,13 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('my-report-cards/{reportCard}', [StudentReportCardController::class, 'show'])->name('student.report-cards.show');
     });
 
+    // API self-attendance routes using web session
+    Route::middleware(['throttle:30,1'])
+        ->prefix('api/attendance/self')->name('api.attendance.self.')->group(function () {
+        Route::get('config', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'config'])->name('config');
+        Route::post('face-profile', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'saveFaceProfile'])->name('face-profile');
+        Route::post('check-in', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'checkIn'])->name('check-in');
+        Route::get('history', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'history'])->name('history');
+    });
+
 });
