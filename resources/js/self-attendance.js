@@ -20,6 +20,10 @@ export class SelfAttendanceApp {
             btnStart: root.querySelector('[data-btn-start]'),
             btnCapturePhoto: root.querySelector('#btnCapturePhoto'),
             successBox: root.querySelector('[data-success]'),
+            fallbackContainer: root.querySelector('#cameraFallbackContainer'),
+            fileInput: root.querySelector('#filePhoto'),
+            fallbackPreview: root.querySelector('#fallbackPreview'),
+            previewContainer: root.querySelector('#previewContainer'),
         };
         this.bindEvents();
     }
@@ -27,6 +31,7 @@ export class SelfAttendanceApp {
     bindEvents() {
         this.els.btnStart?.addEventListener('click', () => this.startFlow());
         this.els.btnCapturePhoto?.addEventListener('click', () => this.captureAndNext());
+        this.els.fileInput?.addEventListener('change', (e) => this.handleFallbackFile(e));
     }
 
     async init() {
@@ -58,13 +63,19 @@ export class SelfAttendanceApp {
         this.goToStep('camera');
         const cameraOk = await this.startCamera();
         if (!cameraOk) {
-            this.setStatus('Kamera tidak dapat diakses atau tidak ada izin.', 'danger');
-            return;
+            this.setStatus('Kamera langsung tidak dapat diakses. Silakan gunakan opsi unggah foto di bawah.', 'warning');
+            this.showFallbackFileInput();
+        } else {
+            this.setStatus('Hadapkan wajah Anda ke kamera lalu klik tombol di bawah untuk mengambil foto.');
         }
-        this.setStatus('Hadapkan wajah Anda ke kamera lalu klik tombol di bawah untuk mengambil foto.');
     }
 
     async startCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.warn('getUserMedia is not supported on this context (HTTP/non-secure)');
+            return false;
+        }
+
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
@@ -72,11 +83,85 @@ export class SelfAttendanceApp {
             });
             this.els.video.srcObject = this.stream;
             await this.els.video.play();
+            
+            // Show video, hide fallback file uploader
+            this.els.video.parentElement.classList.remove('hidden');
+            this.els.btnCapturePhoto.classList.remove('hidden');
+            this.els.btnCapturePhoto.innerHTML = '<i class="bi bi-camera"></i> Ambil Foto & Lanjut';
+            this.els.fallbackContainer?.classList.add('hidden');
             return true;
         } catch (e) {
             console.error('Camera access error:', e);
             return false;
         }
+    }
+
+    showFallbackFileInput() {
+        this.els.video.parentElement.classList.add('hidden');
+        this.els.btnCapturePhoto.classList.add('hidden');
+        this.els.fallbackContainer?.classList.remove('hidden');
+    }
+
+    async handleFallbackFile(e) {
+        const file = e.target.files[0];
+        if (file) {
+            this.setStatus('Mengompresi gambar...');
+            try {
+                this.state.photoBlob = await this.compressImage(file);
+                
+                // Display preview image
+                if (this.els.fallbackPreview && this.els.previewContainer && this.state.photoBlob) {
+                    this.els.fallbackPreview.src = URL.createObjectURL(this.state.photoBlob);
+                    this.els.previewContainer.classList.remove('hidden');
+                }
+
+                // Show and customize the capture button to serve as the continue button
+                this.els.btnCapturePhoto.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Lanjut dengan Foto Ini';
+                this.els.btnCapturePhoto.classList.remove('hidden');
+                this.setStatus('Foto berhasil dipilih. Klik tombol di bawah untuk memvalidasi lokasi GPS.');
+            } catch (err) {
+                console.error('Image compression error:', err);
+                this.setStatus('Gagal mengompresi gambar, coba lagi.', 'danger');
+            }
+        }
+    }
+
+    compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 800;
+                    
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('Canvas blob is null'));
+                    }, 'image/jpeg', 0.8);
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
     }
 
     stopCamera() {
@@ -85,11 +170,16 @@ export class SelfAttendanceApp {
     }
 
     async captureAndNext() {
-        this.state.photoBlob = await this.capturePhoto();
+        // If we haven't already selected a file photo, capture it from the video element
         if (!this.state.photoBlob) {
-            alert('Gagal mengambil gambar. Pastikan kamera menyala.');
+            this.state.photoBlob = await this.capturePhoto();
+        }
+
+        if (!this.state.photoBlob) {
+            alert('Gagal mengambil gambar. Silakan coba lagi atau unggah foto.');
             return;
         }
+
         this.stopCamera();
         this.goToStep('gps');
         await this.acquireGps();

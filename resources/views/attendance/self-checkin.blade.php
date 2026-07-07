@@ -53,6 +53,20 @@
                         <video id="attendanceVideo" class="h-full w-full object-cover" playsinline muted autoplay></video>
                         <canvas id="attendanceCanvas" class="hidden"></canvas>
                     </div>
+
+                    <!-- Fallback file input for non-secure contexts / HTTP / Permission Denied -->
+                    <div id="cameraFallbackContainer" class="hidden py-6 text-center">
+                        <i class="bi bi-camera-fill text-5xl text-slate-400 mb-3 d-block"></i>
+                        <p class="text-sm text-slate-500 mb-4">Kamera langsung tidak tersedia.</p>
+                        <label class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-brand-700">
+                            <i class="bi bi-upload"></i> Ambil Foto / Pilih File
+                            <input type="file" id="filePhoto" accept="image/*" capture="user" class="hidden">
+                        </label>
+                        <div id="previewContainer" class="mt-4 hidden">
+                            <img id="fallbackPreview" class="mx-auto max-h-48 rounded-lg shadow-sm border border-slate-200" src="" alt="Preview">
+                        </div>
+                    </div>
+
                     <button id="btnCapturePhoto" class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-700">
                         <i class="bi bi-camera"></i> Ambil Foto & Lanjut
                     </button>
