@@ -75,6 +75,7 @@ class StudentAssignmentController extends Controller
             $data = array_merge($data, $fileData);
         }
 
+        unset($data['file']);
         if ($submission) {
             $submission->update($data);
             $message = 'Tugas berhasil diperbarui.';

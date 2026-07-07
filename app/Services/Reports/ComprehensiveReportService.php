@@ -12,8 +12,6 @@ use App\Models\{
     ClassSubject,
     DiscussionThread,
     Material,
-    Quiz,
-    QuizAttempt,
     ReportCardDetail,
     SelfAttendanceLog,
     Teacher,
@@ -217,13 +215,7 @@ class ComprehensiveReportService
             ->groupBy('class_subject.teacher_id')
             ->pluck('total', 'teacher_id');
 
-        $quizCounts = Quiz::query()
-            ->when($classSubjectIds, fn ($q) => $q->whereIn('quizzes.class_subject_id', $classSubjectIds))
-            ->whereBetween('quizzes.created_at', [$filter->dateFrom . ' 00:00:00', $filter->dateTo . ' 23:59:59'])
-            ->join('class_subject', 'quizzes.class_subject_id', '=', 'class_subject.id')
-            ->select('class_subject.teacher_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('class_subject.teacher_id')
-            ->pluck('total', 'teacher_id');
+        $quizCounts = collect();
 
         $activityCounts = ActivityLog::query()
             ->join('users', 'activity_logs.user_id', '=', 'users.id')
@@ -277,19 +269,7 @@ class ComprehensiveReportService
             ->groupBy('students.id')
             ->pluck('total', 'id');
 
-        $quizQuery = QuizAttempt::query()
-            ->join('students', 'quiz_attempts.student_id', '=', 'students.id')
-            ->join('classes', 'students.class_id', '=', 'classes.id')
-            ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
-            ->whereBetween('quiz_attempts.created_at', [$filter->dateFrom . ' 00:00:00', $filter->dateTo . ' 23:59:59'])
-            ->when($filter->classId, fn ($q) => $q->where('students.class_id', $filter->classId))
-            ->when($filter->academicYearId, fn ($q) => $q->where('classes.academic_year_id', $filter->academicYearId))
-            ->when($classSubjectIds, fn ($q) => $q->whereIn('quizzes.class_subject_id', $classSubjectIds));
-
-        $quizCounts = (clone $quizQuery)
-            ->select('students.id', DB::raw('COUNT(*) as total'))
-            ->groupBy('students.id')
-            ->pluck('total', 'id');
+        $quizCounts = collect();
 
         $selfCounts = SelfAttendanceLog::query()
             ->join('students', 'self_attendance_logs.student_id', '=', 'students.id')
@@ -367,8 +347,7 @@ class ComprehensiveReportService
                 ->whereBetween('created_at', [$dateFrom, $dateTo])->count();
             $assignments = Assignment::where('class_subject_id', $cs->id)
                 ->whereBetween('created_at', [$dateFrom, $dateTo])->count();
-            $quizzes = Quiz::where('class_subject_id', $cs->id)
-                ->whereBetween('created_at', [$dateFrom, $dateTo])->count();
+            $quizzes = 0;
             $discussions = DiscussionThread::where('class_subject_id', $cs->id)
                 ->whereBetween('created_at', [$dateFrom, $dateTo])->count();
 

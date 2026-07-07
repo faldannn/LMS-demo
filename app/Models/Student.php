@@ -53,11 +53,6 @@ class Student extends Model
         return $this->hasMany(AssignmentSubmission::class);
     }
 
-    public function quizAttempts(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(QuizAttempt::class);
-    }
-
     public function reportCards(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ReportCard::class);

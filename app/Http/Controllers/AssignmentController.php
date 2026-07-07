@@ -41,6 +41,7 @@ class AssignmentController extends Controller
             $data = array_merge($data, $this->assignmentService->uploadFile($request->file('file')));
         }
 
+        unset($data['file']);
         Assignment::create($data);
 
         return redirect()->route('assignments.index', $classSubject)
@@ -90,6 +91,7 @@ class AssignmentController extends Controller
             $data = array_merge($data, $this->assignmentService->uploadFile($request->file('file')));
         }
 
+        unset($data['file']);
         $assignment->update($data);
 
         return redirect()->route('assignments.index', $assignment->class_subject_id)

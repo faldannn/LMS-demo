@@ -58,7 +58,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     // Dashboard & analytics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware('can:access-elearning')->group(function () {
+    Route::middleware('can:access-staff')->group(function () {
         Route::get('/dashboard/chart-data', [DashboardController::class, 'chartData'])->name('dashboard.chart-data');
         Route::get('/dashboard/grade-chart-data', [DashboardController::class, 'gradeChartData'])->name('dashboard.grade-chart-data');
         Route::get('/dashboard/lms-activity-data', [DashboardController::class, 'lmsActivityChartData'])->name('dashboard.lms-activity-data');
@@ -170,18 +170,20 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('assignments/submissions/{submission}/grade', [AssignmentController::class, 'storeGrade'])
             ->name('assignments.store-grade');
 
-        // Attendance management
-        Route::get('attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
-        Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
-        Route::get('attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
-        Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+        // Staff-only Academic management
+        Route::middleware('can:access-staff')->group(function () {
+            // Attendance management
+            Route::get('attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
+            Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+            Route::get('attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
+            Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+            Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
 
-        Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
-
-        // Schedules management
-        Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
-        Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
-        Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+            // Schedules management
+            Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
+            Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+            Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+        });
     });
 
     // Attendance & schedules — read access
@@ -201,7 +203,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     | Reports, Report Cards & Announcements
     |----------------------------------------------------------------------
     */
-    Route::middleware('can:access-elearning')->prefix('akademik')->group(function () {
+    Route::middleware('can:access-staff')->prefix('akademik')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
         Route::get('reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');

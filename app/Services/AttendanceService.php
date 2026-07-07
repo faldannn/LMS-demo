@@ -234,6 +234,14 @@ class AttendanceService
     public function storeAttendance(array $data, ?Teacher $teacher): Attendance
     {
         if (!$teacher) {
+            $class = Classes::with('homeroomTeacher')->find($data['class_id']);
+            $teacher = $class?->homeroomTeacher;
+            if (!$teacher) {
+                $teacher = Teacher::active()->first();
+            }
+        }
+
+        if (!$teacher) {
             throw new Exception('Data Guru tidak ditemukan untuk user yang sedang login.');
         }
 

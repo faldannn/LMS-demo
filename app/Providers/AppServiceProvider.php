@@ -38,6 +38,10 @@ class AppServiceProvider extends ServiceProvider
             return true; // All authenticated users (Admin, Guru, Siswa)
         });
 
+        Gate::define('access-staff', function ($user) {
+            return $user->isStaff();
+        });
+
         Gate::define('access-siswa', function ($user) {
             return $user->isSiswa();
         });

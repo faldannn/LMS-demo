@@ -19,13 +19,10 @@ class ReportCardService
             ->with([
                 'attendanceDetails',
                 'assignmentSubmissions.grade',
-                'quizAttempts' => function ($q) {
-                    $q->where('status', 'finished');
-                },
             ])
             ->get();
             
-        $classSubjects = ClassSubject::with(['subject', 'assignments', 'quizzes'])->where('class_id', $class->id)->get();
+        $classSubjects = ClassSubject::with(['subject', 'assignments'])->where('class_id', $class->id)->get();
         
         $generatedCount = 0;
         
@@ -55,8 +52,8 @@ class ReportCardService
                     $assignmentScore = $this->calculateAssignmentScore($student, $cs);
                     $quizScore = $this->calculateQuizScore($student, $cs);
                     
-                    // Formula: 40% tugas + 60% kuis
-                    $finalScore = ($assignmentScore * 0.4) + ($quizScore * 0.6);
+                    // Formula: 100% tugas
+                    $finalScore = $assignmentScore;
                     $grade = $this->determineGrade($finalScore);
                     
                     ReportCardDetail::updateOrCreate(
@@ -103,18 +100,7 @@ class ReportCardService
     
     private function calculateQuizScore(Student $student, ClassSubject $cs): float
     {
-        $quizzes = $cs->quizzes;
-        if ($quizzes->isEmpty()) return 0;
-        
-        $earned = 0;
-        foreach ($quizzes as $quiz) {
-            $attempt = $student->quizAttempts->firstWhere('quiz_id', $quiz->id);
-            if ($attempt) {
-                $earned += $attempt->score; // out of 100
-            }
-        }
-        
-        return $earned / $quizzes->count(); // average
+        return 0;
     }
     
     private function determineGrade(float $score): string

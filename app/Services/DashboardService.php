@@ -11,8 +11,6 @@ use App\Models\Attendance;
 use App\Models\Classes;
 use App\Models\ClassSubject;
 use App\Models\Material;
-use App\Models\Quiz;
-use App\Models\QuizAttempt;
 use App\Models\ReportCard;
 use App\Models\Schedule;
 use App\Models\Student;
@@ -64,10 +62,6 @@ class DashboardService
             $assignmentsMap = Assignment::where('created_at', '>=', $start)
                 ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
                 ->groupBy('date')->pluck('count', 'date');
-                
-            $quizzesMap = Quiz::where('created_at', '>=', $start)
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->groupBy('date')->pluck('count', 'date');
 
             $labels = [];
             $materials = [];
@@ -81,7 +75,7 @@ class DashboardService
                 $labels[] = $dateObj->translatedFormat('D, d M');
                 $materials[] = $materialsMap[$dateStr] ?? 0;
                 $assignments[] = $assignmentsMap[$dateStr] ?? 0;
-                $quizzes[] = $quizzesMap[$dateStr] ?? 0;
+                $quizzes[] = 0;
             }
 
             return compact('labels', 'materials', 'assignments', 'quizzes');
@@ -150,7 +144,7 @@ class DashboardService
 
         $classSubjects = $teacher
             ? ClassSubject::with(['class', 'subject'])
-                ->withCount(['materials', 'assignments', 'quizzes'])
+                ->withCount(['materials', 'assignments'])
                 ->where('teacher_id', $teacher->id)
                 ->get()
             : collect();
@@ -169,17 +163,7 @@ class DashboardService
                 ->get()
             : collect();
 
-        $activeQuizzes = $classSubjectIds->isNotEmpty()
-            ? Quiz::with('classSubject.class', 'classSubject.subject')
-                ->whereIn('class_subject_id', $classSubjectIds)
-                ->where('is_published', true)
-                ->where(fn ($q) => $q->whereNull('end_time')->orWhere('end_time', '>=', now()))
-                ->orderBy('start_time')
-                ->limit(8)
-                ->get()
-                ->filter(fn (Quiz $q) => $q->isOpen())
-                ->values()
-            : collect();
+        $activeQuizzes = collect();
 
         $recentMaterials = $classSubjectIds->isNotEmpty()
             ? Material::with('classSubject.class', 'classSubject.subject')
@@ -265,15 +249,7 @@ class DashboardService
                 ->get()
             : collect();
 
-        $activeQuizzes = $classSubjectIds->isNotEmpty()
-            ? Quiz::with('classSubject.subject')
-                ->whereIn('class_subject_id', $classSubjectIds)
-                ->where('is_published', true)
-                ->get()
-                ->filter(fn (Quiz $q) => $q->isOpen())
-                ->take(6)
-                ->values()
-            : collect();
+        $activeQuizzes = collect();
 
         $attendanceStats = $student
             ? $this->studentAttendanceStats($student)
@@ -354,17 +330,6 @@ class DashboardService
             ]);
         }
 
-        return QuizAttempt::with('quiz.classSubject.subject')
-            ->where('student_id', $student->id)
-            ->where('status', 'finished')
-            ->latest()
-            ->limit(5)
-            ->get()
-            ->map(fn ($a) => [
-                'subject' => $a->quiz?->classSubject?->subject?->name ?? $a->quiz?->title ?? 'Kuis',
-                'score' => $a->score,
-                'grade' => null,
-                'source' => 'kuis',
-            ]);
+        return collect();
     }
 }

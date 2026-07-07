@@ -114,7 +114,7 @@ class ModernAttendanceTest extends TestCase
         $this->actingAs($this->siswaUser)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Presensi Wajah & GPS')
+            ->assertSee('Presensi Wajah & GPS', false)
             ->assertDontSee('Scan QR Absensi');
     }
 }
