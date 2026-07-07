@@ -32,7 +32,7 @@ class DashboardController extends Controller
             $teacher = $user->teacher;
             $classSubjects = $teacher
                 ? \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
-                    ->withCount(['materials', 'assignments', 'quizzes'])
+                    ->withCount(['materials', 'assignments'])
                     ->where('teacher_id', $teacher->id)
                     ->get()
                 : collect();
@@ -40,13 +40,13 @@ class DashboardController extends Controller
             $student = $user->student;
             $classSubjects = $student?->class_id
                 ? \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
-                    ->withCount(['materials', 'assignments', 'quizzes'])
+                    ->withCount(['materials', 'assignments'])
                     ->where('class_id', $student->class_id)
                     ->get()
                 : collect();
         } else {
             $classSubjects = \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
-                ->withCount(['materials', 'assignments', 'quizzes'])
+                ->withCount(['materials', 'assignments'])
                 ->get();
         }
 
