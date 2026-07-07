@@ -6,7 +6,9 @@
 <div id="dashboard-root" class="space-y-6">
     @include('dashboard.partials.hero', [
         'title' => 'Dashboard Guru',
-            'subtitle' => 'Kelola pembelajaran, pantau jadwal, tugas, materi, dan kehadiran kelas Anda.',
+        'subtitle' => 'Kelola pembelajaran, pantau jadwal, tugas, materi, dan kehadiran kelas Anda.',
+    ])
+
     {{-- Statistik --}}
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         @include('dashboard.partials.stat-card', ['label' => 'Kelas', 'value' => $stats['classes'], 'icon' => 'bi-building', 'tone' => 'brand'])
