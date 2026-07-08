@@ -92,22 +92,22 @@
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="student-num">{{ $i + 1 }}</div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="{{ $detail->student->photo_url }}" class="h-9 w-9 rounded-full object-cover border border-slate-200" alt="">
                                             <div>
-                                                <div class="fw-semibold">{{ $detail->student->name }}</div>
-                                                <div class="text-muted" style="font-size:11px">{{ $detail->student->nis }}</div>
+                                                <div class="fw-semibold text-slate-900">{{ $detail->student->name }}</div>
+                                                <div class="text-slate-500 text-xs">NIS: {{ $detail->student->nis }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="badge badge-status-{{ $detail->status }}">
                                             @switch($detail->status)
-                                                @case('hadir') ✅ Hadir @break
-                                                @case('terlambat') ⏰ Terlambat @break
-                                                @case('sakit') 🤒 Sakit @break
-                                                @case('izin') 📄 Izin @break
-                                                @case('alfa') ❌ Alfa @break
+                                                @case('hadir') Hadir @break
+                                                @case('terlambat') Terlambat @break
+                                                @case('sakit') Sakit @break
+                                                @case('izin') Izin @break
+                                                @case('alfa') Alfa @break
                                                 @default {{ ucfirst($detail->status) }}
                                             @endswitch
                                         </span>

@@ -48,21 +48,85 @@
             </div>
         </div>
 
-        @if($teacher->homeroomClasses->count())
-            <div class="card mt-4">
-                <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Wali Kelas</div>
-                <div class="card-body">
-                    @foreach($teacher->homeroomClasses as $cls)
-                        <span class="badge me-1 mb-1" style="background:var(--color-brand-50);color:var(--color-brand-600);font-size:13px;padding:6px 10px">
-                            {{ $cls->name }}
-                        </span>
-                    @endforeach
-                </div>
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-building me-2 text-primary"></i>Wali Kelas</span>
+                @role('kepala_sekolah')
+                    <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editHomeroomModal" style="padding: 2px 6px; font-size: 11px;">
+                        <i class="bi bi-gear"></i> Atur
+                    </button>
+                @endrole
             </div>
-        @endif
+            <div class="card-body">
+                @if($teacher->homeroomClasses->count())
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach($teacher->homeroomClasses as $cls)
+                            <span class="badge" style="background:var(--color-brand-50);color:var(--color-brand-600);font-size:12px;padding:6px 10px">
+                                {{ $cls->name }}
+                            </span>
+                        @endforeach
+                    </div>
+                @else
+                    <span class="text-slate-400 small">Belum mengampu kelas manapun.</span>
+                @endif
+            </div>
+        </div>
     </div>
 
     <div class="col-md-8">
+        {{-- Tugas Mengajar (Class Subjects) --}}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-book-half me-2 text-primary"></i>Mata Pelajaran & Kelas yang Diajar</span>
+                @role('kepala_sekolah')
+                    <button type="button" class="btn btn-xs btn-primary" data-bs-toggle="modal" data-bs-target="#addClassSubjectModal" style="padding: 4px 10px; font-size: 11px;">
+                        <i class="bi bi-plus-lg me-1"></i> Tambah Tugas Mengajar
+                    </button>
+                @endrole
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Kelas</th>
+                            <th>Mata Pelajaran</th>
+                            <th>Tahun Ajaran</th>
+                            @role('kepala_sekolah')
+                                <th class="text-end">Aksi</th>
+                            @endrole
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($teacher->classSubjects as $cs)
+                            <tr>
+                                <td class="fw-bold text-slate-800">Kelas {{ $cs->class->name }}</td>
+                                <td>
+                                    <strong>{{ $cs->subject->name }}</strong>
+                                    <div class="text-muted small">Code: {{ $cs->subject->code ?? '-' }}</div>
+                                </td>
+                                <td>{{ $cs->academicYear->year }}</td>
+                                @role('kepala_sekolah')
+                                    <td class="text-end">
+                                        <form method="POST" action="{{ route('teachers.subjects.destroy', [$teacher->id, $cs->id]) }}" onsubmit="return confirm('Hapus tugas mengajar mata pelajaran ini dari guru?')" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 2px 6px">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                @endrole
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Belum ada tugas mengajar yang dikonfigurasi.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         {{-- Jadwal mengajar --}}
         <div class="card mb-4">
             <div class="card-header"><i class="bi bi-calendar3 me-2 text-primary"></i>Jadwal Mengajar</div>
@@ -116,4 +180,77 @@
         </div>
     </div>
 </div>
+@role('kepala_sekolah')
+{{-- Modal Atur Wali Kelas --}}
+<div class="modal fade" id="editHomeroomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('teachers.homeroom.update', $teacher->id) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Atur Wali Kelas — {{ $teacher->name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-xs text-slate-500 mb-3">Pilih kelas-kelas yang diampu oleh {{ $teacher->name }} sebagai Wali Kelas. Kelas yang sudah memiliki Wali Kelas lain akan dialihkan ke guru ini.</p>
+                <div class="space-y-2" style="max-height: 300px; overflow-y: auto;">
+                    @foreach($classes as $c)
+                        <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 border border-slate-100 cursor-pointer">
+                            <input type="checkbox" name="class_ids[]" value="{{ $c->id }}" class="h-4 w-4 rounded accent-brand-600"
+                                {{ $c->homeroom_teacher_id === $teacher->id ? 'checked' : '' }}>
+                            <div class="text-sm">
+                                <span class="fw-semibold text-slate-800">Kelas {{ $c->name }}</span>
+                                @if($c->homeroomTeacher && $c->homeroom_teacher_id !== $teacher->id)
+                                    <span class="text-xs text-amber-600 block">(Saat ini: {{ $c->homeroomTeacher->name }})</span>
+                                @endif
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal Tambah Tugas Mengajar --}}
+<div class="modal fade" id="addClassSubjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('teachers.subjects.store', $teacher->id) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Tugas Mengajar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Pilih Kelas</label>
+                    <select name="class_id" class="form-select" required>
+                        <option value="">-- Pilih Kelas --</option>
+                        @foreach($classes as $c)
+                            <option value="{{ $c->id }}">Kelas {{ $c->name }} (Tingkat {{ $c->grade }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Pilih Mata Pelajaran</label>
+                    <select name="subject_id" class="form-select" required>
+                        <option value="">-- Pilih Mata Pelajaran --</option>
+                        @foreach($subjects as $sub)
+                            <option value="{{ $sub->id }}">{{ $sub->name }} ({{ $sub->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endrole
+
 @endsection

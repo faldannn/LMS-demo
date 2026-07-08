@@ -189,7 +189,7 @@
 
     {{-- Siswa Quick Actions --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <a href="{{ route('attendance.self-checkin') }}" class="card text-decoration-none border-0 shadow-sm h-100"
                 style="border-radius:1rem;background:linear-gradient(135deg,var(--color-brand-600),#3b82f6)">
                 <div class="card-body text-center py-4 text-white">
@@ -199,24 +199,13 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <a href="{{ route('attendance.mine') }}" class="card text-decoration-none border-0 shadow-sm h-100"
                 style="border-radius:1rem;background:linear-gradient(135deg,var(--color-brand-500),var(--color-brand-600))">
                 <div class="card-body text-center py-4 text-white">
                     <i class="bi bi-calendar-check" style="font-size:2.5rem"></i>
                     <h6 class="fw-bold mt-3 mb-1">Riwayat Absensi</h6>
                     <p class="mb-0 small" style="opacity:.8">Lihat rekap kehadiran Anda</p>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-4">
-            <a href="{{ route('students.my-card') }}" target="_blank"
-                class="card text-decoration-none border-0 shadow-sm h-100"
-                style="border-radius:1rem;background:linear-gradient(135deg,#8b5cf6,#a78bfa)">
-                <div class="card-body text-center py-4 text-white">
-                    <i class="bi bi-person-vcard" style="font-size:2.5rem"></i>
-                    <h6 class="fw-bold mt-3 mb-1">Kartu Pelajar</h6>
-                    <p class="mb-0 small" style="opacity:.8">Lihat & cetak kartu QR Anda</p>
                 </div>
             </a>
         </div>

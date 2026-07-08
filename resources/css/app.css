@@ -119,4 +119,11 @@
     .page-link { @apply flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-lg text-slate-500 bg-white border border-slate-300 hover:bg-slate-50 hover:text-slate-700 transition-colors; }
     .page-item.active .page-link { @apply z-10 text-brand-600 border-brand-500 bg-brand-50; }
     .page-item.disabled .page-link { @apply text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed; }
+
+    /* ── Attendance Status Badges ── */
+    .badge-status-hadir { @apply bg-emerald-100 text-emerald-800; }
+    .badge-status-terlambat { @apply bg-amber-100 text-amber-800; }
+    .badge-status-sakit { @apply bg-sky-100 text-sky-800; }
+    .badge-status-izin { @apply bg-blue-100 text-blue-800; }
+    .badge-status-alfa { @apply bg-rose-100 text-rose-800; }
 }

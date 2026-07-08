@@ -86,9 +86,19 @@ class TeacherController extends Controller
 
     public function show(Teacher $teacher)
     {
-        $teacher->load(['homeroomClasses', 'schedules.class', 'attendances' => fn ($q) => $q->latest()->limit(10)]);
+        $teacher->load([
+            'homeroomClasses', 
+            'schedules.class', 
+            'classSubjects.class',
+            'classSubjects.subject',
+            'classSubjects.academicYear',
+            'attendances' => fn ($q) => $q->latest()->limit(10)
+        ]);
 
-        return view('teachers.show', compact('teacher'));
+        $classes = \App\Models\Classes::with('homeroomTeacher')->orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+
+        return view('teachers.show', compact('teacher', 'classes', 'subjects'));
     }
 
     public function edit(Teacher $teacher)
@@ -109,5 +119,66 @@ class TeacherController extends Controller
         $this->service->delete($teacher);
 
         return redirect()->route('teachers.index')->with('success', "Guru {$name} berhasil dihapus.");
+    }
+
+    public function updateHomeroom(Request $request, Teacher $teacher)
+    {
+        $data = $request->validate([
+            'class_ids' => 'nullable|array',
+            'class_ids.*' => 'exists:classes,id',
+        ]);
+
+        $classIds = $data['class_ids'] ?? [];
+
+        // Reset homeroom for classes previously assigned to this teacher
+        \App\Models\Classes::where('homeroom_teacher_id', $teacher->id)->update(['homeroom_teacher_id' => null]);
+
+        // Assign new classes
+        if (!empty($classIds)) {
+            \App\Models\Classes::whereIn('id', $classIds)->update(['homeroom_teacher_id' => $teacher->id]);
+        }
+
+        return back()->with('success', 'Wali kelas berhasil diperbarui.');
+    }
+
+    public function storeClassSubject(Request $request, Teacher $teacher)
+    {
+        $data = $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'subject_id' => 'required|exists:subjects,id',
+        ]);
+
+        $activeYear = \App\Models\AcademicYear::active();
+        if (!$activeYear) {
+            return back()->withErrors(['error' => 'Tidak ada tahun ajaran aktif.']);
+        }
+
+        // Check if this class and subject already has a teacher
+        $existing = \App\Models\ClassSubject::where([
+            'class_id' => $data['class_id'],
+            'subject_id' => $data['subject_id'],
+            'academic_year_id' => $activeYear->id,
+        ])->first();
+
+        if ($existing) {
+            // Update the teacher instead of duplicate or error
+            $existing->update(['teacher_id' => $teacher->id]);
+        } else {
+            \App\Models\ClassSubject::create([
+                'class_id' => $data['class_id'],
+                'subject_id' => $data['subject_id'],
+                'academic_year_id' => $activeYear->id,
+                'teacher_id' => $teacher->id,
+            ]);
+        }
+
+        return back()->with('success', 'Tugas mengajar berhasil ditambahkan.');
+    }
+
+    public function destroyClassSubject(Teacher $teacher, \App\Models\ClassSubject $classSubject)
+    {
+        $classSubject->delete();
+
+        return back()->with('success', 'Tugas mengajar berhasil dihapus.');
     }
 }

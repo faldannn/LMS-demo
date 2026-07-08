@@ -19,12 +19,13 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $users = User::when(
-            $request->search,
-            fn($q) =>
-            $q->where('name', 'like', "%{$request->search}%")
-                ->orWhere('username', 'like', "%{$request->search}%")
-        )
+        $users = User::with(['teacher', 'student'])
+            ->when(
+                $request->search,
+                fn($q) =>
+                $q->where('name', 'like', "%{$request->search}%")
+                    ->orWhere('username', 'like', "%{$request->search}%")
+            )
             ->when($request->role, fn($q) => $q->where('role', $request->role))
             ->orderBy('name')
             ->paginate(20)->withQueryString();

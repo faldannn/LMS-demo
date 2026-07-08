@@ -55,7 +55,18 @@
                                 <div class="user-avatar" style="width:32px;height:32px;font-size:12px">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
-                                <span class="fw-semibold">{{ $user->name }}</span>
+                                <div>
+                                    <span class="fw-semibold d-block">{{ $user->name }}</span>
+                                    @if($user->isGuru() && $user->teacher)
+                                        <span class="text-xs text-slate-500 d-block mt-0.5">
+                                            Guru: <a href="{{ route('teachers.show', $user->teacher->id) }}" class="text-brand-600 hover:underline fw-medium">NIP {{ $user->teacher->nip ?? '-' }}</a>
+                                        </span>
+                                    @elseif($user->isSiswa() && $user->student)
+                                        <span class="text-xs text-slate-500 d-block mt-0.5">
+                                            Siswa: <a href="{{ route('students.show', $user->student->id) }}" class="text-brand-600 hover:underline fw-medium">NIS {{ $user->student->nis ?? '-' }}</a>
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td><code>{{ $user->username }}</code></td>
