@@ -1,4 +1,3 @@
-{{-- resources/views/attendance/show.blade.php --}}
 @extends('layouts.app')
 @section('title', 'Detail Absensi')
 @section('page-title', 'Detail Absensi')
@@ -11,9 +10,9 @@
         </div>
         <div class="d-flex gap-2">
             @role('admin,guru')
-            <a href="{{ route('attendance.edit', $attendance) }}" class="btn btn-primary">
-                <i class="bi bi-pencil me-1"></i>Edit Absensi
-            </a>
+                <a href="{{ route('attendance.edit', $attendance) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit Absensi
+                </a>
             @endrole
             <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Kembali
@@ -21,33 +20,33 @@
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-icon mx-auto" style="background:var(--color-brand-50);color:var(--color-brand-500)"><i class="bi bi-check-circle-fill"></i></div>
                 <div style="font-size:32px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--color-brand-500)">{{ $attendance->details->where('status','hadir')->count() }}</div>
-                <div class="text-muted" style="font-size:12px">Hadir</div>
+                <div class="text-muted small">Hadir</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-icon mx-auto" style="background:#fef3c7;color:#f59e0b"><i class="bi bi-clock-fill"></i></div>
                 <div style="font-size:32px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#f59e0b">{{ $attendance->details->where('status','terlambat')->count() }}</div>
-                <div class="text-muted" style="font-size:12px">Terlambat</div>
+                <div class="text-muted small">Terlambat</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-icon mx-auto" style="background:#fee2e2;color:#ef4444"><i class="bi bi-x-circle-fill"></i></div>
                 <div style="font-size:32px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#ef4444">{{ $attendance->details->where('status','alfa')->count() }}</div>
-                <div class="text-muted" style="font-size:12px">Alfa</div>
+                <div class="text-muted small">Alfa</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-icon mx-auto" style="background:var(--color-brand-50);color:var(--color-brand-600)"><i class="bi bi-file-earmark-text-fill"></i></div>
                 <div style="font-size:32px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--color-brand-600)">{{ $attendance->details->whereIn('status',['sakit','izin'])->count() }}</div>
-                <div class="text-muted" style="font-size:12px">Sakit / Izin</div>
+                <div class="text-muted small">Sakit / Izin</div>
             </div>
         </div>
     </div>
@@ -59,7 +58,7 @@
                 <div class="card-body">
                     <dl class="mb-0">
                         <dt class="text-muted small">Kelas</dt>
-                        <dd class="fw-semibold mb-2">{{ $attendance->class?->name }}</dd>
+                        <dd class="fw-semibold mb-2">{{ $attendance->class?->name ?? '-' }}</dd>
                         <dt class="text-muted small">Guru Pengisi</dt>
                         <dd class="fw-semibold mb-2">{{ $attendance->teacher?->name ?? '-' }}</dd>
                         <dt class="text-muted small">Sesi</dt>
@@ -72,15 +71,15 @@
         </div>
         <div class="col-md-9">
             <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="card-header flex-wrap gap-2">
                     <span><i class="bi bi-list-check me-2 text-primary"></i>Daftar Kehadiran Siswa</span>
                     <span class="badge bg-primary">{{ $attendance->details->count() }} siswa</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table mb-0">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th style="width:64px">No</th>
                                 <th>Nama Siswa</th>
                                 <th>Status</th>
                                 <th>Jam Masuk</th>
@@ -88,32 +87,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($attendance->details->sortBy('student.name') as $i => $detail)
+                            @forelse($attendance->details->sortBy('student.name')->values() as $i => $detail)
+                                @php $student = $detail->student; @endphp
                                 <tr>
-                                    <td>{{ $i + 1 }}</td>
+                                    <td class="fw-semibold text-muted">{{ $i + 1 }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img src="{{ $detail->student->photo_url }}" class="h-9 w-9 rounded-full object-cover border border-slate-200" alt="">
-                                            <div>
-                                                <div class="fw-semibold text-slate-900">{{ $detail->student->name }}</div>
-                                                <div class="text-slate-500 text-xs">NIS: {{ $detail->student->nis }}</div>
+                                        <div class="d-flex align-items-center gap-3 min-w-[240px]">
+                                            <img src="{{ $student?->photo_url ?? 'https://ui-avatars.com/api/?name=Siswa&background=e2e8f0&color=475569' }}" class="h-10 w-10 rounded-full object-cover border border-slate-200" alt="Foto siswa">
+                                            <div class="min-w-0">
+                                                <div class="fw-bold text-slate-900 truncate">{{ $student?->name ?? 'Data siswa tidak ditemukan' }}</div>
+                                                <div class="text-muted small">NIS: {{ $student?->nis ?? '-' }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="badge badge-status-{{ $detail->status }}">
-                                            @switch($detail->status)
-                                                @case('hadir') Hadir @break
-                                                @case('terlambat') Terlambat @break
-                                                @case('sakit') Sakit @break
-                                                @case('izin') Izin @break
-                                                @case('alfa') Alfa @break
-                                                @default {{ ucfirst($detail->status) }}
-                                            @endswitch
+                                            {{ $detail->status_label }}
                                         </span>
                                     </td>
-                                    <td style="font-family:'JetBrains Mono',monospace;font-size:13px">{{ $detail->check_in ? $detail->check_in->format('H:i') : '-' }}</td>
-                                    <td style="font-size:12px;color:#64748b">{{ $detail->notes ?? '-' }}</td>
+                                    <td><code>{{ $detail->check_in ? $detail->check_in->format('H:i') : '-' }}</code></td>
+                                    <td class="small text-muted">{{ $detail->notes ?: '-' }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="text-center text-muted py-4">Belum ada detail absensi.</td></tr>

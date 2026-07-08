@@ -7,9 +7,14 @@ use App\Http\Controllers\Concerns\HandlesMasterDataActions;
 use App\Http\Requests\StoreTeacherRequest;
 use App\Http\Requests\UpdateTeacherRequest;
 use App\Imports\TeachersImport;
+use App\Models\AcademicYear;
+use App\Models\Classes;
+use App\Models\ClassSubject;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\MasterData\TeacherService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TeacherController extends Controller
 {
@@ -87,16 +92,17 @@ class TeacherController extends Controller
     public function show(Teacher $teacher)
     {
         $teacher->load([
+            'user',
             'homeroomClasses', 
             'schedules.class', 
             'classSubjects.class',
             'classSubjects.subject',
             'classSubjects.academicYear',
-            'attendances' => fn ($q) => $q->latest()->limit(10)
+            'attendances' => fn ($q) => $q->with(['class'])->withCount('details')->latest()->limit(10)
         ]);
 
-        $classes = \App\Models\Classes::with('homeroomTeacher')->orderBy('name')->get();
-        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $classes = Classes::with('homeroomTeacher')->orderBy('name')->get();
+        $subjects = Subject::orderBy('name')->get();
 
         return view('teachers.show', compact('teacher', 'classes', 'subjects'));
     }
@@ -130,13 +136,15 @@ class TeacherController extends Controller
 
         $classIds = $data['class_ids'] ?? [];
 
-        // Reset homeroom for classes previously assigned to this teacher
-        \App\Models\Classes::where('homeroom_teacher_id', $teacher->id)->update(['homeroom_teacher_id' => null]);
+        DB::transaction(function () use ($teacher, $classIds) {
+            Classes::where('homeroom_teacher_id', $teacher->id)
+                ->whereNotIn('id', $classIds)
+                ->update(['homeroom_teacher_id' => null]);
 
-        // Assign new classes
-        if (!empty($classIds)) {
-            \App\Models\Classes::whereIn('id', $classIds)->update(['homeroom_teacher_id' => $teacher->id]);
-        }
+            if (!empty($classIds)) {
+                Classes::whereIn('id', $classIds)->update(['homeroom_teacher_id' => $teacher->id]);
+            }
+        });
 
         return back()->with('success', 'Wali kelas berhasil diperbarui.');
     }
@@ -148,13 +156,13 @@ class TeacherController extends Controller
             'subject_id' => 'required|exists:subjects,id',
         ]);
 
-        $activeYear = \App\Models\AcademicYear::active();
+        $activeYear = AcademicYear::active();
         if (!$activeYear) {
             return back()->withErrors(['error' => 'Tidak ada tahun ajaran aktif.']);
         }
 
         // Check if this class and subject already has a teacher
-        $existing = \App\Models\ClassSubject::where([
+        $existing = ClassSubject::where([
             'class_id' => $data['class_id'],
             'subject_id' => $data['subject_id'],
             'academic_year_id' => $activeYear->id,
@@ -164,7 +172,7 @@ class TeacherController extends Controller
             // Update the teacher instead of duplicate or error
             $existing->update(['teacher_id' => $teacher->id]);
         } else {
-            \App\Models\ClassSubject::create([
+            ClassSubject::create([
                 'class_id' => $data['class_id'],
                 'subject_id' => $data['subject_id'],
                 'academic_year_id' => $activeYear->id,
@@ -175,8 +183,10 @@ class TeacherController extends Controller
         return back()->with('success', 'Tugas mengajar berhasil ditambahkan.');
     }
 
-    public function destroyClassSubject(Teacher $teacher, \App\Models\ClassSubject $classSubject)
+    public function destroyClassSubject(Teacher $teacher, ClassSubject $classSubject)
     {
+        abort_unless((int) $classSubject->teacher_id === (int) $teacher->id, 404);
+
         $classSubject->delete();
 
         return back()->with('success', 'Tugas mengajar berhasil dihapus.');

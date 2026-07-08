@@ -10,7 +10,7 @@
     ])
 
     {{-- Quick actions --}}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <a href="{{ route('attendance.self-checkin') }}" class="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md hover:ring-brand-200">
             <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
                 <i class="bi bi-camera-video text-xl"></i>
@@ -24,13 +24,6 @@
             </div>
             <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Riwayat Absensi</p>
             <p class="mt-1 text-xs text-slate-500">Lihat rekap kehadiran</p>
-        </a>
-        <a href="{{ route('students.my-card') }}" target="_blank" class="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md hover:ring-brand-200">
-            <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
-                <i class="bi bi-person-vcard text-xl"></i>
-            </div>
-            <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Kartu Pelajar</p>
-            <p class="mt-1 text-xs text-slate-500">Tautan digital identitas siswa</p>
         </a>
     </div>
 
