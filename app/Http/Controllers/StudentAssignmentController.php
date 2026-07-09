@@ -86,4 +86,29 @@ class StudentAssignmentController extends Controller
 
         return redirect()->back()->with('success', $message);
     }
+
+    public function showClassSubject(ClassSubject $classSubject)
+    {
+        $student = auth()->user()->student;
+
+        if (!$student || $student->class_id !== $classSubject->class_id) {
+            abort(403, 'Anda tidak memiliki akses ke mata pelajaran ini.');
+        }
+
+        $classSubject->load([
+            'subject',
+            'teacher',
+            'materials' => function ($query) {
+                $query->where('is_published', true)->orderBy('order')->orderBy('created_at', 'desc');
+            },
+            'assignments' => function ($query) {
+                $query->where('is_published', true)->orderBy('due_date', 'asc');
+            },
+            'assignments.submissions' => function ($query) use ($student) {
+                $query->where('student_id', $student->id);
+            }
+        ]);
+
+        return view('student-class-subjects.show', compact('classSubject'));
+    }
 }

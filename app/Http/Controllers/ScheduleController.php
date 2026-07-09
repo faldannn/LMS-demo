@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{AcademicYear, Classes, Schedule, Teacher};
+use App\Models\{AcademicYear, Classes, ClassSubject, Schedule, Teacher};
 use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
@@ -21,12 +21,30 @@ class ScheduleController extends Controller
         $class = Classes::find($classId);
         $days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-        $schedules = Schedule::with('teacher')
+        $schedulesList = Schedule::with('teacher')
             ->where('class_id', $classId)
             ->orderBy('day_of_week')
             ->orderBy('start_time')
-            ->get()
-            ->groupBy('day_of_week');
+            ->get();
+
+        $classSubjects = ClassSubject::where('class_id', $classId)->with('subject')->get();
+        
+        foreach ($schedulesList as $sched) {
+            $matchedCs = $classSubjects->first(function ($cs) use ($sched) {
+                return (int) $cs->teacher_id === (int) $sched->teacher_id && 
+                       stripos($cs->subject->name, $sched->subject) !== false;
+            });
+            
+            if (!$matchedCs) {
+                $matchedCs = $classSubjects->first(function ($cs) use ($sched) {
+                    return stripos($cs->subject->name, $sched->subject) !== false;
+                });
+            }
+
+            $sched->class_subject_id = $matchedCs ? $matchedCs->id : null;
+        }
+
+        $schedules = $schedulesList->groupBy('day_of_week');
 
         return view('schedules.index', compact('classes', 'class', 'schedules', 'days', 'classId'));
     }
