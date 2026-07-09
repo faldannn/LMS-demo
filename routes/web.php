@@ -294,3 +294,19 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     });
 
 });
+
+// Fallback route to serve public storage files when symlink/junction is not supported or working (e.g. PHP built-in server on Windows)
+Route::get('storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    
+    // Safety check: Prevent directory traversal attacks
+    if (str_contains($path, '..') || !str_starts_with(realpath($fullPath), realpath(storage_path('app/public')))) {
+        abort(403, 'Akses ditolak.');
+    }
+
+    if (!file_exists($fullPath)) {
+        abort(404, 'File tidak ditemukan.');
+    }
+    
+    return response()->file($fullPath);
+})->where('path', '.*')->name('storage.fallback');
