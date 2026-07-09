@@ -16,6 +16,11 @@
                     Kelas: <span class="font-semibold text-slate-700">{{ $classSubject->class->name }}</span>
                     <span class="mx-1 text-slate-300">|</span>
                     Guru: <span class="font-semibold text-slate-700">{{ $classSubject->teacher->name }}</span>
+                    @if($classSubject->teacher->subjects->isNotEmpty())
+                        <span class="text-xs text-slate-500">({{ $classSubject->teacher->subjects->pluck('name')->join(', ') }})</span>
+                    @elseif($classSubject->teacher->subject)
+                        <span class="text-xs text-slate-500">({{ $classSubject->teacher->subject }})</span>
+                    @endif
                 </p>
             </div>
         </div>
@@ -29,7 +34,13 @@
                     <i class="bi bi-book"></i> Kode: {{ $classSubject->subject->code ?? '-' }}
                 </span>
                 <h3 class="text-2xl font-extrabold">{{ $classSubject->subject->name }}</h3>
-                <p class="text-brand-100 text-sm mt-1">Dosen/Guru Pengampu: <span class="font-semibold text-white">{{ $classSubject->teacher->name }}</span></p>
+                <p class="text-brand-100 text-sm mt-1">Dosen/Guru Pengampu: <span class="font-semibold text-white">{{ $classSubject->teacher->name }}</span>
+                    @if($classSubject->teacher->subjects->isNotEmpty())
+                        <span class="text-xs text-brand-100">({{ $classSubject->teacher->subjects->pluck('name')->join(', ') }})</span>
+                    @elseif($classSubject->teacher->subject)
+                        <span class="text-xs text-brand-100">({{ $classSubject->teacher->subject }})</span>
+                    @endif
+                </p>
             </div>
             <div class="flex gap-3">
                 <div class="rounded-xl bg-white/10 px-4 py-2.5 text-center min-w-[80px]">

@@ -21,6 +21,8 @@ class UpdateTeacherRequest extends FormRequest
             'nip' => "nullable|string|max:30|unique:teachers,nip,{$id}",
             'name' => 'required|string|max:100',
             'subject' => 'nullable|string|max:100',
+            'subject_ids' => 'nullable|array',
+            'subject_ids.*' => 'exists:subjects,id',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
             'status' => 'boolean',

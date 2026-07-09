@@ -128,7 +128,7 @@ class MaterialController extends Controller
             return redirect()->route('dashboard')->with('error', 'Anda tidak terdaftar dalam kelas apapun.');
         }
 
-        $classSubjects = ClassSubject::with(['subject', 'teacher', 'materials' => function ($query) {
+        $classSubjects = ClassSubject::with(['subject', 'teacher.subjects', 'materials' => function ($query) {
             $query->where('is_published', true)->orderBy('order')->orderBy('created_at', 'desc');
         }])
             ->where('class_id', $student->class_id)

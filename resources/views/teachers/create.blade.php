@@ -18,7 +18,22 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nip" label="NIP" value="{{ old('nip') }}" placeholder="Nomor Induk Pegawai" />
                     <x-form-input name="name" label="Nama Lengkap" value="{{ old('name') }}" placeholder="Nama lengkap guru" required />
-                    <x-form-input name="subject" label="Mata Pelajaran" value="{{ old('subject') }}" placeholder="Contoh: Matematika" />
+                    <div class="sm:col-span-2">
+                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Mata Pelajaran yang Diajar</label>
+                        <div class="grid grid-cols-1 gap-2 rounded-xl border border-slate-300 bg-slate-50 p-4 max-h-48 overflow-y-auto sm:grid-cols-2">
+                            @foreach($subjects as $subj)
+                                <label class="inline-flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-slate-100 transition duration-150">
+                                    <input type="checkbox" name="subject_ids[]" value="{{ $subj->id }}" 
+                                        {{ in_array($subj->id, old('subject_ids', [])) ? 'checked' : '' }}
+                                        class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                                    <span class="text-sm text-slate-700">{{ $subj->name }} <span class="text-xs text-slate-400">({{ $subj->code }})</span></span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('subject_ids')
+                            <p class="mt-1.5 text-sm font-medium text-rose-600"><i class="bi bi-exclamation-circle mr-1"></i>{{ $message }}</p>
+                        @enderror
+                    </div>
                     <x-form-input name="phone" label="No. HP" value="{{ old('phone') }}" placeholder="08xxxxxxxxxx" />
                     
                     <div class="sm:col-span-2">

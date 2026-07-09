@@ -18,14 +18,17 @@ class TeacherRepository extends BaseRepository
             $q->where('name', 'like', "%{$search}%")
                 ->orWhere('nip', 'like', "%{$search}%")
                 ->orWhere('subject', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhereHas('subjects', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                });
         });
     }
 
     protected function applyFilters(Builder $query, array $filters): Builder
     {
         return $query
-            ->with(['user', 'homeroomClasses'])
+            ->with(['user', 'homeroomClasses', 'subjects'])
             ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
             ->when($filters['trashed'] ?? false, fn ($q) => $q->onlyTrashed());
     }

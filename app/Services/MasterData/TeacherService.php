@@ -37,8 +37,21 @@ class TeacherService extends BaseMasterDataService
                 'status' => true,
             ]);
 
+            $subjectIds = $data['subject_ids'] ?? [];
+            if (!empty($subjectIds)) {
+                $subjectNames = \App\Models\Subject::whereIn('id', $subjectIds)->pluck('name')->toArray();
+                $data['subject'] = implode(', ', $subjectNames);
+            } else {
+                $data['subject'] = null;
+            }
+
             $data['user_id'] = $user->id;
             $teacher = parent::create($data);
+            
+            if (!empty($subjectIds)) {
+                $teacher->subjects()->sync($subjectIds);
+            }
+
             $teacher->setAttribute('generated_password', $password);
             $teacher->setAttribute('generated_username', $username);
 
@@ -56,7 +69,17 @@ class TeacherService extends BaseMasterDataService
             $data['photo'] = $data['photo']->store('teachers/photos', 'public');
         }
 
+        $subjectIds = $data['subject_ids'] ?? [];
+        if (!empty($subjectIds)) {
+            $subjectNames = \App\Models\Subject::whereIn('id', $subjectIds)->pluck('name')->toArray();
+            $data['subject'] = implode(', ', $subjectNames);
+        } else {
+            $data['subject'] = null;
+        }
+
         $teacher = parent::update($model, $data);
+        $teacher->subjects()->sync($subjectIds);
+
         $teacher->user?->update([
             'name' => $data['name'],
             'email' => $data['email'] ?? $teacher->user->email,

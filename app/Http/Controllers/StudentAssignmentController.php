@@ -21,7 +21,7 @@ class StudentAssignmentController extends Controller
             return redirect()->route('dashboard')->with('error', 'Anda tidak terdaftar dalam kelas apapun.');
         }
 
-        $classSubjects = ClassSubject::with(['subject', 'teacher', 'assignments' => function ($query) {
+        $classSubjects = ClassSubject::with(['subject', 'teacher.subjects', 'assignments' => function ($query) {
             $query->where('is_published', true)->orderBy('due_date', 'asc');
         }, 'assignments.submissions' => function ($query) use ($student) {
             $query->where('student_id', $student->id);
@@ -97,7 +97,7 @@ class StudentAssignmentController extends Controller
 
         $classSubject->load([
             'subject',
-            'teacher',
+            'teacher.subjects',
             'materials' => function ($query) {
                 $query->where('is_published', true)->orderBy('order')->orderBy('created_at', 'desc');
             },

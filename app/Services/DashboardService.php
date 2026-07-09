@@ -223,7 +223,7 @@ class DashboardService
         }
 
         $todaySchedules = $student?->class_id
-            ? Schedule::with('teacher:id,name,photo')
+            ? Schedule::with('teacher.subjects')
                 ->where('class_id', $student->class_id)
                 ->where('day_of_week', $dayOfWeek)
                 ->orderBy('start_time')

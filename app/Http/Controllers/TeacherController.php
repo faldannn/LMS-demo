@@ -75,7 +75,8 @@ class TeacherController extends Controller
 
     public function create()
     {
-        return view('teachers.create');
+        $subjects = Subject::active()->orderBy('name')->get();
+        return view('teachers.create', compact('subjects'));
     }
 
     public function store(StoreTeacherRequest $request)
@@ -98,6 +99,7 @@ class TeacherController extends Controller
             'classSubjects.class',
             'classSubjects.subject',
             'classSubjects.academicYear',
+            'subjects',
             'attendances' => fn ($q) => $q->with(['class'])->withCount('details')->latest()->limit(10)
         ]);
 
@@ -109,7 +111,9 @@ class TeacherController extends Controller
 
     public function edit(Teacher $teacher)
     {
-        return view('teachers.edit', compact('teacher'));
+        $teacher->load('subjects');
+        $subjects = Subject::active()->orderBy('name')->get();
+        return view('teachers.edit', compact('teacher', 'subjects'));
     }
 
     public function update(UpdateTeacherRequest $request, Teacher $teacher)

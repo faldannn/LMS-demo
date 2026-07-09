@@ -62,7 +62,13 @@
                     </div>
                 </td>
                 <td class="whitespace-nowrap px-4 py-3">
-                    <x-badge tone="violet">{{ $teacher->subject ?? '-' }}</x-badge>
+                    <div class="flex flex-wrap gap-1">
+                        @forelse($teacher->subjects as $subj)
+                            <x-badge tone="violet">{{ $subj->name }}</x-badge>
+                        @empty
+                            <x-badge tone="violet">{{ $teacher->subject ?? '-' }}</x-badge>
+                        @endforelse
+                    </div>
                 </td>
                 <td class="whitespace-nowrap px-4 py-3">
                     <div class="flex flex-wrap gap-1">

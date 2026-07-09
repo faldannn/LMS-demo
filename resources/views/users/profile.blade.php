@@ -53,7 +53,15 @@
                         <dt class="text-muted small">NIP</dt>
                         <dd class="fw-semibold mb-2"><code>{{ $user->teacher->nip ?? '-' }}</code></dd>
                         <dt class="text-muted small">Mata Pelajaran</dt>
-                        <dd class="fw-semibold mb-0">{{ $user->teacher->subject ?? '-' }}</dd>
+                        <dd class="fw-semibold mb-0">
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                @forelse($user->teacher->subjects as $subj)
+                                    <span class="badge" style="background:#ede9fe;color:#5b21b6">{{ $subj->name }}</span>
+                                @empty
+                                    {{ $user->teacher->subject ?? '-' }}
+                                @endforelse
+                            </div>
+                        </dd>
                     </dl>
                 </div>
             </div>

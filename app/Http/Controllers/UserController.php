@@ -115,7 +115,9 @@ class UserController extends Controller
 
     public function profile()
     {
-        return view('users.profile', ['user' => Auth::user()]);
+        $user = Auth::user();
+        $user->load(['teacher.subjects', 'student.class']);
+        return view('users.profile', compact('user'));
     }
 
     public function updateProfile(Request $request)

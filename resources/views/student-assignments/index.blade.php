@@ -20,7 +20,13 @@
             <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70">
                 <div class="border-b border-amber-500/10 bg-gradient-to-br from-amber-500 to-amber-600 px-6 py-4 text-white">
                     <h3 class="text-lg font-bold">{{ $classSubject->subject->name }}</h3>
-                    <p class="mt-1 text-xs font-medium text-amber-100">{{ $classSubject->teacher->name }}</p>
+                    <p class="mt-1 text-xs font-medium text-amber-100">{{ $classSubject->teacher->name }}
+                        @if($classSubject->teacher->subjects->isNotEmpty())
+                            ({{ $classSubject->teacher->subjects->pluck('name')->join(', ') }})
+                        @elseif($classSubject->teacher->subject)
+                            ({{ $classSubject->teacher->subject }})
+                        @endif
+                    </p>
                 </div>
                 
                 <div class="divide-y divide-slate-100">

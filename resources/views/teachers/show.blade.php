@@ -37,7 +37,15 @@
             <div class="card-body">
                 <dl class="mb-0">
                     <dt class="text-muted small">Mata Pelajaran</dt>
-                    <dd class="fw-semibold mb-2"><span class="badge" style="background:#ede9fe;color:#5b21b6">{{ $teacher->subject ?? '-' }}</span></dd>
+                    <dd class="fw-semibold mb-2">
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @forelse($teacher->subjects as $subj)
+                                <span class="badge" style="background:#ede9fe;color:#5b21b6">{{ $subj->name }}</span>
+                            @empty
+                                <span class="badge" style="background:#ede9fe;color:#5b21b6">{{ $teacher->subject ?? '-' }}</span>
+                            @endforelse
+                        </div>
+                    </dd>
                     <dt class="text-muted small">No. HP</dt>
                     <dd class="fw-semibold mb-2">{{ $teacher->phone ?? '-' }}</dd>
                     <dt class="text-muted small">Email</dt>
