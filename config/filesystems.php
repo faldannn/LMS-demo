@@ -32,9 +32,9 @@ return [
 
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app/private'),
-            'serve' => true,
-            'throw' => false,
+            'root'   => storage_path('app/private'),
+            'serve'  => false,   // Disabled: prevents storage.local route from blocking /storage/* symlink access
+            'throw'  => false,
             'report' => false,
         ],
 
