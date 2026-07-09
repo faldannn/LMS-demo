@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAttendanceRequest;
 use App\Models\{Attendance, AttendanceDetail, Classes, Student};
 use App\Services\AttendanceService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -26,11 +27,50 @@ class AttendanceController extends Controller
             $classes = Classes::orderBy('name')->get();
         }
 
+        if ($user->isKepalaSekolah()) {
+            $viewMode = $request->get('view', 'grid') === 'list' ? 'list' : 'grid';
+
+            $classSummaries = Classes::withCount([
+                    'students as active_students_count' => fn ($q) => $q->where('status', true),
+                ])
+                ->with([
+                    'homeroomTeacher:id,name',
+                    'attendances' => fn ($q) => $this->applyAttendanceFilters($q, $request)
+                        ->with(['teacher:id,name,nip', 'details'])
+                        ->orderByDesc('date')
+                        ->orderByDesc('id'),
+                ])
+                ->when($classId, fn ($q) => $q->where('id', $classId))
+                ->orderBy('name')
+                ->get()
+                ->map(function (Classes $class) {
+                    $attendances = $class->attendances;
+                    $details = $attendances->flatMap->details;
+                    $present = $details->whereIn('status', ['hadir', 'terlambat'])->count();
+                    $total = $details->count();
+
+                    $class->attendance_summary = [
+                        'sessions' => $attendances->count(),
+                        'students' => $class->active_students_count,
+                        'hadir' => $details->where('status', 'hadir')->count(),
+                        'terlambat' => $details->where('status', 'terlambat')->count(),
+                        'izin_sakit' => $details->whereIn('status', ['izin', 'sakit'])->count(),
+                        'alfa' => $details->where('status', 'alfa')->count(),
+                        'percentage' => $total > 0 ? round($present / $total * 100, 1) : 0,
+                    ];
+                    $class->latest_attendance = $attendances->first();
+
+                    return $class;
+                });
+
+            return view('attendance.index', compact('classes', 'classSummaries', 'viewMode'));
+        }
+
         $query = Attendance::with(['class', 'teacher', 'details'])
             ->when($classId, fn($q) => $q->where('class_id', $classId))
-            ->when($request->date, fn($q) => $q->whereDate('date', $request->date))
-            ->when($request->month, fn($q) => $q->whereMonth('date', $request->month))
             ->orderByDesc('date');
+
+        $this->applyAttendanceFilters($query, $request);
 
         $attendances = $query->paginate(20)->withQueryString();
 
@@ -71,10 +111,61 @@ class AttendanceController extends Controller
         }
     }
 
-    public function show(Attendance $attendance)
+    public function show(Attendance $attendance, Request $request)
     {
         $attendance->load(['class', 'teacher', 'details.student']);
-        return view('attendance.show', compact('attendance'));
+
+        $periodType = $request->get('period', 'week') === 'month' ? 'month' : 'week';
+        $periodAnchor = $periodType === 'month'
+            ? Carbon::createFromFormat('Y-m', $request->get('month', $attendance->date->format('Y-m')))->startOfMonth()
+            : Carbon::parse($request->get('week', $attendance->date->toDateString()))->startOfWeek();
+
+        $periodStart = $periodAnchor->copy();
+        $periodEnd = $periodType === 'month'
+            ? $periodAnchor->copy()->endOfMonth()
+            : $periodAnchor->copy()->endOfWeek();
+
+        $periodAttendances = Attendance::with(['details.student', 'teacher'])
+            ->where('class_id', $attendance->class_id)
+            ->whereBetween('date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+            ->orderByDesc('date')
+            ->get();
+
+        $periodDetails = $periodAttendances->flatMap->details;
+        $periodStats = [
+            'sessions' => $periodAttendances->count(),
+            'hadir' => $periodDetails->where('status', 'hadir')->count(),
+            'terlambat' => $periodDetails->where('status', 'terlambat')->count(),
+            'alfa' => $periodDetails->where('status', 'alfa')->count(),
+            'izin_sakit' => $periodDetails->whereIn('status', ['sakit', 'izin'])->count(),
+        ];
+
+        $studentRecaps = $periodDetails
+            ->groupBy('student_id')
+            ->map(function ($details) {
+                $student = $details->first()->student;
+
+                return [
+                    'student' => $student,
+                    'hadir' => $details->where('status', 'hadir')->count(),
+                    'terlambat' => $details->where('status', 'terlambat')->count(),
+                    'izin_sakit' => $details->whereIn('status', ['sakit', 'izin'])->count(),
+                    'alfa' => $details->where('status', 'alfa')->count(),
+                    'total' => $details->count(),
+                ];
+            })
+            ->sortBy(fn ($row) => $row['student']?->name ?? '')
+            ->values();
+
+        return view('attendance.show', compact(
+            'attendance',
+            'periodType',
+            'periodStart',
+            'periodEnd',
+            'periodAttendances',
+            'periodStats',
+            'studentRecaps',
+        ));
     }
 
     public function edit(Attendance $attendance)
@@ -120,5 +211,17 @@ class AttendanceController extends Controller
             ->map->count();
 
         return view('attendance.my-attendance', compact('student', 'history', 'stats', 'month', 'year'));
+    }
+
+    private function applyAttendanceFilters($query, Request $request)
+    {
+        return $query
+            ->when($request->date, fn ($q) => $q->whereDate('date', $request->date))
+            ->when($request->month, function ($q) use ($request) {
+                $month = Carbon::createFromFormat('Y-m', $request->month);
+
+                $q->whereMonth('date', $month->month)
+                    ->whereYear('date', $month->year);
+            });
     }
 }
