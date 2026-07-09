@@ -81,8 +81,8 @@
 </div>
 <div class="py-2">
     <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Data Master</div>
-    <a href="{{ route('students.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('students.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-people @active('students.*', 'text-brand-400')"></i> Data Siswa
+    <a href="{{ route('subjects.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('subjects.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-book @active('subjects.*', 'text-brand-400')"></i> Mata Pelajaran
     </a>
     <a href="{{ route('teachers.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('teachers.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-person-badge @active('teachers.*', 'text-brand-400')"></i> Data Guru
@@ -90,14 +90,14 @@
     <a href="{{ route('classes.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('classes.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-building @active('classes.*', 'text-brand-400')"></i> Data Kelas
     </a>
-    <a href="{{ route('subjects.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('subjects.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-book @active('subjects.*', 'text-brand-400')"></i> Mata Pelajaran
+    <a href="{{ route('students.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('students.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-people @active('students.*', 'text-brand-400')"></i> Data Siswa
     </a>
 </div>
 <div class="py-2">
     <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Sistem</div>
     <a href="{{ route('users.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('users.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-shield-person @active('users.*', 'text-brand-400')"></i> Manajemen User
+        <i class="bi bi-people-fill @active('users.*', 'text-brand-400')"></i> Manajemen User
     </a>
     <a href="{{ route('security.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('security.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-shield-lock @active('security.*', 'text-brand-400')"></i> Keamanan
