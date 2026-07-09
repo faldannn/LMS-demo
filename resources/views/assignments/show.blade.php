@@ -5,8 +5,13 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="mb-3 d-flex justify-content-between align-items-center">
-            <a href="{{ route('assignments.index', $assignment->class_subject_id) }}" class="btn btn-sm btn-light border"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ route('assignments.index', $assignment->class_subject_id) }}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600" title="Kembali">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <span class="text-muted small">Kembali ke Daftar Tugas</span>
+            </div>
             
             <a href="{{ route('assignments.edit', $assignment) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil me-1"></i> Edit</a>
         </div>

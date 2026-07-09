@@ -279,6 +279,9 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
         Route::get('my-report-cards', [StudentReportCardController::class, 'index'])->name('student.report-cards.index');
         Route::get('my-report-cards/{reportCard}', [StudentReportCardController::class, 'show'])->name('student.report-cards.show');
+        
+        Route::get('class-subjects/{classSubject}', [StudentAssignmentController::class, 'showClassSubject'])
+            ->name('student.class-subjects.show');
     });
 
     // API self-attendance routes using web session

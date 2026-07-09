@@ -5,8 +5,13 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <div class="mb-3">
-            <a href="{{ route('student.assignments.index') }}" class="btn btn-sm btn-light border"><i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Tugas</a>
+        <div class="mb-4 d-flex align-items-center gap-3">
+            <a href="{{ route('student.assignments.index') }}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600" title="Kembali ke Daftar Tugas">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="fw-bold mb-0 text-slate-700">Kembali ke Daftar Tugas</h5>
+            </div>
         </div>
 
         <div class="card border-0 shadow-sm mb-4">
@@ -78,7 +83,14 @@
                         
                         @if($submission->content)
                             <div class="p-3 bg-white border rounded mb-3">
-                                {!! nl2br(e($submission->content)) !!}
+                                @if(filter_var($submission->content, FILTER_VALIDATE_URL))
+                                    <a href="{{ $submission->content }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-link-45deg me-1"></i> Buka Link Google Drive / Tautan Tugas
+                                    </a>
+                                    <div class="text-muted small mt-2 truncate">{{ $submission->content }}</div>
+                                @else
+                                    {!! nl2br(e($submission->content)) !!}
+                                @endif
                             </div>
                         @endif
                         
@@ -99,8 +111,9 @@
                         @csrf
                         
                         <div class="mb-3">
-                            <label class="form-label">Jawaban Teks (Opsional)</label>
-                            <textarea name="content" class="form-control @error('content') is-invalid @enderror" rows="5" placeholder="Tuliskan jawaban Anda di sini jika tidak mengunggah file...">{{ old('content', $submission->content ?? '') }}</textarea>
+                            <label class="form-label">Link Google Drive / Jawaban Teks (Opsional)</label>
+                            <textarea name="content" class="form-control @error('content') is-invalid @enderror" rows="3" placeholder="Masukkan Link Google Drive tugas Anda di sini (misal: https://drive.google.com/...) atau tulis jawaban teks Anda...">{{ old('content', $submission->content ?? '') }}</textarea>
+                            <div class="form-text text-muted">Jika mengumpulkan link Google Drive, pastikan akses link diatur ke "Siapa saja yang memiliki link dapat melihat".</div>
                             @error('content') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
