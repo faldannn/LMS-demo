@@ -199,20 +199,28 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="text-xs text-slate-500 mb-3">Pilih kelas-kelas yang diampu oleh {{ $teacher->name }} sebagai Wali Kelas. Kelas yang sudah memiliki Wali Kelas lain akan dialihkan ke guru ini.</p>
-                <div class="space-y-2" style="max-height: 300px; overflow-y: auto;">
-                    @foreach($classes as $c)
-                        <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 border border-slate-100 cursor-pointer">
-                            <input type="checkbox" name="class_ids[]" value="{{ $c->id }}" class="h-4 w-4 rounded accent-brand-600"
-                                {{ $c->homeroom_teacher_id === $teacher->id ? 'checked' : '' }}>
-                            <div class="text-sm">
-                                <span class="fw-semibold text-slate-800">Kelas {{ $c->name }}</span>
+                <p class="text-xs text-slate-500 mb-3">
+                    Pilih <strong>satu kelas</strong> yang diampu oleh {{ $teacher->name }} sebagai Wali Kelas.
+                    Seorang guru hanya dapat menjadi wali kelas untuk <strong>1 kelas</strong> saja.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Pilih Kelas</label>
+                    <select name="class_id" class="form-select">
+                        <option value="">— Tidak ada / Lepas Wali Kelas —</option>
+                        @foreach($classes as $c)
+                            <option value="{{ $c->id }}"
+                                {{ $c->homeroom_teacher_id === $teacher->id ? 'selected' : '' }}>
+                                Kelas {{ $c->name }}
                                 @if($c->homeroomTeacher && $c->homeroom_teacher_id !== $teacher->id)
-                                    <span class="text-xs text-amber-600 block">(Saat ini: {{ $c->homeroomTeacher->name }})</span>
+                                    (Saat ini: {{ $c->homeroomTeacher->name }})
                                 @endif
-                            </div>
-                        </label>
-                    @endforeach
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="form-text text-amber-600 mt-1">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Jika kelas yang dipilih sudah memiliki wali kelas lain, wali kelas tersebut akan dilepas otomatis.
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

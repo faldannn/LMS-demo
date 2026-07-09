@@ -134,19 +134,21 @@ class TeacherController extends Controller
     public function updateHomeroom(Request $request, Teacher $teacher)
     {
         $data = $request->validate([
-            'class_ids' => 'nullable|array',
-            'class_ids.*' => 'exists:classes,id',
+            'class_id' => 'nullable|exists:classes,id',
         ]);
 
-        $classIds = $data['class_ids'] ?? [];
+        $classId = $data['class_id'] ?? null;
 
-        DB::transaction(function () use ($teacher, $classIds) {
+        DB::transaction(function () use ($teacher, $classId) {
+            // Remove this teacher as homeroom from ALL classes first
             Classes::where('homeroom_teacher_id', $teacher->id)
-                ->whereNotIn('id', $classIds)
                 ->update(['homeroom_teacher_id' => null]);
 
-            if (!empty($classIds)) {
-                Classes::whereIn('id', $classIds)->update(['homeroom_teacher_id' => $teacher->id]);
+            // Assign to the selected single class (if any)
+            if ($classId) {
+                // Also unset from any previous homeroom teacher on that class
+                Classes::where('id', $classId)
+                    ->update(['homeroom_teacher_id' => $teacher->id]);
             }
         });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreClassRequest extends FormRequest
 {
@@ -14,13 +15,25 @@ class StoreClassRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:50',
-            'grade' => 'required|integer|in:10,11,12',
-            'major_id' => 'nullable|exists:majors,id',
-            'homeroom_teacher_id' => 'nullable|exists:teachers,id',
-            'academic_year_id' => 'required|exists:academic_years,id',
-            'room' => 'nullable|string|max:20',
-            'max_students' => 'integer|min:1|max:50',
+            'name'               => 'required|string|max:50',
+            'grade'              => 'required|integer|in:10,11,12',
+            'major_id'           => 'nullable|exists:majors,id',
+            'homeroom_teacher_id'=> [
+                'nullable',
+                'exists:teachers,id',
+                // A teacher can only be homeroom for 1 class
+                Rule::unique('classes', 'homeroom_teacher_id'),
+            ],
+            'academic_year_id'   => 'required|exists:academic_years,id',
+            'room'               => 'nullable|string|max:20',
+            'max_students'       => 'integer|min:1|max:50',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'homeroom_teacher_id.unique' => 'Guru ini sudah menjadi wali kelas di kelas lain. Satu guru hanya dapat menjadi wali kelas untuk 1 kelas saja.',
         ];
     }
 }
