@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             AcademicYearSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            SubjectSeeder::class,
             TeacherSeeder::class,
             MajorSeeder::class,
             ClassSeeder::class,
@@ -20,7 +21,6 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             AttendanceSeeder::class,
             SettingSeeder::class,
-            SubjectSeeder::class,
             ClassSubjectSeeder::class,
         ]);
     }

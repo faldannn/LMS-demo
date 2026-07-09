@@ -20,6 +20,7 @@ class SubjectSeeder extends Seeder
             ['code' => 'FIS', 'name' => 'Fisika', 'group' => 'Muatan Peminatan', 'grade' => null],
             ['code' => 'KIM', 'name' => 'Kimia', 'group' => 'Muatan Peminatan', 'grade' => null],
             ['code' => 'BIO', 'name' => 'Biologi', 'group' => 'Muatan Peminatan', 'grade' => null],
+            ['code' => 'EKO', 'name' => 'Ekonomi', 'group' => 'Muatan Peminatan', 'grade' => null],
         ];
 
         foreach ($subjects as $subject) {

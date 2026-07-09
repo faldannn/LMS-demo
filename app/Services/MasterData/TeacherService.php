@@ -46,6 +46,7 @@ class TeacherService extends BaseMasterDataService
             }
 
             $data['user_id'] = $user->id;
+            unset($data['subject_ids']);
             $teacher = parent::create($data);
             
             if (!empty($subjectIds)) {
@@ -77,6 +78,7 @@ class TeacherService extends BaseMasterDataService
             $data['subject'] = null;
         }
 
+        unset($data['subject_ids']);
         $teacher = parent::update($model, $data);
         $teacher->subjects()->sync($subjectIds);
 

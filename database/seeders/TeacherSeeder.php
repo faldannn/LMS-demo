@@ -17,17 +17,32 @@ class TeacherSeeder extends Seeder
             ['199504122022121005', 'Dewi Kusuma, S.Pd', 'Bahasa Inggris', '081298765436', '199504122022121005', 'dewi.kusuma@assyafiiyah02bekasi.sch.id'],
         ];
 
-        foreach ($teachers as [$nip, $name, $subject, $phone, $username, $email]) {
+        foreach ($teachers as [$nip, $name, $subjectName, $phone, $username, $email]) {
             $user = User::where('username', $username)->first();
-            Teacher::create([
+            
+            $subjects = [];
+            if ($subjectName === 'Matematika') {
+                $subjects = \App\Models\Subject::where('name', 'like', '%Matematika%')->get();
+            } else {
+                $subjects = \App\Models\Subject::where('name', 'like', "%{$subjectName}%")->get();
+            }
+            
+            $dbSubjectNames = collect($subjects)->pluck('name')->toArray();
+            $subjectString = !empty($dbSubjectNames) ? implode(', ', $dbSubjectNames) : $subjectName;
+
+            $teacher = Teacher::create([
                 'nip' => $nip,
                 'name' => $name,
-                'subject' => $subject,
+                'subject' => $subjectString,
                 'phone' => $phone,
                 'email' => $email,
                 'user_id' => $user->id,
                 'status' => true,
             ]);
+
+            if (!empty($subjects)) {
+                $teacher->subjects()->sync(collect($subjects)->pluck('id')->toArray());
+            }
         }
     }
 }
