@@ -27,28 +27,49 @@ class DashboardController extends Controller
         $this->authorize('viewAny', \App\Models\ClassSubject::class);
 
         $user = auth()->user();
+        $activeYear = \App\Models\AcademicYear::active();
 
         if ($user->isGuru()) {
             $teacher = $user->teacher;
-            $classSubjects = $teacher
-                ? \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
+            if ($teacher) {
+                $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
                     ->withCount(['materials', 'assignments'])
-                    ->where('teacher_id', $teacher->id)
-                    ->get()
-                : collect();
+                    ->where('teacher_id', $teacher->id);
+                if ($activeYear) {
+                    $query->where('academic_year_id', $activeYear->id);
+                }
+                $classSubjects = $query->get();
+            } else {
+                $classSubjects = collect();
+            }
         } elseif ($user->isSiswa()) {
             $student = $user->student;
-            $classSubjects = $student?->class_id
-                ? \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
+            if ($student?->class_id) {
+                $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
                     ->withCount(['materials', 'assignments'])
-                    ->where('class_id', $student->class_id)
-                    ->get()
-                : collect();
+                    ->where('class_id', $student->class_id);
+                if ($activeYear) {
+                    $query->where('academic_year_id', $activeYear->id);
+                }
+                $classSubjects = $query->get();
+            } else {
+                $classSubjects = collect();
+            }
         } else {
-            $classSubjects = \App\Models\ClassSubject::with(['class', 'subject', 'teacher'])
-                ->withCount(['materials', 'assignments'])
-                ->get();
+            $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
+                ->withCount(['materials', 'assignments']);
+            if ($activeYear) {
+                $query->where('academic_year_id', $activeYear->id);
+            }
+            $classSubjects = $query->get();
         }
+
+        // Sort by class grade, class name, and subject name
+        $classSubjects = $classSubjects->sortBy([
+            ['class.grade', 'asc'],
+            ['class.name', 'asc'],
+            ['subject.name', 'asc'],
+        ]);
 
         return view('elearning.index', compact('classSubjects'));
     }
