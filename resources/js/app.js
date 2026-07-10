@@ -12,6 +12,30 @@ window.toggleSidebar = function () {
     overlay.classList.toggle('hidden');
 };
 
+// Form submission loading handler
+window.handleFormSubmit = function(form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<div class="inline-flex items-center gap-2"><div class="h-4 w-4 border-2 border-white border-t-transparent animate-spin rounded-full"></div><span>Memproses...</span></div>';
+        submitBtn.disabled = true;
+        
+        // Restore button after 10 seconds (safety net)
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 10000);
+    }
+};
+
+// Auto-disable double click on forms
+document.addEventListener('submit', function(event) {
+    const form = event.target;
+    if (form.tagName === 'FORM') {
+        window.handleFormSubmit(form);
+    }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
     const closeModal = (modal) => {
         if (!modal) {
