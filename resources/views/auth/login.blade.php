@@ -82,18 +82,22 @@ p-1">
             <div>
                 <label class="mb-1.5 block text-xs font-semibold text-white/80" for="username">Username / NIP / NIS</label>
                 <div class="relative">
-                    <i class="bi bi-person absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"></i>
+                    <i class="bi bi-person absolute top-1/2 -translate-y-1/2 text-white/40" style="left: 1rem;"></i>
+                    
                     <input type="text" id="username" name="username" placeholder="Masukkan NIP atau NIS..." value="{{ old('username') }}" required autofocus
-                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 pl-10 pr-4 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10">
+                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 pr-4 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10"
+                        style="padding-left: 2.75rem;">
                 </div>
             </div>
 
             <div>
                 <label class="mb-1.5 block text-xs font-semibold text-white/80" for="password">Password</label>
                 <div class="relative">
-                    <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"></i>
+                    <i class="bi bi-lock absolute top-1/2 -translate-y-1/2 text-white/40" style="left: 1rem;"></i>
+                    
                     <input type="password" id="password" name="password" placeholder="Masukkan password..." required
-                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 pl-10 pr-4 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10">
+                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 pr-4 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10"
+                        style="padding-left: 2.75rem;">
                 </div>
             </div>
 
