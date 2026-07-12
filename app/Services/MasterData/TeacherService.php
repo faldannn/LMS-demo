@@ -7,12 +7,15 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Repositories\TeacherRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class TeacherService extends BaseMasterDataService
 {
+    private const DEFAULT_PASSWORD = 'guru123';
+
     public function __construct(TeacherRepository $repository)
     {
         parent::__construct($repository);
@@ -25,12 +28,12 @@ class TeacherService extends BaseMasterDataService
                 $data['photo'] = $data['photo']->store('teachers/photos', 'public');
             }
 
-            $username = $data['nip'] ?? Str::slug($data['name'], '.');
-            $password = Str::random(8);
+            $username = $data['nip'] ?? $data['email'] ?? Str::slug($data['name'], '.');
+            $password = self::DEFAULT_PASSWORD;
 
             $user = User::create([
                 'username' => $username,
-                'password' => bcrypt($password),
+                'password' => Hash::make($password),
                 'name' => $data['name'],
                 'email' => $data['email'] ?? null,
                 'role' => UserRole::Guru,

@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Enums\UserRole;
 use App\Models\Teacher;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
@@ -16,12 +17,14 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 {
     use Importable;
 
+    private const DEFAULT_PASSWORD = 'guru123';
+
     public function model(array $row): ?Teacher
     {
-        $username = $row['nip'] ?? Str::slug($row['nama'], '.');
+        $username = $row['nip'] ?? $row['email'] ?? Str::slug($row['nama'], '.');
         $user = User::create([
             'username' => $username,
-            'password' => bcrypt($row['password'] ?? 'guru123'),
+            'password' => Hash::make($row['password'] ?? self::DEFAULT_PASSWORD),
             'name' => $row['nama'],
             'email' => $row['email'] ?? null,
             'role' => UserRole::Guru,
