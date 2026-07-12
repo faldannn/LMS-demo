@@ -13,7 +13,6 @@ class MajorSeeder extends Seeder
             ['MIPA', 'Matematika dan Ilmu Pengetahuan Alam'],
             ['IPS', 'Ilmu Pengetahuan Sosial'],
             ['BAHASA', 'Bahasa dan Budaya'],
-            ['TKJ', 'Teknik Komputer dan Jaringan'],
         ];
 
         foreach ($majors as [$code, $name]) {
