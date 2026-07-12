@@ -82,6 +82,7 @@ class AttendanceController extends Controller
         $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
         $date = $request->get('date', today()->toDateString());
         $classId = $request->get('class_id');
+        $session = $request->get('session', 'pagi');
 
         $students = $classId
             ? Student::forClass($classId)->active()->orderBy('name')->get()
@@ -90,13 +91,23 @@ class AttendanceController extends Controller
         // Load existing attendance for this session
         $existing = [];
         if ($classId && $date) {
-            $att = Attendance::where(['date' => $date, 'class_id' => $classId])->first();
+            $att = Attendance::where([
+                'date' => $date,
+                'class_id' => $classId,
+                'session' => $session,
+            ])->first();
             if ($att) {
-                $existing = $att->details()->pluck('status', 'student_id')->toArray();
+                $existing = $att->details->keyBy('student_id')->map(function ($detail) {
+                    return [
+                        'status' => $detail->status,
+                        'check_in' => $detail->check_in ? $detail->check_in->format('H:i') : null,
+                        'notes' => $detail->notes,
+                    ];
+                })->toArray();
             }
         }
 
-        return view('attendance.create', compact('classes', 'students', 'date', 'classId', 'existing'));
+        return view('attendance.create', compact('classes', 'students', 'date', 'classId', 'session', 'existing'));
     }
 
     public function store(StoreAttendanceRequest $request)

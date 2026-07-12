@@ -4,10 +4,12 @@
 @section('title', 'Input Absensi')
 @section('page-title', 'Input Absensi Harian')
 
+
+
 @section('content')
 
 {{-- ── FILTER FORM ── --}}
-<div class="card mb-4">
+<div class="card mb-4" style="border-top: 4px solid var(--color-brand-600)">
     <div class="card-body">
         <form method="GET" action="{{ route('attendance.create') }}" id="filter-form">
             <div class="row g-3 align-items-end">
@@ -29,13 +31,13 @@
                 <div class="col-md-2">
                     <label class="form-label fw-600">Sesi</label>
                     <select name="session" class="form-select">
-                        <option value="pagi">🌅 Pagi</option>
-                        <option value="siang">🌇 Siang</option>
+                        <option value="pagi" {{ ($session ?? 'pagi') == 'pagi' ? 'selected' : '' }}>🌅 Pagi</option>
+                        <option value="siang" {{ ($session ?? 'pagi') == 'siang' ? 'selected' : '' }}>🌇 Siang</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search me-1"></i> Tampilkan Siswa
+                        <i class="bi bi-search me-1.5"></i> Tampilkan Siswa
                     </button>
                 </div>
             </div>
@@ -46,12 +48,18 @@
 @if($students->isNotEmpty())
 
 {{-- ── SUMMARY CARDS ── --}}
-<div class="row g-3 mb-4" id="summary-cards">
-    @foreach(['hadir' => ['✅','var(--color-brand-50)','#0058ff'], 'sakit' => ['🤒','#fef3c7','#92400e'], 'izin' => ['📄','var(--color-brand-50)','#0047d1'], 'alfa' => ['❌','#fee2e2','#991b1b'], 'terlambat' => ['⏰','#ede9fe','#5b21b6']] as $status => [$icon, $bg, $color])
-    <div class="col">
-        <div class="text-center p-3 rounded-3 border" style="background:{{ $bg }};border-color:{{ $color }}20!important">
-            <div style="font-size:24px;font-weight:800;color:{{ $color }};font-family:'JetBrains Mono',monospace" id="sum-{{ $status }}">0</div>
-            <div style="font-size:10px;font-weight:700;color:{{ $color }};text-transform:uppercase;letter-spacing:.5px">{{ $icon }} {{ ucfirst($status) }}</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" id="summary-cards">
+    @foreach([
+        'hadir' => ['Hadir', '✅', '#ecfdf5', '#a7f3d0', '#047857'],
+        'sakit' => ['Sakit', '🤒', '#fffbeb', '#fde68a', '#b45309'],
+        'izin' => ['Izin', '📄', '#f0f9ff', '#bae6fd', '#0369a1'],
+        'alfa' => ['Alfa', '❌', '#fef2f2', '#fecaca', '#b91c1c'],
+        'terlambat' => ['Terlambat', '⏰', '#faf5ff', '#ddd6fe', '#6d28d9']
+    ] as $status => [$label, $icon, $bg, $border, $color])
+    <div class="text-center p-3 rounded-xl border summary-card" style="background: {{ $bg }}; border-color: {{ $border }} !important;">
+        <div style="font-size: 26px; font-weight: 800; color: {{ $color }}; font-family: 'JetBrains Mono', monospace" id="sum-{{ $status }}">0</div>
+        <div style="font-size: 11px; font-weight: 700; color: {{ $color }}; text-transform: uppercase; letter-spacing: 0.5px" class="mt-1">
+            {{ $icon }} {{ $label }}
         </div>
     </div>
     @endforeach
@@ -62,75 +70,108 @@
     @csrf
     <input type="hidden" name="date" value="{{ $date }}">
     <input type="hidden" name="class_id" value="{{ $classId }}">
+    <input type="hidden" name="session" value="{{ $session }}">
 
-    <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <span>
-                <i class="bi bi-clipboard-check me-2 text-primary"></i>
-                Daftar Siswa — <strong>{{ $classes->find($classId)?->name }}</strong>
-                <span class="text-muted ms-1">({{ $students->count() }} siswa)</span>
-            </span>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-success" onclick="setAll('hadir')">
+    <div class="card shadow-sm border border-slate-200">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h5 class="mb-0 text-slate-800 fw-bold d-flex align-items-center">
+                    <i class="bi bi-clipboard-check text-primary me-2" style="font-size: 1.25rem"></i>
+                    Daftar Siswa Kelas <span class="text-primary ms-1.5">{{ $classes->find($classId)?->name }}</span>
+                </h5>
+                <p class="text-muted small mb-0 mt-0.5">Total: <strong>{{ $students->count() }} siswa</strong> aktif terdaftar</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm" onclick="setAll('hadir')">
                     <i class="bi bi-check-all me-1"></i>Semua Hadir
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="setAll('alfa')">
+                <button type="button" class="btn btn-sm bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 shadow-sm" onclick="setAll('alfa')">
                     <i class="bi bi-x-circle me-1"></i>Semua Alfa
                 </button>
-                <button type="submit" class="btn btn-sm btn-primary" id="save-btn">
-                    <i class="bi bi-save me-1"></i>Simpan Absensi
+                <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm" id="save-btn">
+                    <i class="bi bi-save me-1.5"></i>Simpan Absensi
                 </button>
             </div>
         </div>
 
         <div class="card-body p-0">
-            @foreach($students as $i => $student)
-            <div class="att-row px-4 py-3 d-flex align-items-center gap-3 flex-wrap" data-student="{{ $student->id }}">
-                <div class="student-num">{{ $i + 1 }}</div>
-
-                <div class="me-auto">
-                    <div class="fw-600">{{ $student->name }}</div>
-                    <div style="font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace">
-                        NIS: {{ $student->nis }}
-                        @if($student->gender === 'P') <span class="badge ms-1" style="background:#fce7f3;color:#9d174d;font-size:9px">P</span>
-                        @else <span class="badge ms-1" style="background:var(--color-brand-50);color:var(--color-brand-600);font-size:9px">L</span>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- STATUS BUTTONS --}}
-                <div class="d-flex gap-1 flex-wrap status-group" role="group">
-                    @foreach(['hadir' => ['success','✅'], 'sakit' => ['warning','🤒'], 'izin' => ['info','📄'], 'alfa' => ['danger','❌'], 'terlambat' => ['secondary','⏰']] as $s => [$color, $icon])
-                    <input type="radio" class="btn-check status-radio"
-                        name="details[{{ $student->id }}][status]"
-                        id="st-{{ $student->id }}-{{ $s }}"
-                        value="{{ $s }}"
-                        {{ ($existing[$student->id] ?? 'alfa') === $s ? 'checked' : '' }}
-                        onchange="updateSummary()">
-                    <label class="btn btn-outline-{{ $color }} btn-sm" for="st-{{ $student->id }}-{{ $s }}" style="font-size:12px;padding:4px 10px">
-                        {{ $icon }} {{ ucfirst($s) }}
-                    </label>
-                    @endforeach
-                </div>
-
-                {{-- CHECK IN TIME --}}
-                <input type="time" name="details[{{ $student->id }}][check_in]"
-                    class="form-control form-control-sm" style="width:100px"
-                    value="{{ now()->format('H:i') }}">
-
-                {{-- NOTES --}}
-                <input type="text" name="details[{{ $student->id }}][notes]"
-                    class="form-control form-control-sm" style="width:180px"
-                    placeholder="Keterangan...">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 60px">No</th>
+                            <th style="min-width: 200px">Siswa</th>
+                            <th style="min-width: 480px">Status Kehadiran</th>
+                            <th style="width: 130px" class="text-center">Jam Masuk</th>
+                            <th style="width: 250px">Keterangan / Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($students as $i => $student)
+                        @php
+                            $studentExisting = $existing[$student->id] ?? null;
+                            $savedStatus = $studentExisting['status'] ?? 'alfa';
+                            $savedCheckIn = $studentExisting['check_in'] ?? now()->format('H:i');
+                            $savedNotes = $studentExisting['notes'] ?? '';
+                        @endphp
+                        <tr class="att-row" data-student="{{ $student->id }}">
+                            <td class="text-center align-middle font-semibold text-slate-400" style="font-size: 13px">{{ $i + 1 }}</td>
+                            <td class="align-middle">
+                                <div class="fw-semibold text-slate-800" style="font-size: 14px">{{ $student->name }}</div>
+                                <div style="font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace" class="mt-0.5">
+                                    NIS: {{ $student->nis }}
+                                    @if($student->gender === 'P') 
+                                        <span class="badge ms-1 bg-pink-50 text-pink-700 border border-pink-200" style="font-size: 9px; padding: 2px 6px">Perempuan</span>
+                                    @else 
+                                        <span class="badge ms-1 bg-blue-50 text-blue-700 border border-blue-200" style="font-size: 9px; padding: 2px 6px">Laki-laki</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex gap-1 status-group" role="group">
+                                    @foreach([
+                                        'hadir' => ['Hadir', '✅'],
+                                        'sakit' => ['Sakit', '🤒'],
+                                        'izin' => ['Izin', '📄'],
+                                        'alfa' => ['Alfa', '❌'],
+                                        'terlambat' => ['Terlambat', '⏰']
+                                    ] as $statusKey => [$label, $emoji])
+                                    <input type="radio" class="btn-check status-radio"
+                                        name="details[{{ $student->id }}][status]"
+                                        id="st-{{ $student->id }}-{{ $statusKey }}"
+                                        value="{{ $statusKey }}"
+                                        {{ $savedStatus === $statusKey ? 'checked' : '' }}
+                                        onchange="updateSummary()">
+                                    <label class="status-btn" 
+                                           for="st-{{ $student->id }}-{{ $statusKey }}">
+                                        <span class="me-1">{{ $emoji }}</span> {{ $label }}
+                                    </label>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <input type="time" name="details[{{ $student->id }}][check_in]"
+                                    class="form-control form-control-sm text-center font-semibold text-slate-700"
+                                    value="{{ $savedCheckIn }}">
+                            </td>
+                            <td class="align-middle">
+                                <input type="text" name="details[{{ $student->id }}][notes]"
+                                    class="form-control form-control-sm"
+                                    placeholder="Tulis keterangan..."
+                                    value="{{ $savedNotes }}">
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-            @endforeach
         </div>
 
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted" style="font-size:13px">
+        <div class="card-footer d-flex justify-content-between align-items-center py-3 px-4">
+            <span class="text-muted" style="font-size: 13px">
                 Total: <strong>{{ $students->count() }} siswa</strong>
             </span>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary px-4 shadow-sm">
                 <i class="bi bi-save me-2"></i>Simpan Absensi
             </button>
         </div>
@@ -138,11 +179,13 @@
 </form>
 
 @else
-<div class="card">
+<div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9)">
     <div class="card-body text-center py-5">
-        <i class="bi bi-clipboard-x text-muted" style="font-size:3rem"></i>
-        <h5 class="mt-3 text-muted">Pilih Kelas Terlebih Dahulu</h5>
-        <p class="text-muted">Pilih tanggal dan kelas di atas untuk menampilkan daftar siswa.</p>
+        <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm mb-4" style="width: 80px; height: 80px;">
+            <i class="bi bi-calendar2-check text-primary" style="font-size: 2.2rem"></i>
+        </div>
+        <h4 class="fw-bold text-slate-800 mb-2">Pilih Kelas Terlebih Dahulu</h4>
+        <p class="text-slate-500 max-w-md mx-auto mb-0" style="max-width: 460px;">Silakan pilih tanggal, kelas, dan sesi pada form di atas, lalu klik <strong>Tampilkan Siswa</strong> untuk mulai mengisi absensi.</p>
     </div>
 </div>
 @endif
@@ -162,6 +205,7 @@ function updateSummary() {
     });
 }
 
+// Global setAll function
 function setAll(status) {
     document.querySelectorAll(`.status-radio[value="${status}"]`).forEach(r => {
         r.checked = true;
