@@ -28,6 +28,7 @@ class StudentService extends BaseMasterDataService
             $password = null;
             if (!empty($data['create_account'])) {
                 $password = (string) $data['nis'];
+                $data['status'] = true;
                 $user = User::create([
                     'username' => $data['nis'],
                     'password' => Hash::make($password),
@@ -37,6 +38,8 @@ class StudentService extends BaseMasterDataService
                     'status' => true,
                 ]);
                 $data['user_id'] = $user->id;
+            } else {
+                $data['status'] = false;
             }
             unset($data['create_account']);
 
@@ -60,6 +63,12 @@ class StudentService extends BaseMasterDataService
         }
         unset($data['create_account']);
 
-        return parent::update($model, $data);
+        $student = parent::update($model, $data);
+
+        if ($student->user) {
+            $student->user->update(['status' => (bool) ($data['status'] ?? false)]);
+        }
+
+        return $student;
     }
 }

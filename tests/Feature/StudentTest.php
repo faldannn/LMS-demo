@@ -46,7 +46,8 @@ class StudentTest extends TestCase
             ])
             ->assertRedirect(route('students.index'));
 
-        $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa']);
+        $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa', 'status' => 0]);
+        $this->assertDatabaseMissing('users', ['username' => '2025099']);
     }
 
     public function test_admin_can_create_student_account_with_nis_login(): void
@@ -68,7 +69,88 @@ class StudentTest extends TestCase
         $user = User::where('username', $nis)->firstOrFail();
 
         $this->assertSame($user->id, $student->user_id);
+        $this->assertTrue($student->status);
+        $this->assertTrue($user->status);
         $this->assertTrue(Hash::check($nis, $user->password));
+
+        $this->post(route('logout'));
+
+        $this->post(route('login.post'), [
+            'username' => $nis,
+            'password' => $nis,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_student_status_updates_toggle_login_access(): void
+    {
+        $nis = '2025101';
+
+        $this->actingAs($this->admin)
+            ->post(route('students.store'), [
+                'nis' => $nis,
+                'name' => 'Test Siswa Status',
+                'gender' => 'L',
+                'class_id' => $this->class->id,
+                'status' => true,
+                'create_account' => true,
+            ])
+            ->assertRedirect(route('students.index'));
+
+        $student = Student::where('nis', $nis)->firstOrFail();
+        $user = User::where('username', $nis)->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->put(route('students.update', $student), [
+                'nis' => $student->nis,
+                'nisn' => $student->nisn,
+                'name' => $student->name,
+                'gender' => $student->gender,
+                'dob' => $student->dob?->toDateString(),
+                'class_id' => $student->class_id,
+                'status' => false,
+                'parent_name' => $student->parent_name,
+                'parent_phone' => $student->parent_phone,
+                'parent_email' => $student->parent_email,
+                'address' => $student->address,
+            ])
+            ->assertRedirect(route('students.index'));
+
+        $student->refresh();
+        $user->refresh();
+
+        $this->assertFalse($student->status);
+        $this->assertFalse($user->status);
+
+        $this->post(route('logout'));
+
+        $this->post(route('login.post'), [
+            'username' => $nis,
+            'password' => $nis,
+        ])->assertSessionHasErrors('username');
+
+        $this->actingAs($this->admin)
+            ->put(route('students.update', $student), [
+                'nis' => $student->nis,
+                'nisn' => $student->nisn,
+                'name' => $student->name,
+                'gender' => $student->gender,
+                'dob' => $student->dob?->toDateString(),
+                'class_id' => $student->class_id,
+                'status' => true,
+                'parent_name' => $student->parent_name,
+                'parent_phone' => $student->parent_phone,
+                'parent_email' => $student->parent_email,
+                'address' => $student->address,
+            ])
+            ->assertRedirect(route('students.index'));
+
+        $student->refresh();
+        $user->refresh();
+
+        $this->assertTrue($student->status);
+        $this->assertTrue($user->status);
 
         $this->post(route('logout'));
 
