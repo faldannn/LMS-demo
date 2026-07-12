@@ -6,9 +6,9 @@ return [
     | Identitas Sekolah & Sistem
     |--------------------------------------------------------------------------
     */
-    'system_name' => env('SYSTEM_NAME', 'LMS SMA Islam Assyafiiyah 02 Bekasi'),
-    'system_short' => env('SYSTEM_SHORT', 'LMS Assyafiiyah'),
-    'system_version' => env('SYSTEM_VERSION', '4.0'),
+    'system_name' => env('SYSTEM_NAME', 'SMA Islam Assyafiiyah 02 Bekasi'),
+    'system_short' => env('SYSTEM_SHORT', 'E-Learning'),
+    'system_version' => env('SYSTEM_VERSION', 'v.1.0'),
 
     'name' => env('SCHOOL_NAME', 'SMA Islam Assyafiiyah 02 Bekasi'),
     'npsn' => env('SCHOOL_NPSN', ''),

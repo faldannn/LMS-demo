@@ -33,16 +33,7 @@
         <div class="flex items-center gap-3 border-b border-white/10 px-5 py-4">
             <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo" class="h-10 w-10 shrink-0 rounded-full object-cover p-1 bg-white ring-1 ring-white/20">
             <div>
-                <div class="text-sm font-bold text-white">{{ config('school.system_short', 'LMS Assyafiiyah') }}</div>
-                <div class="text-[10px] tracking-wider text-white/60">v{{ config('school.system_version', '4.0') }} &middot; {{ date('Y') }}</div>
-            </div>
-        </div>
-
-        <div class="mx-4 my-3 flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3">
-            <span class="text-xl">🕌</span>
-            <div>
-                <div class="text-xs font-bold text-white">{{ config('school.name') }}</div>
-                <div class="text-[10px] text-white/70">{{ config('school.type', 'SMA Islam') }}</div>
+                <div class="text-sm font-bold text-white">{{ config('school.system_name') }}</div>
             </div>
         </div>
 
@@ -125,8 +116,8 @@
             @yield('content')
         </main>
 
-        {{-- FOOTER --}}
-        <footer class="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+            {{-- FOOTER --}}
+            <footer class="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
             {{ config('school.system_name') }} &copy; {{ date('Y') }} &middot; {{ config('school.developer', 'NexDigi System') }}
         </footer>
     </div>
