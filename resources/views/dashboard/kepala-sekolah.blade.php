@@ -43,7 +43,7 @@
         <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div class="mb-4">
                 <h2 class="text-base font-bold text-slate-900"><i class="bi bi-activity mr-2 text-brand-600"></i>Aktivitas LMS (7 Hari)</h2>
-                <p class="text-xs text-slate-500">Materi, tugas, dan kuis yang dibuat</p>
+                <p class="text-xs text-slate-500">Materi, dan Tugas yang dibuat</p>
             </div>
             <div class="h-64"><canvas id="lmsActivityChart"></canvas></div>
         </div>
@@ -166,7 +166,6 @@
             datasets: [
                 { label: 'Materi', data: lms.materials, backgroundColor: brand, borderRadius: 6 },
                 { label: 'Tugas', data: lms.assignments, backgroundColor: css.getPropertyValue('--color-brand-600').trim() || '#0047d1', borderRadius: 6 },
-                { label: 'Kuis', data: lms.quizzes, backgroundColor: css.getPropertyValue('--color-brand-700').trim() || '#0036a3', borderRadius: 6 },
             ]
         },
         options: {
