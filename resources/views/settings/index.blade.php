@@ -88,7 +88,6 @@
                             <div class="input-group">
                                 <input type="number" name="min_attendance" class="form-control @error('min_attendance') is-invalid @enderror"
                                     value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100">
-                                <span class="input-group-text">%</span>
                             </div>
                             @error('min_attendance')
                                 <div class="invalid-feedback">{{ $message }}</div>
