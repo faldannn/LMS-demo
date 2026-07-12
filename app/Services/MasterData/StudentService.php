@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Repositories\StudentRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class StudentService extends BaseMasterDataService
 {
@@ -27,10 +27,10 @@ class StudentService extends BaseMasterDataService
 
             $password = null;
             if (!empty($data['create_account'])) {
-                $password = Str::random(8);
+                $password = (string) $data['nis'];
                 $user = User::create([
                     'username' => $data['nis'],
-                    'password' => bcrypt($password),
+                    'password' => Hash::make($password),
                     'name' => $data['name'],
                     'email' => $data['parent_email'] ?? null,
                     'role' => UserRole::Siswa,

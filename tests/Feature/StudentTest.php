@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\{AcademicYear, Classes, Student, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class StudentTest extends TestCase
@@ -46,6 +47,37 @@ class StudentTest extends TestCase
             ->assertRedirect(route('students.index'));
 
         $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa']);
+    }
+
+    public function test_admin_can_create_student_account_with_nis_login(): void
+    {
+        $nis = '2025100';
+
+        $this->actingAs($this->admin)
+            ->post(route('students.store'), [
+                'nis' => $nis,
+                'name' => 'Test Siswa Akun',
+                'gender' => 'L',
+                'class_id' => $this->class->id,
+                'status' => true,
+                'create_account' => true,
+            ])
+            ->assertRedirect(route('students.index'));
+
+        $student = Student::where('nis', $nis)->firstOrFail();
+        $user = User::where('username', $nis)->firstOrFail();
+
+        $this->assertSame($user->id, $student->user_id);
+        $this->assertTrue(Hash::check($nis, $user->password));
+
+        $this->post(route('logout'));
+
+        $this->post(route('login.post'), [
+            'username' => $nis,
+            'password' => $nis,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_duplicate_nis_rejected(): void
