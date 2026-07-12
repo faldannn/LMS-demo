@@ -11,8 +11,6 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\MaterialController;
-use App\Http\Controllers\ReportCardController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\SemesterController;
@@ -25,7 +23,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SystemMaintenanceController;
 use App\Http\Controllers\StudentAssignmentController;
 use App\Http\Controllers\StudentController;
-use App\Http\Controllers\StudentReportCardController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\UserController;
@@ -203,31 +200,10 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Reports, Report Cards & Announcements
+    | Announcements
     |----------------------------------------------------------------------
     */
     Route::middleware('can:access-staff')->prefix('akademik')->group(function () {
-        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('reports/daily', [ReportController::class, 'daily'])->name('reports.daily');
-        Route::get('reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
-        Route::get('reports/recap', [ReportController::class, 'recap'])->name('reports.recap');
-        Route::get('reports/export/pdf', [ReportController::class, 'exportLegacyPdf'])->name('reports.pdf');
-        Route::get('reports/export/excel', [ReportController::class, 'exportLegacyExcel'])->name('reports.excel');
-        Route::get('reports/{type}/export/pdf', [ReportController::class, 'exportPdf'])
-            ->middleware('throttle:' . config('security.rate_limits.reports_export', '15,1'))
-            ->name('reports.type.pdf');
-        Route::get('reports/{type}/export/excel', [ReportController::class, 'exportExcel'])
-            ->middleware('throttle:' . config('security.rate_limits.reports_export', '15,1'))
-            ->name('reports.type.excel');
-        Route::get('reports/{type}', [ReportController::class, 'show'])->name('reports.show');
-
-        Route::get('report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
-        Route::post('report-cards/generate', [ReportCardController::class, 'generate'])->name('report-cards.generate');
-        Route::get('report-cards/{reportCard}', [ReportCardController::class, 'show'])->name('report-cards.show');
-        Route::put('report-cards/{reportCard}/toggle-publish', [ReportCardController::class, 'togglePublish'])
-            ->name('report-cards.toggle-publish');
-        Route::get('report-cards/{reportCard}/print', [ReportCardController::class, 'print'])->name('report-cards.print');
-
         Route::get('announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
         Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
         Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
@@ -276,10 +252,6 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('my-assignments/{assignment}/submit', [StudentAssignmentController::class, 'submit'])
             ->name('student.assignments.submit');
 
-
-        Route::get('my-report-cards', [StudentReportCardController::class, 'index'])->name('student.report-cards.index');
-        Route::get('my-report-cards/{reportCard}', [StudentReportCardController::class, 'show'])->name('student.report-cards.show');
-        
         Route::get('class-subjects/{classSubject}', [StudentAssignmentController::class, 'showClassSubject'])
             ->name('student.class-subjects.show');
     });

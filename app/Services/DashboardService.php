@@ -11,7 +11,6 @@ use App\Models\Attendance;
 use App\Models\Classes;
 use App\Models\ClassSubject;
 use App\Models\Material;
-use App\Models\ReportCard;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
@@ -255,10 +254,6 @@ class DashboardService
             ? $this->studentAttendanceStats($student)
             : ['hadir' => 0, 'terlambat' => 0, 'alfa' => 0, 'percentage' => 0];
 
-        $grades = $student
-            ? $this->studentGrades($student)
-            : collect();
-
         $announcements = Announcement::with('creator:id,name')
             ->where(function ($q) use ($student) {
                 $q->whereNull('class_id');
@@ -277,7 +272,6 @@ class DashboardService
             'active_assignments' => $activeAssignments,
             'active_quizzes' => $activeQuizzes,
             'attendance_stats' => $attendanceStats,
-            'grades' => $grades,
             'announcements' => $announcements,
         ];
     }
@@ -311,25 +305,5 @@ class DashboardService
             'alfa' => (int) ($counts->alfa ?? 0),
             'percentage' => $total > 0 ? round($present / $total * 100, 1) : 0,
         ];
-    }
-
-    private function studentGrades(Student $student): Collection
-    {
-        $reportCard = ReportCard::with(['details.subject'])
-            ->where('student_id', $student->id)
-            ->where('is_published', true)
-            ->latest()
-            ->first();
-
-        if ($reportCard && $reportCard->details->isNotEmpty()) {
-            return $reportCard->details->map(fn ($d) => [
-                'subject' => $d->subject?->name ?? 'Mapel',
-                'score' => $d->final_score,
-                'grade' => $d->grade,
-                'source' => 'raport',
-            ]);
-        }
-
-        return collect();
     }
 }

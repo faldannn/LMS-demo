@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\{AttendanceService, DashboardService, ReportCardService};
+use App\Services\{AttendanceService, DashboardService};
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function __construct(
         private readonly AttendanceService $attendanceService,
-        private readonly ReportCardService $reportCardService,
         private readonly DashboardService $dashboardService,
     ) {
     }
@@ -79,15 +78,6 @@ class DashboardController extends Controller
         $year = (int) $request->get('year', now()->year);
 
         return response()->json($this->attendanceService->getMonthlyChartData($year));
-    }
-
-    public function gradeChartData(Request $request)
-    {
-        $semester = $request->get('semester', 'ganjil');
-
-        return response()->json(
-            $this->reportCardService->getClassGradeAverages($semester)
-        );
     }
 
     public function lmsActivityChartData()

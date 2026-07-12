@@ -98,32 +98,6 @@
             </div>
         </div>
 
-        {{-- Nilai --}}
-        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
-            <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-base font-bold text-slate-900"><i class="bi bi-award mr-2 text-amber-500"></i>Nilai Terbaru</h2>
-                <a href="{{ route('student.report-cards.index') }}" class="text-xs font-semibold text-brand-600">Raport →</a>
-            </div>
-            <div class="space-y-3">
-                @forelse($grades as $g)
-                <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                    <div>
-                        <p class="font-semibold text-slate-900">{{ $g['subject'] }}</p>
-                        <p class="text-xs capitalize text-slate-500">{{ $g['source'] }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-lg font-extrabold text-brand-700">{{ $g['score'] ?? '—' }}</p>
-                        @if($g['grade'])<p class="text-xs font-bold text-slate-500">Grade {{ $g['grade'] }}</p>@endif
-                    </div>
-                </div>
-                @empty
-                <p class="py-6 text-center text-sm text-slate-500">Belum ada nilai tersedia.</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Tugas --}}
         <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
             <div class="mb-4 flex items-center justify-between">
@@ -144,7 +118,6 @@
                 @endforelse
             </div>
         </div>
-
     </div>
 </div>
 @endsection
