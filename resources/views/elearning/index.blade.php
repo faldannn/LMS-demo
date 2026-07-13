@@ -2,18 +2,20 @@
 @section('title', 'Portal E-Learning')
 @section('page-title', 'Portal E-Learning')
 
+@push('styles')
+<style>
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-none {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-6">
-    {{-- Header --}}
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h2 class="text-lg font-extrabold text-slate-900">Portal E-Learning</h2>
-            <p class="mt-1 text-sm text-slate-500">
-                Kelola materi, tugas, forum diskusi, dan bank soal dari satu tempat.
-            </p>
-        </div>
-    </div>
-
     {{-- Group class subjects by class --}}
     @php
         $grouped = $classSubjects->groupBy(function($cs) {
@@ -22,27 +24,61 @@
     @endphp
 
     @if($grouped->isNotEmpty())
+        {{-- Search Bar --}}
+        <div class="max-w-md mb-6">
+            <div class="relative">
+                <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+                <input type="text" id="elearning-search" placeholder="Cari mata pelajaran atau guru..."
+                    class="block w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm">
+            </div>
+        </div>
+
         {{-- Filter Pills/Tabs --}}
         @if($grouped->count() > 1)
-        <div class="flex flex-wrap items-center gap-1.5 border-b border-slate-100 pb-3">
-            <button type="button" 
-                    onclick="filterClass('all')" 
-                    id="btn-class-all"
-                    class="class-filter-btn inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ring-1 transition-all duration-200 bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-500/10 scale-105">
-                Semua Kelas
-            </button>
-            @foreach($grouped as $classId => $subjects)
-                @php
-                    $firstCs = $subjects->first();
-                    $className = $firstCs->class?->name ?? 'Lainnya';
-                @endphp
+        <div class="flex flex-col gap-2 md:flex-row md:items-center border-b border-slate-100 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0 md:mr-2">Kelas:</span>
+            <div class="flex gap-1.5 overflow-x-auto pb-1 whitespace-nowrap scrollbar-none">
                 <button type="button" 
-                        onclick="filterClass('{{ $classId }}')" 
-                        id="btn-class-{{ $classId }}"
-                        class="class-filter-btn inline-flex items-center justify-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200/80 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm">
-                    {{ $className }}
+                        onclick="filterClass('all')" 
+                        id="btn-class-all"
+                        class="class-filter-btn inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ring-1 transition-all duration-200 bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-500/10 scale-105">
+                    Semua Kelas
                 </button>
-            @endforeach
+                @foreach($grouped as $classId => $subjects)
+                    @php
+                        $firstCs = $subjects->first();
+                        $className = $firstCs->class?->name ?? 'Lainnya';
+                    @endphp
+                    <button type="button" 
+                            onclick="filterClass('{{ $classId }}')" 
+                            id="btn-class-{{ $classId }}"
+                            class="class-filter-btn inline-flex items-center justify-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200/80 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm">
+                        {{ $className }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($teachers->isNotEmpty())
+        <div class="flex flex-col gap-2 md:flex-row md:items-center border-b border-slate-100 pb-3 mt-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0 md:mr-2">Guru:</span>
+            <div class="flex gap-1.5 overflow-x-auto pb-1 whitespace-nowrap scrollbar-none">
+                <button type="button" 
+                        onclick="filterTeacher('all')" 
+                        id="btn-teacher-all"
+                        class="teacher-filter-btn inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ring-1 transition-all duration-200 bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-500/10 scale-105">
+                    Semua Guru
+                </button>
+                @foreach($teachers as $teacher)
+                    <button type="button" 
+                            onclick="filterTeacher('{{ $teacher->id }}')" 
+                            id="btn-teacher-{{ $teacher->id }}"
+                            class="teacher-filter-btn inline-flex items-center justify-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200/80 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm">
+                        {{ $teacher->name }}
+                    </button>
+                @endforeach
+            </div>
         </div>
         @endif
 
@@ -74,7 +110,7 @@
                     {{-- Class Subject Grid --}}
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach($subjects as $cs)
-                        <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:ring-brand-200">
+                        <div data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:ring-brand-200">
                             {{-- Accent bar --}}
                             <div class="h-1 bg-brand-500"></div>
 
@@ -129,27 +165,27 @@
         </div>
 
         {{-- Filter Script --}}
-        @if($grouped->count() > 1)
+        @if($grouped->count() > 1 || $teachers->isNotEmpty())
         @push('scripts')
         <script>
-            function filterClass(classId) {
-                const sections = document.querySelectorAll('.class-section');
-                
-                sections.forEach(section => {
-                    const id = section.getAttribute('data-class-id');
-                    if (classId === 'all' || id === classId) {
-                        section.style.display = 'block';
-                        section.offsetHeight; // Force reflow
-                        section.style.opacity = '1';
-                        section.style.transform = 'scale(1)';
-                    } else {
-                        section.style.opacity = '0';
-                        section.style.transform = 'scale(0.98)';
-                        section.style.display = 'none';
-                    }
-                });
+            let selectedClassId = 'all';
+            let selectedTeacherId = 'all';
+            let searchQuery = '';
 
-                // Update filter buttons
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('elearning-search');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        searchQuery = this.value.toLowerCase().trim();
+                        applyFilters();
+                    });
+                }
+            });
+
+            function filterClass(classId) {
+                selectedClassId = classId;
+                
+                // Update filter class buttons
                 const buttons = document.querySelectorAll('.class-filter-btn');
                 buttons.forEach(btn => {
                     btn.classList.remove('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
@@ -161,6 +197,65 @@
                     activeBtn.classList.remove('bg-white', 'text-slate-600', 'ring-slate-200/80', 'font-semibold');
                     activeBtn.classList.add('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
                 }
+
+                applyFilters();
+            }
+
+            function filterTeacher(teacherId) {
+                selectedTeacherId = teacherId;
+                
+                // Update filter teacher buttons
+                const buttons = document.querySelectorAll('.teacher-filter-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
+                    btn.classList.add('bg-white', 'text-slate-600', 'ring-slate-200/80', 'font-semibold');
+                });
+
+                const activeBtn = document.getElementById(`btn-teacher-${teacherId}`);
+                if (activeBtn) {
+                    activeBtn.classList.remove('bg-white', 'text-slate-600', 'ring-slate-200/80', 'font-semibold');
+                    activeBtn.classList.add('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
+                }
+
+                applyFilters();
+            }
+
+            function applyFilters() {
+                const sections = document.querySelectorAll('.class-section');
+                
+                sections.forEach(section => {
+                    const classId = section.getAttribute('data-class-id');
+                    const cards = section.querySelectorAll('.subject-card');
+                    let visibleCardsCount = 0;
+                    
+                    cards.forEach(card => {
+                        const teacherId = card.getAttribute('data-teacher-id');
+                        const subjectName = card.querySelector('h4').textContent.toLowerCase();
+                        const teacherName = card.querySelector('.font-medium').textContent.toLowerCase();
+                        
+                        const matchesClass = (selectedClassId === 'all' || classId === selectedClassId);
+                        const matchesTeacher = (selectedTeacherId === 'all' || teacherId === selectedTeacherId);
+                        const matchesSearch = (subjectName.includes(searchQuery) || teacherName.includes(searchQuery));
+                        
+                        if (matchesClass && matchesTeacher && matchesSearch) {
+                            card.style.display = 'flex';
+                            visibleCardsCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    if (visibleCardsCount > 0) {
+                        section.style.display = 'block';
+                        section.offsetHeight; // Force reflow
+                        section.style.opacity = '1';
+                        section.style.transform = 'scale(1)';
+                    } else {
+                        section.style.opacity = '0';
+                        section.style.transform = 'scale(0.98)';
+                        section.style.display = 'none';
+                    }
+                });
             }
         </script>
         @endpush

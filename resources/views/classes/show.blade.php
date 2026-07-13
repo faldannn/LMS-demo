@@ -180,7 +180,7 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Pilih Mata Pelajaran</label>
-                    <select name="subject_id" class="form-select" required>
+                    <select name="subject_id" id="class_subject_select" class="form-select" required>
                         <option value="">-- Pilih Mata Pelajaran --</option>
                         @foreach($subjects as $sub)
                             <option value="{{ $sub->id }}">{{ $sub->name }} ({{ $sub->code }})</option>
@@ -189,10 +189,12 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Pilih Guru Pengampu</label>
-                    <select name="teacher_id" class="form-select" required>
+                    <select name="teacher_id" id="class_teacher_select" class="form-select" required>
                         <option value="">-- Pilih Guru --</option>
                         @foreach($teachers as $t)
-                            <option value="{{ $t->id }}">{{ $t->name }}</option>
+                            <option value="{{ $t->id }}" data-subjects="{{ json_encode($t->subjects->pluck('id')->toArray()) }}">
+                                {{ $t->name }} ({{ $t->subjects->pluck('name')->implode(', ') ?: 'Tidak ada mapel' }})
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -205,5 +207,46 @@
     </div>
 </div>
 @endrole
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subjectSelect = document.getElementById('class_subject_select');
+    const teacherSelect = document.getElementById('class_teacher_select');
+    
+    if (subjectSelect && teacherSelect) {
+        const originalOptions = Array.from(teacherSelect.options);
+        
+        subjectSelect.addEventListener('change', function() {
+            const selectedSubjectId = parseInt(this.value);
+            
+            // Reset selection
+            teacherSelect.value = "";
+            
+            // Clear options and append default option
+            teacherSelect.innerHTML = "";
+            teacherSelect.appendChild(originalOptions[0]);
+            
+            if (!selectedSubjectId) {
+                // If no subject selected, show all teachers
+                for (let i = 1; i < originalOptions.length; i++) {
+                    teacherSelect.appendChild(originalOptions[i]);
+                }
+                return;
+            }
+            
+            // Filter options based on data-subjects
+            for (let i = 1; i < originalOptions.length; i++) {
+                const opt = originalOptions[i];
+                const subjects = JSON.parse(opt.getAttribute('data-subjects') || '[]');
+                if (subjects.includes(selectedSubjectId)) {
+                    teacherSelect.appendChild(opt);
+                }
+            }
+        });
+    }
+});
+</script>
+@endpush
 
 @endsection

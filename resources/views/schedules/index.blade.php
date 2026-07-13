@@ -6,7 +6,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <p class="text-muted mb-0">Jadwal pelajaran per kelas</p>
-    @role('admin,guru')
+    @role('kepala_sekolah')
         <a href="{{ route('schedules.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i>Tambah Jadwal
         </a>
@@ -120,7 +120,7 @@
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
-                            <tr><th>Jam</th><th>Mata Pelajaran</th><th>Guru</th><th>Ruang</th><th>Durasi</th>@role('admin,guru')<th>Aksi</th>@endrole</tr>
+                            <tr><th>Jam</th><th>Mata Pelajaran</th><th>Guru</th><th>Ruang</th><th>Durasi</th>@role('kepala_sekolah,guru')<th>Aksi</th>@endrole</tr>
                         </thead>
                         <tbody>
                             @foreach($daySchedules as $sched)
@@ -139,10 +139,10 @@
                                         @endphp
                                         <span class="badge" style="background:var(--color-brand-50);color:var(--color-brand-600)">{{ $dur }} menit</span>
                                     </td>
-                                    @role('admin,guru')
+                                    @role('kepala_sekolah,guru')
                                         <td>
                                             <div class="d-flex gap-1 align-items-center">
-                                                @if($sched->class_subject_id)
+                                                @if(auth()->user()->isGuru() && $sched->class_subject_id)
                                                     <a href="{{ route('materials.create', $sched->class_subject_id) }}" class="btn btn-xs btn-outline-primary" title="Tambah Materi">
                                                         <i class="bi bi-plus-circle"></i> Materi
                                                     </a>
@@ -150,12 +150,14 @@
                                                         <i class="bi bi-plus-circle"></i> Tugas
                                                     </a>
                                                 @endif
-                                                <form id="del-s{{ $sched->id }}" method="POST" action="{{ route('schedules.destroy', $sched) }}">@csrf @method('DELETE')</form>
-                                                <button class="btn btn-xs btn-outline-danger"
-                                                    data-confirm="Hapus jadwal {{ $sched->subject }}?"
-                                                    data-form="del-s{{ $sched->id }}" title="Hapus">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                @role('kepala_sekolah')
+                                                    <form id="del-s{{ $sched->id }}" method="POST" action="{{ route('schedules.destroy', $sched) }}">@csrf @method('DELETE')</form>
+                                                    <button class="btn btn-xs btn-outline-danger"
+                                                        data-confirm="Hapus jadwal {{ $sched->subject }}?"
+                                                        data-form="del-s{{ $sched->id }}" title="Hapus">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                @endrole
                                             </div>
                                         </td>
                                     @endrole
@@ -170,7 +172,7 @@
                 <div class="card-body text-center py-5 text-muted">
                     <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
                     Belum ada jadwal untuk kelas ini.
-                    @role('admin,guru')
+                    @role('kepala_sekolah')
                         <a href="{{ route('schedules.create', ['class_id' => $classId]) }}" class="btn btn-sm btn-primary mt-2">+ Tambah Jadwal</a>
                     @endrole
                 </div>

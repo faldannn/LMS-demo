@@ -254,7 +254,7 @@
                     <label class="form-label">Pilih Mata Pelajaran</label>
                     <select name="subject_id" class="form-select" required>
                         <option value="">-- Pilih Mata Pelajaran --</option>
-                        @foreach($subjects as $sub)
+                        @foreach($teacher->subjects as $sub)
                             <option value="{{ $sub->id }}">{{ $sub->name }} ({{ $sub->code }})</option>
                         @endforeach
                     </select>

@@ -2,12 +2,38 @@
 @section('title', $classSubject->subject->name)
 @section('page-title', 'Detail Mata Pelajaran')
 
+@php
+    $groupedMaterials = $classSubject->materials->groupBy(function($item) {
+        return $item->created_at->toDateString();
+    })->sortKeysDesc();
+
+    $groupedAssignments = $classSubject->assignments->groupBy(function($item) {
+        return $item->created_at->toDateString();
+    })->sortKeysDesc();
+    
+    if (!function_exists('formatDateGroup')) {
+        function formatDateGroup($dateStr) {
+            $date = \Carbon\Carbon::parse($dateStr);
+            if ($date->isToday()) {
+                return 'Hari Ini';
+            } elseif ($date->isYesterday()) {
+                return 'Kemarin';
+            } elseif ($date->isTomorrow()) {
+                return 'Besok';
+            } elseif ($date->isFuture()) {
+                return 'Mendatang';
+            }
+            return $date->translatedFormat('d F Y');
+        }
+    }
+@endphp
+
 @section('content')
 <div class="space-y-6">
     {{-- Header --}}
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
-            <a href="{{ route('schedules.index') }}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600" title="Kembali ke Jadwal Pelajaran">
+            <a href="{{ route('dashboard') }}" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600" title="Kembali ke Dashboard">
                 <i class="bi bi-arrow-left"></i>
             </a>
             <div>
@@ -65,29 +91,73 @@
                     <i class="bi bi-file-earmark-richtext text-brand-500 text-lg"></i>
                     Materi Pelajaran
                 </h3>
-                <span class="badge bg-primary">{{ $classSubject->materials->count() }} File</span>
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <button type="button" onclick="toggleView('materials', 'grid')" id="btn-materials-grid" class="px-2.5 py-1.5 text-xs transition" title="Grid View">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </button>
+                        <button type="button" onclick="toggleView('materials', 'list')" id="btn-materials-list" class="px-2.5 py-1.5 text-xs transition" title="List View">
+                            <i class="bi bi-list-ul"></i>
+                        </button>
+                    </div>
+                    <span class="badge bg-primary text-[10px]">{{ $classSubject->materials->count() }} File</span>
+                </div>
             </div>
-            <div class="card-body p-0 divide-y divide-slate-100">
-                @forelse($classSubject->materials as $material)
-                    <div class="p-6 transition hover:bg-slate-50/50 flex gap-4">
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xl text-brand-600">
-                            <i class="bi {{ $material->type_icon }}"></i>
+            <div class="card-body p-4 space-y-6">
+                @forelse($groupedMaterials as $date => $dateMaterials)
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                <i class="bi bi-calendar-check me-1"></i>{{ formatDateGroup($date) }}
+                            </span>
+                            <div class="h-px bg-slate-100 flex-1"></div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $material->title }}</h4>
-                            <p class="text-xs text-slate-500 mt-1">Topik: <span class="font-medium text-slate-700">{{ $material->topic ?: 'Umum' }}</span></p>
-                            <div class="mt-3 flex items-center justify-between">
-                                <span class="text-[11px] text-slate-400 font-medium">
-                                    <i class="bi bi-clock me-1"></i>{{ $material->created_at->diffForHumans() }}
-                                </span>
-                                <a href="{{ route('materials.show', $material) }}" class="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-800 transition">
-                                    Lihat Materi <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </div>
+                        
+                        {{-- Grid view --}}
+                        <div id="materials-grid-{{ $date }}" class="materials-grid-container grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            @foreach($dateMaterials as $material)
+                                <div class="group relative overflow-hidden rounded-xl bg-slate-50/50 p-4 border border-slate-100 transition hover:shadow-md hover:bg-white hover:border-brand-200">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                                            <i class="bi {{ $material->type_icon }}"></i>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-bold text-slate-900 text-sm truncate group-hover:text-brand-600 transition">{{ $material->title }}</h4>
+                                            <p class="text-xs text-slate-500 mt-1 truncate">Topik: {{ $material->topic ?: 'Umum' }}</p>
+                                            <div class="mt-3 flex items-center justify-between">
+                                                <span class="text-[10px] text-slate-400 font-medium">
+                                                    Dibuat: {{ $material->created_at->format('d M Y') }}
+                                                </span>
+                                                <a href="{{ route('materials.show', $material) }}" class="text-xs font-bold text-brand-600 hover:text-brand-800 transition">
+                                                    Buka <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- List view --}}
+                        <div id="materials-list-{{ $date }}" class="materials-list-container hidden divide-y divide-slate-100 rounded-xl border border-slate-100 bg-white">
+                            @foreach($dateMaterials as $material)
+                                <div class="flex items-center justify-between p-3 hover:bg-slate-50/50 transition">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                                            <i class="bi {{ $material->type_icon }}"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $material->title }}</h4>
+                                            <span class="text-[10px] text-slate-400 font-medium">Dibuat: {{ $material->created_at->format('d M Y') }}</span>
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('materials.show', $material) }}" class="btn btn-xs btn-outline-primary">Lihat</a>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 @empty
-                    <div class="p-8 text-center text-slate-500">
+                    <div class="py-8 text-center text-slate-500">
                         <div class="flex justify-center mb-3">
                             <div class="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 text-2xl">
                                 <i class="bi bi-journal-x"></i>
@@ -107,60 +177,140 @@
                     <i class="bi bi-journal-check text-brand-500 text-lg"></i>
                     Tugas Pelajaran
                 </h3>
-                <span class="badge bg-primary">{{ $classSubject->assignments->count() }} Tugas</span>
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <button type="button" onclick="toggleView('assignments', 'grid')" id="btn-assignments-grid" class="px-2.5 py-1.5 text-xs transition" title="Grid View">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </button>
+                        <button type="button" onclick="toggleView('assignments', 'list')" id="btn-assignments-list" class="px-2.5 py-1.5 text-xs transition" title="List View">
+                            <i class="bi bi-list-ul"></i>
+                        </button>
+                    </div>
+                    <span class="badge bg-primary text-[10px]">{{ $classSubject->assignments->count() }} Tugas</span>
+                </div>
             </div>
-            <div class="card-body p-0 divide-y divide-slate-100">
-                @forelse($classSubject->assignments as $assignment)
-                    @php
-                        $submission = $assignment->submissions->first();
-                        $statusBg = 'bg-slate-50';
-                        $statusBorder = 'border-slate-200';
-                        $statusText = 'Belum Dikerjakan';
-                        $statusColor = 'text-slate-600';
-                        $iconClass = 'bi-exclamation-circle text-slate-400';
-                        
-                        if ($submission) {
-                            if ($submission->grade) {
-                                $statusBg = 'bg-emerald-50';
-                                $statusBorder = 'border-emerald-200';
-                                $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
-                                $statusColor = 'text-emerald-700';
-                                $iconClass = 'bi-check-circle-fill text-emerald-500';
-                            } else {
-                                $statusBg = 'bg-blue-50';
-                                $statusBorder = 'border-blue-200';
-                                $statusText = 'Menunggu Penilaian';
-                                $statusColor = 'text-blue-700';
-                                $iconClass = 'bi-clock-fill text-blue-500';
-                            }
-                        } elseif ($assignment->isPastDue()) {
-                            $statusBg = 'bg-rose-50';
-                            $statusBorder = 'border-rose-200';
-                            $statusText = 'Terlambat / Melewati Tenggat';
-                            $statusColor = 'text-rose-700';
-                            $iconClass = 'bi-x-circle-fill text-rose-500';
-                        }
-                    @endphp
-                    <div class="p-6 transition hover:bg-slate-50/50 flex gap-4">
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-xl text-amber-600">
-                            <i class="bi bi-file-earmark-check"></i>
+            <div class="card-body p-4 space-y-6">
+                @forelse($groupedAssignments as $date => $dateAssignments)
+                    <div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                <i class="bi bi-calendar-check me-1"></i>{{ formatDateGroup($date) }}
+                            </span>
+                            <div class="h-px bg-slate-100 flex-1"></div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $assignment->title }}</h4>
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <span class="inline-flex items-center gap-1 rounded-lg border {{ $statusBorder }} {{ $statusBg }} px-2 py-0.5 text-[10px] font-semibold {{ $statusColor }}">
-                                    <i class="bi {{ $iconClass }}"></i>
-                                    {{ $statusText }}
-                                </span>
-                            </div>
-                            <div class="mt-3 flex items-center justify-between">
-                                <span class="text-[11px] text-slate-400 font-medium">
-                                    <i class="bi bi-calendar-x me-1"></i>Tenggat: {{ $assignment->due_date ? $assignment->due_date->format('d M Y, H:i') : 'Tanpa batas waktu' }}
-                                </span>
-                                <a href="{{ route('student.assignments.show', $assignment) }}" class="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-800 transition">
-                                    Lihat Tugas <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </div>
+
+                        {{-- Grid view --}}
+                        <div id="assignments-grid-{{ $date }}" class="assignments-grid-container grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            @foreach($dateAssignments as $assignment)
+                                @php
+                                    $submission = $assignment->submissions->first();
+                                    $statusBg = 'bg-slate-50';
+                                    $statusBorder = 'border-slate-200';
+                                    $statusText = 'Belum Dikerjakan';
+                                    $statusColor = 'text-slate-600';
+                                    $iconClass = 'bi-exclamation-circle text-slate-400';
+                                    
+                                    if ($submission) {
+                                        if ($submission->grade) {
+                                            $statusBg = 'bg-emerald-50';
+                                            $statusBorder = 'border-emerald-200';
+                                            $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
+                                            $statusColor = 'text-emerald-700';
+                                            $iconClass = 'bi-check-circle-fill text-emerald-500';
+                                        } else {
+                                            $statusBg = 'bg-blue-50';
+                                            $statusBorder = 'border-blue-200';
+                                            $statusText = 'Menunggu Penilaian';
+                                            $statusColor = 'text-blue-700';
+                                            $iconClass = 'bi-clock-fill text-blue-500';
+                                        }
+                                    } elseif ($assignment->isPastDue()) {
+                                        $statusBg = 'bg-rose-50';
+                                        $statusBorder = 'border-rose-200';
+                                        $statusText = 'Terlambat / Melewati Tenggat';
+                                        $statusColor = 'text-rose-700';
+                                        $iconClass = 'bi-x-circle-fill text-rose-500';
+                                    }
+                                @endphp
+                                <div class="group relative overflow-hidden rounded-xl bg-slate-50/50 p-4 border border-slate-100 transition hover:shadow-md hover:bg-white hover:border-brand-200">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                                            <i class="bi bi-file-earmark-check"></i>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h4 class="font-bold text-slate-900 text-sm truncate group-hover:text-brand-600 transition">{{ $assignment->title }}</h4>
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600 ring-1 ring-slate-200">
+                                                    {{ ucfirst($assignment->type) }}
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 rounded-lg border {{ $statusBorder }} {{ $statusBg }} px-2 py-0.5 text-[10px] font-semibold {{ $statusColor }} ml-1">
+                                                    <i class="bi {{ $iconClass }}"></i>
+                                                    {{ $statusText }}
+                                                </span>
+                                            </div>
+                                            <div class="mt-3 flex items-center justify-between">
+                                                <span class="text-[10px] text-slate-400 font-medium">
+                                                    Dibuat: {{ $assignment->created_at->format('d M Y') }}
+                                                </span>
+                                                <a href="{{ route('student.assignments.show', $assignment) }}" class="text-xs font-bold text-brand-600 hover:text-brand-800 transition">
+                                                    Buka <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- List view --}}
+                        <div id="assignments-list-{{ $date }}" class="assignments-list-container hidden divide-y divide-slate-100 rounded-xl border border-slate-100 bg-white">
+                            @foreach($dateAssignments as $assignment)
+                                @php
+                                    $submission = $assignment->submissions->first();
+                                    $statusBg = 'bg-slate-50';
+                                    $statusBorder = 'border-slate-200';
+                                    $statusText = 'Belum Dikerjakan';
+                                    $statusColor = 'text-slate-600';
+                                    $iconClass = 'bi-exclamation-circle text-slate-400';
+                                    
+                                    if ($submission) {
+                                        if ($submission->grade) {
+                                            $statusBg = 'bg-emerald-50';
+                                            $statusBorder = 'border-emerald-200';
+                                            $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
+                                            $statusColor = 'text-emerald-700';
+                                            $iconClass = 'bi-check-circle-fill text-emerald-500';
+                                        } else {
+                                            $statusBg = 'bg-blue-50';
+                                            $statusBorder = 'border-blue-200';
+                                            $statusText = 'Menunggu Penilaian';
+                                            $statusColor = 'text-blue-700';
+                                            $iconClass = 'bi-clock-fill text-blue-500';
+                                        }
+                                    } elseif ($assignment->isPastDue()) {
+                                        $statusBg = 'bg-rose-50';
+                                        $statusBorder = 'border-rose-200';
+                                        $statusText = 'Terlambat / Melewati Tenggat';
+                                        $statusColor = 'text-rose-700';
+                                        $iconClass = 'bi-x-circle-fill text-rose-500';
+                                    }
+                                @endphp
+                                <div class="flex items-center justify-between p-3 hover:bg-slate-50/50 transition">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                                            <i class="bi bi-file-earmark-check"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $assignment->title }}</h4>
+                                            <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1 py-0.5 text-[8px] font-bold text-slate-600">
+                                                {{ ucfirst($assignment->type) }}
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 font-medium ml-2">Dibuat: {{ $assignment->created_at->format('d M Y') }}</span>
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('student.assignments.show', $assignment) }}" class="btn btn-xs btn-outline-primary">Lihat</a>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 @empty
@@ -179,4 +329,54 @@
 
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function toggleView(section, view) {
+        localStorage.setItem('student_class_subject_' + section + '_view', view);
+        applyViewPreference(section);
+    }
+    
+    function applyViewPreference(section) {
+        const view = localStorage.getItem('student_class_subject_' + section + '_view') || 'grid';
+        
+        const gridContainers = document.querySelectorAll(`.${section}-grid-container`);
+        const listContainers = document.querySelectorAll(`.${section}-list-container`);
+        
+        const btnGrid = document.getElementById(`btn-${section}-grid`);
+        const btnList = document.getElementById(`btn-${section}-list`);
+        
+        if (view === 'grid') {
+            gridContainers.forEach(el => el.classList.remove('hidden'));
+            listContainers.forEach(el => el.classList.add('hidden'));
+            
+            if (btnGrid) {
+                btnGrid.classList.remove('text-slate-500', 'hover:bg-slate-50');
+                btnGrid.classList.add('bg-brand-600', 'text-white');
+            }
+            if (btnList) {
+                btnList.classList.remove('bg-brand-600', 'text-white');
+                btnList.classList.add('text-slate-500', 'hover:bg-slate-50');
+            }
+        } else {
+            gridContainers.forEach(el => el.classList.add('hidden'));
+            listContainers.forEach(el => el.classList.remove('hidden'));
+            
+            if (btnList) {
+                btnList.classList.remove('text-slate-500', 'hover:bg-slate-50');
+                btnList.classList.add('bg-brand-600', 'text-white');
+            }
+            if (btnGrid) {
+                btnGrid.classList.remove('bg-brand-600', 'text-white');
+                btnGrid.classList.add('text-slate-500', 'hover:bg-slate-50');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        applyViewPreference('materials');
+        applyViewPreference('assignments');
+    });
+</script>
+@endpush
 @endsection

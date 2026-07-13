@@ -179,10 +179,12 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
             Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
 
-            // Schedules management
-            Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
-            Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
-            Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+            // Schedules management (Kepala Sekolah/Admin only)
+            Route::middleware('can:manage-admin')->group(function () {
+                Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
+                Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+                Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+            });
         });
     });
 

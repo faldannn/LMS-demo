@@ -8,7 +8,25 @@ class StoreAttendanceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()->isStaff();
+        $user = auth()->user();
+        if (!$user?->isStaff()) {
+            return false;
+        }
+
+        if ($user->isGuru()) {
+            $classId = $this->input('class_id');
+            $teacher = $user->teacher;
+            if (!$teacher) {
+                return false;
+            }
+            
+            $isHomeroom = $teacher->homeroomClasses()->where('id', $classId)->exists();
+            if (!$isHomeroom) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function rules(): array

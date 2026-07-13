@@ -105,7 +105,7 @@ class ClassController extends Controller
         ]);
 
         $subjects = Subject::orderBy('name')->get();
-        $teachers = Teacher::active()->orderBy('name')->get();
+        $teachers = Teacher::active()->with('subjects')->orderBy('name')->get();
 
         return view('classes.show', compact('class', 'subjects', 'teachers'));
     }
@@ -116,6 +116,11 @@ class ClassController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'teacher_id' => 'required|exists:teachers,id',
         ]);
+
+        $teacher = Teacher::with('subjects')->findOrFail($data['teacher_id']);
+        if (!$teacher->subjects->contains($data['subject_id'])) {
+            return back()->withErrors(['teacher_id' => "Guru {$teacher->name} tidak mengampu mata pelajaran ini."]);
+        }
 
         $activeYear = AcademicYear::active();
         if (!$activeYear) {

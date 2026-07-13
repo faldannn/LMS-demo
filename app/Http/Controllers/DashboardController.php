@@ -70,7 +70,9 @@ class DashboardController extends Controller
             ['subject.name', 'asc'],
         ]);
 
-        return view('elearning.index', compact('classSubjects'));
+        $teachers = $classSubjects->pluck('teacher')->filter()->unique('id')->sortBy('name')->values();
+
+        return view('elearning.index', compact('classSubjects', 'teachers'));
     }
 
     public function chartData(Request $request)

@@ -162,6 +162,11 @@ class TeacherController extends Controller
             'subject_id' => 'required|exists:subjects,id',
         ]);
 
+        $teacher->loadMissing('subjects');
+        if (!$teacher->subjects->contains($data['subject_id'])) {
+            return back()->withErrors(['subject_id' => 'Mata pelajaran yang dipilih tidak diampu oleh guru ini.']);
+        }
+
         $activeYear = AcademicYear::active();
         if (!$activeYear) {
             return back()->withErrors(['error' => 'Tidak ada tahun ajaran aktif.']);

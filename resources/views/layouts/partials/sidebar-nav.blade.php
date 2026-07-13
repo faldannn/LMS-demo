@@ -42,9 +42,6 @@
     <a href="{{ route('attendance.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.index', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-clipboard-check @active('attendance.index', 'text-brand-500')"></i> Daftar Absensi
     </a>
-    <a href="{{ route('schedules.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('schedules.*', 'bg-brand-500/20 text-white', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-calendar3 @active('schedules.*', 'text-brand-500')"></i> Jadwal Pelajaran
-    </a>
 </div>
 <div class="py-2">
     <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Log Presensi</div>

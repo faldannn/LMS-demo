@@ -13,6 +13,23 @@ class ScheduleController extends Controller
         if ($user->isSiswa() && $user->student) {
             $classId = $user->student->class_id;
             $classes = collect([$user->student->class]);
+        } elseif ($user->isGuru()) {
+            $teacher = $user->teacher;
+            if ($teacher) {
+                $classIds = ClassSubject::where('teacher_id', $teacher->id)
+                    ->pluck('class_id')
+                    ->unique();
+                $classes = Classes::whereIn('id', $classIds)
+                    ->orderBy('grade')
+                    ->orderBy('name')
+                    ->get();
+            } else {
+                $classes = collect();
+            }
+            $classId = $request->get('class_id', $classes->first()?->id);
+            if ($classId && !$classes->pluck('id')->contains($classId)) {
+                $classId = $classes->first()?->id;
+            }
         } else {
             $classId = $request->get('class_id', Classes::first()?->id);
             $classes = Classes::orderBy('grade')->orderBy('name')->get();

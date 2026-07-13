@@ -27,7 +27,10 @@ class ClassSubjectSeeder extends Seeder
             $randomSubjects = $subjects->random(min(3, $subjects->count()));
             
             foreach ($randomSubjects as $subject) {
-                $randomTeacher = $teachers->random();
+                // Find a teacher who specializes in this subject, fallback to random if none
+                $randomTeacher = Teacher::whereHas('subjects', function($q) use ($subject) {
+                    $q->where('subjects.id', $subject->id);
+                })->inRandomOrder()->first() ?? $teachers->random();
                 
                 ClassSubject::firstOrCreate([
                     'class_id' => $class->id,

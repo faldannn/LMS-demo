@@ -203,6 +203,7 @@ class DashboardService
                 'pending_grading' => $pendingGrading,
             ],
             'monthly_trend' => $this->attendanceService->getMonthlyTrend(),
+            'homeroom_class' => $teacher ? $teacher->homeroomClasses()->first() : null,
         ];
     }
 

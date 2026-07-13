@@ -22,6 +22,15 @@ class AttendanceController extends Controller
         if ($user->isSiswa() && $user->student) {
             $classId = $user->student->class_id;
             $classes = collect([$user->student->class]);
+        } elseif ($user->isGuru()) {
+            $teacher = $user->teacher;
+            $classes = $teacher 
+                ? $teacher->homeroomClasses()->orderBy('name')->get() 
+                : collect();
+            $classId = $request->class_id;
+            if ($classId && !$classes->pluck('id')->contains($classId)) {
+                $classId = null;
+            }
         } else {
             $classId = $request->class_id;
             $classes = Classes::orderBy('name')->get();
@@ -70,6 +79,10 @@ class AttendanceController extends Controller
             ->when($classId, fn($q) => $q->where('class_id', $classId))
             ->orderByDesc('date');
 
+        if ($user->isGuru()) {
+            $query->whereIn('class_id', $classes->pluck('id'));
+        }
+
         $this->applyAttendanceFilters($query, $request);
 
         $attendances = $query->paginate(20)->withQueryString();
@@ -79,9 +92,29 @@ class AttendanceController extends Controller
 
     public function create(Request $request)
     {
-        $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
+        $user = auth()->user();
+        if ($user->isGuru()) {
+            $teacher = $user->teacher;
+            $classes = $teacher 
+                ? $teacher->homeroomClasses()->orderBy('name')->get(['id', 'name', 'grade']) 
+                : collect();
+        } else {
+            $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
+        }
+
         $date = $request->get('date', today()->toDateString());
         $classId = $request->get('class_id');
+
+        // Auto-select first class for homeroom teacher if none specified
+        if (!$classId && $user->isGuru() && $classes->isNotEmpty()) {
+            $classId = $classes->first()->id;
+        }
+
+        // Security check: if classId is requested, it must be in the accessible classes list
+        if ($classId && !$classes->pluck('id')->contains($classId)) {
+            $classId = null;
+        }
+
         $session = $request->get('session', 'pagi');
 
         $students = $classId
@@ -124,6 +157,15 @@ class AttendanceController extends Controller
 
     public function show(Attendance $attendance, Request $request)
     {
+        $user = auth()->user();
+        if ($user->isGuru()) {
+            $teacher = $user->teacher;
+            $isHomeroom = $teacher && $teacher->homeroomClasses()->where('id', $attendance->class_id)->exists();
+            if (!$isHomeroom) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+
         $attendance->load(['class', 'teacher', 'details.student']);
 
         $periodType = $request->get('period', 'week') === 'month' ? 'month' : 'week';
@@ -181,6 +223,15 @@ class AttendanceController extends Controller
 
     public function edit(Attendance $attendance)
     {
+        $user = auth()->user();
+        if ($user->isGuru()) {
+            $teacher = $user->teacher;
+            $isHomeroom = $teacher && $teacher->homeroomClasses()->where('id', $attendance->class_id)->exists();
+            if (!$isHomeroom) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+
         $attendance->load(['details.student', 'class.students']);
         $existingDetails = $attendance->details->keyBy('student_id');
         return view('attendance.edit', compact('attendance', 'existingDetails'));

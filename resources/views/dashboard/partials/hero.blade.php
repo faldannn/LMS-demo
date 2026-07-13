@@ -2,7 +2,9 @@
 
 <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
     <div>
-        <p class="text-sm font-medium text-brand-600">{{ $greeting ?? 'Selamat datang' }}, {{ $user->name }} 👋</p>
+        <p class="text-sm font-medium text-brand-600">
+            {{ $greeting ?? 'Selamat datang' }}, {{ $user->name }}@if(isset($homeroom_class) && $homeroom_class) <span class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800 border border-brand-200">Wali Kelas {{ $homeroom_class->name }}</span>@endif 👋
+        </p>
         <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">{{ $title }}</h1>
         @if($subtitle)
             <p class="mt-2 max-w-2xl text-sm text-slate-600">{{ $subtitle }}</p>
