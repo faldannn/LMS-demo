@@ -52,6 +52,9 @@ Route::post('/logout', [AuthController::class, 'logout'])
 */
 Route::middleware(['auth', 'check.active'])->group(function () {
 
+    // SSO CBT Redirect
+    Route::get('/sso/to-cbt', [\App\Http\Controllers\SsoController::class, 'redirectToCbt'])->name('sso.cbt');
+
     // Dashboard & analytics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

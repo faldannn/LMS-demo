@@ -23,6 +23,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nip" label="NIP" value="{{ old('nip', $teacher->nip) }}" />
                     <x-form-input name="name" label="Nama Lengkap" value="{{ old('name', $teacher->name) }}" required />
+                    <x-form-input name="dob" type="date" label="Tanggal Lahir" value="{{ old('dob', $teacher->dob ? $teacher->dob->format('Y-m-d') : '') }}" required />
                     <div class="sm:col-span-2">
                         <label class="mb-1.5 block text-sm font-semibold text-slate-700">Mata Pelajaran yang Diajar</label>
                         <div class="grid grid-cols-1 gap-2 rounded-xl border border-slate-300 bg-slate-50 p-4 max-h-48 overflow-y-auto sm:grid-cols-2">

@@ -13,6 +13,7 @@ class Teacher extends Model
     protected $fillable = [
         'nip',
         'name',
+        'dob',
         'subject',
         'phone',
         'email',
@@ -21,7 +22,10 @@ class Teacher extends Model
         'status',
     ];
 
-    protected $casts = ['status' => 'boolean'];
+    protected $casts = [
+        'status' => 'boolean',
+        'dob' => 'date',
+    ];
 
     // ── Relations ──────────────────────────────────────────
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo

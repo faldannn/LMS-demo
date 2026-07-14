@@ -14,7 +14,12 @@ class StoreSubjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string|max:20|unique:subjects,code',
+            'code' => [
+                'required',
+                'string',
+                'max:20',
+                \Illuminate\Validation\Rule::unique('subjects', 'code')->whereNull('deleted_at'),
+            ],
             'name' => 'required|string|max:100',
             'group' => 'nullable|string|max:50',
             'description' => 'nullable|string',

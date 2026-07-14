@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        \App\Models\Student::observe(\App\Observers\StudentObserver::class);
+        \App\Models\Teacher::observe(\App\Observers\TeacherObserver::class);
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
+        \App\Models\Subject::observe(\App\Observers\SubjectObserver::class);
+
         if (!$this->app->environment('production')) {
             \Illuminate\Database\Eloquent\Model::preventLazyLoading();
             \Illuminate\Database\Eloquent\Model::preventSilentlyDiscardingAttributes();

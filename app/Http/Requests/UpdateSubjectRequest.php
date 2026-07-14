@@ -15,7 +15,12 @@ class UpdateSubjectRequest extends FormRequest
     {
         $subjectId = $this->route('subject')?->id;
         return [
-            'code' => "required|string|max:20|unique:subjects,code,{$subjectId}",
+            'code' => [
+                'required',
+                'string',
+                'max:20',
+                \Illuminate\Validation\Rule::unique('subjects', 'code')->ignore($subjectId)->whereNull('deleted_at'),
+            ],
             'name' => 'required|string|max:100',
             'group' => 'nullable|string|max:50',
             'description' => 'nullable|string',

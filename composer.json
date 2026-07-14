@@ -14,12 +14,13 @@
         "php": "^8.3",
         "ext-gd": "*",
         "ext-zip": "*",
+        "barryvdh/laravel-dompdf": "^3.0",
+        "firebase/php-jwt": "^7.1",
+        "guzzlehttp/guzzle": "^7.8",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
-        "barryvdh/laravel-dompdf": "^3.0",
         "maatwebsite/excel": "^3.1",
-        "simplesoftwareio/simple-qrcode": "^4.2",
-        "guzzlehttp/guzzle": "^7.8"
+        "simplesoftwareio/simple-qrcode": "^4.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

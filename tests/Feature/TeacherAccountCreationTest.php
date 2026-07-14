@@ -21,6 +21,7 @@ class TeacherAccountCreationTest extends TestCase
             ->post(route('teachers.store'), [
                 'nip' => '199001012020121001',
                 'name' => 'Guru Baru',
+                'dob' => '1990-01-01',
                 'phone' => '08123456789',
                 'email' => 'guru.baru@example.com',
                 'status' => true,
@@ -28,6 +29,7 @@ class TeacherAccountCreationTest extends TestCase
             ->assertRedirect(route('teachers.index'));
 
         $teacher = Teacher::where('nip', '199001012020121001')->firstOrFail();
+        $this->assertSame('1990-01-01', $teacher->dob->format('Y-m-d'));
         $user = $teacher->user;
 
         $this->assertSame('199001012020121001', $user->username);
