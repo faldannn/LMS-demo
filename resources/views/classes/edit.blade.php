@@ -34,7 +34,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jurusan</label>
+                            <label class="form-label fw-semibold">Jurusan <span class="text-muted small">(Opsional)</span></label>
                             <select name="major_id" class="form-select">
                                 <option value="">-- Pilih Jurusan --</option>
                                 @foreach($majors as $m)
@@ -43,11 +43,19 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Ruang</label>
+                            <label class="form-label fw-semibold">Ruang <span class="text-muted small">(Opsional)</span></label>
                             <input type="text" name="room" class="form-control" value="{{ old('room', $class->room) }}">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Sesi Kelas <span class="text-danger">*</span></label>
+                            <select name="session" class="form-select @error('session') is-invalid @enderror" required>
+                                <option value="pagi" {{ old('session', $class->session ?? 'pagi') == 'pagi' ? 'selected' : '' }}>Pagi (Sesi Pagi)</option>
+                                <option value="siang" {{ old('session', $class->session ?? 'pagi') == 'siang' ? 'selected' : '' }}>Siang (Sesi Siang)</option>
+                            </select>
+                            @error('session')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Wali Kelas</label>
+                            <label class="form-label fw-semibold">Wali Kelas <span class="text-muted small">(Opsional)</span></label>
                             <select name="homeroom_teacher_id" class="form-select">
                                 <option value="">-- Pilih Wali Kelas --</option>
                                 @foreach($teachers as $t)
@@ -55,6 +63,7 @@
                                 @endforeach
                             </select>
                         </div>
+
                         <div class="col-md-8">
                             <label class="form-label fw-semibold">Tahun Ajaran</label>
                             <select name="academic_year_id" class="form-select">

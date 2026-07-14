@@ -82,34 +82,22 @@
             @endrole
         </header>
 
-        {{-- FLASH MESSAGES --}}
-        <div id="flash-messages" class="mx-4 mt-4 sm:mx-6 lg:mx-8">
-            @if(session('success'))
-                <div class="relative rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <i class="bi bi-check-circle-fill text-lg text-emerald-500"></i>
-                        <p class="font-medium">{{ session('success') }}</p>
-                    </div>
-                    <button type="button" class="absolute right-3 top-3.5 text-emerald-500 hover:text-emerald-700" onclick="this.parentElement.remove()">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            @endif
-            
-            @if(session('error') || $errors->any())
-                <div class="relative mt-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <i class="bi bi-exclamation-triangle-fill text-lg text-rose-500"></i>
-                        <p class="font-medium">
-                            @if(session('error')){{ session('error') }}@else{{ $errors->first() }}@endif
-                        </p>
-                    </div>
-                    <button type="button" class="absolute right-3 top-3.5 text-rose-500 hover:text-rose-700" onclick="this.parentElement.remove()">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            @endif
-        </div>
+        {{-- FLASH MESSAGES VIA TOAST --}}
+        @if(session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    showToast('success', '{{ session("success") }}');
+                });
+            </script>
+        @endif
+        
+        @if(session('error') || $errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    showToast('error', '{{ session("error") ?? $errors->first() }}');
+                });
+            </script>
+        @endif
 
         {{-- PAGE CONTENT --}}
         <main class="flex-1 p-4 sm:p-6 lg:p-8">
@@ -138,6 +126,7 @@
 
         // Dark mode features removed from UI and JS
 
+        // 1. data-confirm handler
         document.querySelectorAll('[data-confirm]').forEach(el => {
             el.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -159,17 +148,90 @@
             });
         });
 
-        setTimeout(() => {
-            const flash = document.getElementById('flash-messages');
-            if(flash) flash.style.display = 'none';
-        }, 5000);
+        // 2. Intercept legacy inline confirm() for form submissions
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            const onsubmitAttr = form.getAttribute('onsubmit');
+            if (onsubmitAttr && onsubmitAttr.includes('confirm(')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                let message = 'Apakah Anda yakin?';
+                const match = onsubmitAttr.match(/confirm\(['"](.*?)['"]\)/);
+                if (match && match[1]) {
+                    message = match[1];
+                }
+                
+                form.removeAttribute('onsubmit');
+                
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Lanjutkan!',
+                    cancelButtonText: 'Batal',
+                    customClass: {
+                        confirmButton: 'rounded-lg',
+                        cancelButton: 'rounded-lg'
+                    }
+                }).then(r => {
+                    if (r.isConfirmed) {
+                        form.submit();
+                    } else {
+                        form.setAttribute('onsubmit', onsubmitAttr);
+                    }
+                });
+            }
+        });
 
-        // SweetAlert2 Toast configuration
+        // 3. Intercept legacy inline confirm() for button clicks
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('[onclick]');
+            if (target) {
+                const onclickAttr = target.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes('confirm(')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    let message = 'Apakah Anda yakin?';
+                    const match = onclickAttr.match(/confirm\(['"](.*?)['"]\)/);
+                    if (match && match[1]) {
+                        message = match[1];
+                    }
+                    
+                    Swal.fire({
+                        title: 'Konfirmasi',
+                        text: message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Ya, Lanjutkan!',
+                        cancelButtonText: 'Batal',
+                        customClass: {
+                            confirmButton: 'rounded-lg',
+                            cancelButton: 'rounded-lg'
+                        }
+                    }).then(r => {
+                        if (r.isConfirmed) {
+                            target.removeAttribute('onclick');
+                            target.click();
+                            target.setAttribute('onclick', onclickAttr);
+                        }
+                    });
+                }
+            }
+        }, true); // Use capture phase to intercept before native inline handler runs
+
+        // 4. SweetAlert2 Toast configuration
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 3000,
+            timer: 3500,
             timerProgressBar: true,
             didOpen: (toast) => {
                 toast.addEventListener('mouseenter', Swal.stopTimer)

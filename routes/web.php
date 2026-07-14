@@ -88,6 +88,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::resource('teachers', TeacherController::class);
 
         registerMasterDataRoutes('classes', ClassController::class);
+        Route::post('classes/promote', [ClassController::class, 'promote'])->name('classes.promote');
         Route::post('classes/{class}/subjects', [ClassController::class, 'storeSubject'])->name('classes.subjects.store');
         Route::delete('classes/{class}/subjects/{classSubject}', [ClassController::class, 'destroySubject'])
             ->name('classes.subjects.destroy');

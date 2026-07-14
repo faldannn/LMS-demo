@@ -6,14 +6,22 @@
 @section('content')
     {{-- Header info siswa --}}
     <div class="mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 shadow-md">
-        <div class="flex items-center gap-4 p-5 text-white">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/20 text-2xl font-bold">
-                {{ strtoupper(substr($student->name, 0, 1)) }}
+        <div class="flex flex-col md:flex-row md:items-center justify-between p-5 text-white gap-4">
+            <div class="flex items-center gap-4">
+                <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/20 text-2xl font-bold">
+                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold">{{ $student->name }}</h4>
+                    <p class="text-sm text-white/80">{{ $student->nis }} &middot; {{ $student->class?->name }}</p>
+                    <p class="text-xs text-white/70">Wali Kelas: {{ $student->class?->homeroomTeacher?->name ?? '-' }}</p>
+                </div>
             </div>
-            <div>
-                <h4 class="text-lg font-bold">{{ $student->name }}</h4>
-                <p class="text-sm text-white/80">{{ $student->nis }} &middot; {{ $student->class?->name }}</p>
-                <p class="text-xs text-white/70">Wali Kelas: {{ $student->class?->homeroomTeacher?->name ?? '-' }}</p>
+            <div class="shrink-0">
+                <a href="{{ route('attendance.self-checkin') }}" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-brand-700 shadow-md hover:bg-brand-50 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <i class="bi bi-camera-video text-lg"></i>
+                    Ambil Presensi Wajah & GPS
+                </a>
             </div>
         </div>
     </div>

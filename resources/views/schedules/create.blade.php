@@ -38,8 +38,12 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Mata Pelajaran <span class="text-danger">*</span></label>
-                            <input type="text" name="subject" class="form-control @error('subject') is-invalid @enderror"
-                                value="{{ old('subject') }}" placeholder="Contoh: Matematika" required>
+                            <select name="subject" class="form-select @error('subject') is-invalid @enderror" required>
+                                <option value="">-- Pilih Mata Pelajaran --</option>
+                                @foreach($subjects as $s)
+                                    <option value="{{ $s->name }}" {{ old('subject') == $s->name ? 'selected' : '' }}>{{ $s->name }} ({{ $s->code }})</option>
+                                @endforeach
+                            </select>
                             @error('subject')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
@@ -47,7 +51,14 @@
                             <select name="teacher_id" class="form-select @error('teacher_id') is-invalid @enderror" required>
                                 <option value="">-- Pilih Guru --</option>
                                 @foreach($teachers as $t)
-                                    <option value="{{ $t->id }}" {{ old('teacher_id') == $t->id ? 'selected' : '' }}>{{ $t->name }} {{ $t->subject ? '('.$t->subject.')' : '' }}</option>
+                                    @php
+                                        $teacherSubjects = $t->subjects->pluck('name')->toArray();
+                                        if ($t->subject) {
+                                            $legacySubjects = array_map('trim', explode(',', $t->subject));
+                                            $teacherSubjects = array_unique(array_merge($teacherSubjects, $legacySubjects));
+                                        }
+                                    @endphp
+                                    <option value="{{ $t->id }}" data-subjects="{{ json_encode($teacherSubjects) }}" {{ old('teacher_id') == $t->id ? 'selected' : '' }}>{{ $t->name }} {{ $t->subject ? '('.$t->subject.')' : '' }}</option>
                                 @endforeach
                             </select>
                             @error('teacher_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -65,7 +76,7 @@
                             @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label fw-semibold">Ruang</label>
+                            <label class="form-label fw-semibold">Ruang <span class="text-muted small">(Opsional)</span></label>
                             <input type="text" name="room" class="form-control" value="{{ old('room') }}" placeholder="R-101">
                         </div>
                     </div>
@@ -77,4 +88,58 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const subjectSelect = document.querySelector('select[name="subject"]');
+    const teacherSelect = document.querySelector('select[name="teacher_id"]');
+    
+    if (subjectSelect && teacherSelect) {
+        // Store all teacher options in an array (including placeholder)
+        const allTeacherOptions = Array.from(teacherSelect.options);
+        
+        subjectSelect.addEventListener('change', function () {
+            const selectedSubject = this.value;
+            
+            // Reset teacher select value
+            teacherSelect.value = "";
+            
+            // Clear current options (except the first placeholder option)
+            teacherSelect.innerHTML = "";
+            teacherSelect.appendChild(allTeacherOptions[0]);
+            
+            if (!selectedSubject) {
+                // If no subject selected, show all teachers
+                for (let i = 1; i < allTeacherOptions.length; i++) {
+                    teacherSelect.appendChild(allTeacherOptions[i]);
+                }
+                return;
+            }
+            
+            // Filter and add matching teachers
+            for (let i = 1; i < allTeacherOptions.length; i++) {
+                const option = allTeacherOptions[i];
+                let subjects = [];
+                try {
+                    subjects = JSON.parse(option.getAttribute('data-subjects') || '[]');
+                } catch (e) {
+                    subjects = [];
+                }
+                
+                // Check if teacher teaches the selected subject
+                const matches = subjects.some(subj => subj.toLowerCase() === selectedSubject.toLowerCase());
+                
+                if (matches) {
+                    teacherSelect.appendChild(option);
+                }
+            }
+        });
+
+        // Trigger change event once on load to filter if subject is pre-selected
+        if (subjectSelect.value) {
+            subjectSelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
 @endsection

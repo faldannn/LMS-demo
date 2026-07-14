@@ -3,6 +3,14 @@
 @section('page-title', 'Presensi Mandiri')
 
 @section('content')
+<div class="mb-4 flex justify-center">
+    <div class="w-full @if($todayLog) max-w-2xl @else max-w-3xl @endif flex justify-start">
+        <a href="{{ route('attendance.mine') }}" class="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-500 hover:text-brand-600 transition">
+            <i class="bi bi-arrow-left"></i> Kembali ke Halaman Absensi
+        </a>
+    </div>
+</div>
+
 @if($todayLog)
 <div class="flex justify-center">
     <div class="w-full max-w-2xl">
@@ -50,8 +58,14 @@
 
                 <div data-step-panel="camera" class="hidden text-center">
                     <div class="relative mx-auto mb-4 overflow-hidden rounded-xl bg-slate-900" style="aspect-ratio:4/3; max-width: 480px;">
-                        <video id="attendanceVideo" class="h-full w-full object-cover" playsinline muted autoplay></video>
+                        <video id="attendanceVideo" class="h-full w-full object-cover" playsinline muted autoplay style="transform: scaleX(-1);"></video>
+                        <img id="attendancePreview" class="hidden h-full w-full object-cover" alt="Preview">
                         <canvas id="attendanceCanvas" class="hidden"></canvas>
+                        
+                        <!-- Face Box Overlay -->
+                        <div id="faceOverlay" class="absolute hidden border-2 border-emerald-500 rounded-lg pointer-events-none" style="transition: all 0.05s ease-out;">
+                            <span class="absolute inset-0 m-auto h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        </div>
                     </div>
 
                     <!-- Fallback file input for non-secure contexts / HTTP / Permission Denied -->
@@ -67,9 +81,21 @@
                         </div>
                     </div>
 
-                    <button id="btnCapturePhoto" class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-700">
-                        <i class="bi bi-camera"></i> Ambil Foto & Lanjut
-                    </button>
+                    <!-- Action Buttons -->
+                    <div id="captureActionContainer" class="mt-4">
+                        <button id="btnCapturePhoto" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-700" disabled>
+                            <i class="bi bi-camera"></i> Ambil Foto
+                        </button>
+                    </div>
+
+                    <div id="confirmActionContainer" class="hidden mt-4 flex justify-center gap-3">
+                        <button id="btnRetakePhoto" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                            <i class="bi bi-arrow-counterclockwise"></i> Foto Ulang
+                        </button>
+                        <button id="btnConfirmPhoto" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-700">
+                            <i class="bi bi-check-lg"></i> Gunakan Foto & Lanjut
+                        </button>
+                    </div>
                 </div>
 
                 <div data-step-panel="gps" class="hidden py-10 text-center">
@@ -90,6 +116,8 @@
 </div>
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
 @if(file_exists(public_path('build/manifest.json')))
 @vite(['resources/js/self-attendance.js'])
 @else

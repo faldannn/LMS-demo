@@ -92,10 +92,16 @@
             <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:ring-brand-500/30">
                 <div>
                     <!-- Top Row: Grade Badge & Academic Year -->
-                    <div class="mb-4 flex items-center justify-between">
-                        <div class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                            <i class="bi bi-mortarboard text-sm leading-none"></i>
-                            Tingkat {{ $class->grade }}
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <div class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
+                                <i class="bi bi-mortarboard text-sm leading-none"></i>
+                                Tingkat {{ $class->grade }}
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 rounded-full @if(($class->session ?? 'pagi') === 'pagi') bg-amber-50 text-amber-700 @else bg-sky-50 text-sky-700 @endif px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider">
+                                <i class="bi @if(($class->session ?? 'pagi') === 'pagi') bi-sun-fill @else bi-moon-stars-fill @endif"></i>
+                                {{ $class->session ?? 'pagi' }}
+                            </div>
                         </div>
                         <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
                             TA {{ $class->academicYear?->year ?? '-' }}

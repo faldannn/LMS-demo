@@ -58,6 +58,22 @@ class ScheduleController extends Controller
                 });
             }
 
+            // Auto-create missing ClassSubject links so schedules immediately become clickable/functional
+            if (!$matchedCs && $classId) {
+                $subjectModel = \App\Models\Subject::where('name', 'like', "%{$sched->subject}%")->first();
+                $activeYear = AcademicYear::active();
+                if ($subjectModel && $activeYear) {
+                    $matchedCs = ClassSubject::firstOrCreate([
+                        'class_id' => $classId,
+                        'subject_id' => $subjectModel->id,
+                        'academic_year_id' => $activeYear->id,
+                    ], [
+                        'teacher_id' => $sched->teacher_id,
+                    ]);
+                    $classSubjects->push($matchedCs);
+                }
+            }
+
             $sched->class_subject_id = $matchedCs ? $matchedCs->id : null;
         }
 
@@ -69,9 +85,10 @@ class ScheduleController extends Controller
     public function create()
     {
         $classes = Classes::orderBy('name')->get();
-        $teachers = Teacher::active()->orderBy('name')->get();
+        $teachers = Teacher::active()->with('subjects')->orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
         $days = ['1' => 'Senin', '2' => 'Selasa', '3' => 'Rabu', '4' => 'Kamis', '5' => 'Jumat', '6' => 'Sabtu'];
-        return view('schedules.create', compact('classes', 'teachers', 'days'));
+        return view('schedules.create', compact('classes', 'teachers', 'subjects', 'days'));
     }
 
     public function store(Request $request)
@@ -85,8 +102,23 @@ class ScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'room' => 'nullable|string|max:20',
         ]);
-        $data['academic_year_id'] = AcademicYear::active()?->id;
-        Schedule::create($data);
+        
+        $activeYear = AcademicYear::active();
+        $data['academic_year_id'] = $activeYear?->id;
+        
+        $schedule = Schedule::create($data);
+
+        // Auto-create ClassSubject mapping if not exists
+        $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
+        if ($subjectModel && $activeYear) {
+            ClassSubject::firstOrCreate([
+                'class_id' => $data['class_id'],
+                'subject_id' => $subjectModel->id,
+                'academic_year_id' => $activeYear->id,
+            ], [
+                'teacher_id' => $data['teacher_id'],
+            ]);
+        }
 
         return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
             ->with('success', 'Jadwal berhasil ditambahkan.');

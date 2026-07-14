@@ -53,6 +53,31 @@
 
     <div class="row g-4">
         <div class="col-md-3">
+            {{-- Filter Absensi --}}
+            <div class="card mb-4 shadow-sm border-slate-200/60 rounded-2xl overflow-hidden bg-white">
+                <div class="card-header bg-slate-50/80 border-bottom border-slate-100 px-4 py-3 fw-bold text-slate-800 flex items-center gap-2">
+                    <i class="bi bi-funnel-fill text-brand-600"></i> Cari Absensi Lain
+                </div>
+                <div class="card-body p-4">
+                    <form method="GET" action="{{ route('attendance.show', $attendance) }}">
+                        <div class="mb-3">
+                            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Tanggal</label>
+                            <input type="date" name="date" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 transition-all outline-none" value="{{ $attendance->date->toDateString() }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Sesi</label>
+                            <select name="session" class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 transition-all outline-none" required>
+                                <option value="pagi" {{ $attendance->session === 'pagi' ? 'selected' : '' }}>Pagi</option>
+                                <option value="siang" {{ $attendance->session === 'siang' ? 'selected' : '' }}>Siang</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-brand-700 hover:scale-[1.01] active:scale-[0.99] transition-all border-0">
+                            <i class="bi bi-search"></i> Cari
+                        </button>
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header"><i class="bi bi-info-circle me-2 text-primary"></i>Info Sesi</div>
                 <div class="card-body">

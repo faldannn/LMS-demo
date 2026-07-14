@@ -59,7 +59,7 @@ class QrAttendanceService
             [
                 'date' => $date,
                 'class_id' => $student->class_id,
-                'session' => 'pagi',
+                'session' => $student->class?->session ?? 'pagi',
             ],
             ['teacher_id' => $teacherId]
         );

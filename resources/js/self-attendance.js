@@ -6,6 +6,7 @@ export class SelfAttendanceApp {
         this.root = root;
         this.config = null;
         this.stream = null;
+        this.trackingTask = null;
         this.state = {
             step: 'init',
             gps: null,
@@ -15,10 +16,16 @@ export class SelfAttendanceApp {
             stepIndicator: root.querySelector('[data-step-indicator]'),
             panels: root.querySelectorAll('[data-step-panel]'),
             video: root.querySelector('#attendanceVideo'),
+            previewImg: root.querySelector('#attendancePreview'),
+            faceOverlay: root.querySelector('#faceOverlay'),
             canvas: root.querySelector('#attendanceCanvas'),
             status: root.querySelector('[data-status]'),
             btnStart: root.querySelector('[data-btn-start]'),
+            captureAction: root.querySelector('#captureActionContainer'),
+            confirmAction: root.querySelector('#confirmActionContainer'),
             btnCapturePhoto: root.querySelector('#btnCapturePhoto'),
+            btnRetake: root.querySelector('#btnRetakePhoto'),
+            btnConfirm: root.querySelector('#btnConfirmPhoto'),
             successBox: root.querySelector('[data-success]'),
             fallbackContainer: root.querySelector('#cameraFallbackContainer'),
             fileInput: root.querySelector('#filePhoto'),
@@ -30,7 +37,9 @@ export class SelfAttendanceApp {
 
     bindEvents() {
         this.els.btnStart?.addEventListener('click', () => this.startFlow());
-        this.els.btnCapturePhoto?.addEventListener('click', () => this.captureAndNext());
+        this.els.btnCapturePhoto?.addEventListener('click', () => this.captureAndPreview());
+        this.els.btnRetake?.addEventListener('click', () => this.retakePhoto());
+        this.els.btnConfirm?.addEventListener('click', () => this.confirmPhoto());
         this.els.fileInput?.addEventListener('change', (e) => this.handleFallbackFile(e));
     }
 
@@ -86,9 +95,12 @@ export class SelfAttendanceApp {
             
             // Show video, hide fallback file uploader
             this.els.video.parentElement.classList.remove('hidden');
-            this.els.btnCapturePhoto.classList.remove('hidden');
-            this.els.btnCapturePhoto.innerHTML = '<i class="bi bi-camera"></i> Ambil Foto & Lanjut';
+            if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
+            if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
             this.els.fallbackContainer?.classList.add('hidden');
+
+            this.initFaceTracking();
+
             return true;
         } catch (e) {
             console.error('Camera access error:', e);
@@ -96,9 +108,72 @@ export class SelfAttendanceApp {
         }
     }
 
+    initFaceTracking() {
+        if (!window.tracking || !window.tracking.ObjectTracker) {
+            console.warn('tracking.js is not loaded. Face detection bypassed.');
+            if (this.els.btnCapturePhoto) {
+                this.els.btnCapturePhoto.removeAttribute('disabled');
+            }
+            this.setStatus('Kamera siap. Posisikan wajah Anda dan ambil foto.');
+            return;
+        }
+
+        const tracker = new window.tracking.ObjectTracker('face');
+        tracker.setInitialScale(4);
+        tracker.setStepSize(2);
+        tracker.setEdgesDensity(0.1);
+
+        this.trackingTask = window.tracking.track(this.els.video, tracker);
+        this.setStatus('Mencari wajah... Harap hadapkan wajah Anda ke kamera.', 'warning');
+
+        tracker.on('track', (event) => {
+            if (this.state.step !== 'camera' || this.state.photoBlob) {
+                if (this.els.faceOverlay) this.els.faceOverlay.classList.add('hidden');
+                return;
+            }
+
+            if (event.data.length > 0) {
+                const rect = event.data[0];
+                this.els.btnCapturePhoto.removeAttribute('disabled');
+                this.setStatus('Wajah terdeteksi! Silakan ambil foto.', 'success');
+
+                // Draw face overlay
+                if (this.els.faceOverlay) {
+                    const video = this.els.video;
+                    const displayWidth = video.offsetWidth;
+                    const displayHeight = video.offsetHeight;
+                    const videoWidth = video.videoWidth || 640;
+                    const videoHeight = video.videoHeight || 480;
+
+                    const scaleX = displayWidth / videoWidth;
+                    const scaleY = displayHeight / videoHeight;
+
+                    // Since the video is mirrored (scaleX(-1)), the left coordinate must be mirrored!
+                    const faceWidth = rect.width * scaleX;
+                    const faceHeight = rect.height * scaleY;
+                    const faceLeft = displayWidth - (rect.x + rect.width) * scaleX;
+                    const faceTop = rect.y * scaleY;
+
+                    this.els.faceOverlay.style.left = `${faceLeft}px`;
+                    this.els.faceOverlay.style.top = `${faceTop}px`;
+                    this.els.faceOverlay.style.width = `${faceWidth}px`;
+                    this.els.faceOverlay.style.height = `${faceHeight}px`;
+                    this.els.faceOverlay.classList.remove('hidden');
+                }
+            } else {
+                this.els.btnCapturePhoto.setAttribute('disabled', 'true');
+                this.setStatus('Wajah tidak terdeteksi. Silakan posisikan wajah Anda ke kamera.', 'danger');
+                if (this.els.faceOverlay) {
+                    this.els.faceOverlay.classList.add('hidden');
+                }
+            }
+        });
+    }
+
     showFallbackFileInput() {
         this.els.video.parentElement.classList.add('hidden');
-        this.els.btnCapturePhoto.classList.add('hidden');
+        if (this.els.captureAction) this.els.captureAction.classList.add('hidden');
+        if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
         this.els.fallbackContainer?.classList.remove('hidden');
     }
 
@@ -117,7 +192,8 @@ export class SelfAttendanceApp {
 
                 // Show and customize the capture button to serve as the continue button
                 this.els.btnCapturePhoto.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Lanjut dengan Foto Ini';
-                this.els.btnCapturePhoto.classList.remove('hidden');
+                this.els.btnCapturePhoto.removeAttribute('disabled');
+                if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
                 this.setStatus('Foto berhasil dipilih. Klik tombol di bawah untuk memvalidasi lokasi GPS.');
             } catch (err) {
                 console.error('Image compression error:', err);
@@ -165,12 +241,18 @@ export class SelfAttendanceApp {
     }
 
     stopCamera() {
+        if (this.trackingTask) {
+            this.trackingTask.stop();
+            this.trackingTask = null;
+        }
+        if (this.els.faceOverlay) {
+            this.els.faceOverlay.classList.add('hidden');
+        }
         this.stream?.getTracks().forEach(t => t.stop());
         this.stream = null;
     }
 
-    async captureAndNext() {
-        // If we haven't already selected a file photo, capture it from the video element
+    async captureAndPreview() {
         if (!this.state.photoBlob) {
             this.state.photoBlob = await this.capturePhoto();
         }
@@ -180,7 +262,46 @@ export class SelfAttendanceApp {
             return;
         }
 
+        // Hide video & overlay, show preview image
+        const url = URL.createObjectURL(this.state.photoBlob);
+        if (this.els.previewImg) {
+            this.els.previewImg.src = url;
+            this.els.previewImg.classList.remove('hidden');
+        }
+        this.els.video.classList.add('hidden');
+        if (this.els.faceOverlay) {
+            this.els.faceOverlay.classList.add('hidden');
+        }
+
         this.stopCamera();
+
+        // Switch buttons
+        if (this.els.captureAction) this.els.captureAction.classList.add('hidden');
+        if (this.els.confirmAction) this.els.confirmAction.classList.remove('hidden');
+
+        this.setStatus('Foto berhasil diambil. Klik "Gunakan Foto & Lanjut" jika hasilnya bagus, atau "Foto Ulang" jika ingin mengambil gambar kembali.', 'success');
+    }
+
+    async retakePhoto() {
+        this.state.photoBlob = null;
+
+        // Reset elements visibility
+        if (this.els.previewImg) {
+            this.els.previewImg.src = '';
+            this.els.previewImg.classList.add('hidden');
+        }
+        this.els.video.classList.remove('hidden');
+
+        // Switch buttons back
+        if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
+        if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
+
+        // Restart camera
+        this.setStatus('Hadapkan wajah Anda ke kamera lalu klik tombol di bawah untuk mengambil foto.');
+        await this.startCamera();
+    }
+
+    async confirmPhoto() {
         this.goToStep('gps');
         await this.acquireGps();
     }
@@ -191,7 +312,16 @@ export class SelfAttendanceApp {
         if (!video?.videoWidth) return null;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
+        const ctx = canvas.getContext('2d');
+        
+        ctx.save();
+        // Mirror the canvas drawing to match the scaleX(-1) CSS video preview!
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        
+        ctx.drawImage(video, 0, 0);
+        ctx.restore();
+        
         return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
     }
 
@@ -267,7 +397,15 @@ export class SelfAttendanceApp {
                 <a href="/siswa/my-attendance" class="mt-6 inline-block rounded-xl border border-brand-600 px-6 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-50">Lihat Riwayat Absensi</a>`;
         } catch (e) {
             this.setStatus(e.message, 'danger');
+            this.state.photoBlob = null;
             this.goToStep('camera');
+            if (this.els.previewImg) {
+                this.els.previewImg.src = '';
+                this.els.previewImg.classList.add('hidden');
+            }
+            this.els.video.classList.remove('hidden');
+            if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
+            if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
             this.startCamera();
         }
     }

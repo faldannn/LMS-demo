@@ -29,6 +29,12 @@
                     <dd class="fw-semibold mb-2">{{ $class->major?->name ?? '-' }}</dd>
                     <dt class="text-muted small">Ruang</dt>
                     <dd class="fw-semibold mb-2">{{ $class->room ?? '-' }}</dd>
+                    <dt class="text-muted small">Sesi Kelas</dt>
+                    <dd class="fw-semibold mb-2">
+                        <span class="badge @if(($class->session ?? 'pagi') === 'pagi') bg-warning text-dark @else bg-info text-white @endif font-bold uppercase" style="font-size: 11px;">
+                            {{ $class->session ?? 'pagi' }}
+                        </span>
+                    </dd>
                     <dt class="text-muted small">Wali Kelas</dt>
                     <dd class="fw-semibold mb-2">{{ $class->homeroomTeacher?->name ?? 'Belum ditentukan' }}</dd>
                     <dt class="text-muted small">Tahun Ajaran</dt>
@@ -61,45 +67,82 @@
     </div>
 
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people me-2 text-primary"></i>Daftar Siswa Aktif</span>
-                <span class="badge bg-primary">{{ $class->students->count() }} siswa</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr><th>#</th><th>NIS</th><th>Nama Siswa</th><th>JK</th><th>% Hadir</th><th>Aksi</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($class->students as $i => $student)
+        <form method="POST" action="{{ route('classes.promote') }}" id="promote-students-form">
+            @csrf
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people me-2 text-primary"></i>Daftar Siswa Aktif</span>
+                    <span class="badge bg-primary">{{ $class->students->count() }} siswa</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ $i + 1 }}</td>
-                                <td><code>{{ $student->nis }}</code></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="{{ $student->photo_url }}" width="28" height="28" style="border-radius:50%;object-fit:cover" alt="">
-                                        <span class="fw-semibold">{{ $student->name }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge" style="background:{{ $student->gender==='L' ? 'var(--color-brand-50)' : '#fce7f3' }};color:{{ $student->gender==='L' ? 'var(--color-brand-600)' : '#9d174d' }}">{{ $student->gender }}</span>
-                                </td>
-                                <td>
-                                    @php $pct = $student->attendance_percentage @endphp
-                                    <span class="fw-semibold {{ $pct >= 75 ? 'text-success' : 'text-danger' }}">{{ $pct }}%</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('students.show', $student) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
-                                </td>
+                                <th style="width: 40px;"><input type="checkbox" id="check-all-students"></th>
+                                <th>#</th>
+                                <th>NIS</th>
+                                <th>Nama Siswa</th>
+                                <th>JK</th>
+                                <th>% Hadir</th>
+                                <th>Aksi</th>
                             </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-center text-muted py-4">Belum ada siswa di kelas ini.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($class->students as $i => $student)
+                                <tr>
+                                    <td><input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="student-checkbox"></td>
+                                    <td>{{ $i + 1 }}</td>
+                                    <td><code>{{ $student->nis }}</code></td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <img src="{{ $student->photo_url }}" width="28" height="28" style="border-radius:50%;object-fit:cover" alt="">
+                                            <span class="fw-semibold">{{ $student->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background:{{ $student->gender==='L' ? 'var(--color-brand-50)' : '#fce7f3' }};color:{{ $student->gender==='L' ? 'var(--color-brand-600)' : '#9d174d' }}">{{ $student->gender }}</span>
+                                    </td>
+                                    <td>
+                                        @php $pct = $student->attendance_percentage @endphp
+                                        <span class="fw-semibold {{ $pct >= 75 ? 'text-success' : 'text-danger' }}">{{ $pct }}%</span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('students.show', $student) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa di kelas ini.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if($class->students->isNotEmpty())
+                    <div class="card-footer bg-light py-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-7 text-muted small">
+                                <i class="bi bi-info-circle me-1"></i> Centang siswa di atas, pilih kelas tujuan, lalu klik "Pindahkan Kelas" untuk menaikkan/memindahkan kelas secara massal.
+                            </div>
+                            <div class="col-md-5 d-flex gap-2">
+                                <select name="target_class_id" class="form-select form-select-sm" required>
+                                    <option value="">-- Pilih Kelas Tujuan --</option>
+                                    <option value="lulus" class="text-danger fw-bold">🎓 Luluskan / Non-Aktifkan Siswa</option>
+                                    @php
+                                        $allClasses = \App\Models\Classes::with('academicYear')->where('id', '!=', $class->id)->orderBy('grade')->orderBy('name')->get();
+                                    @endphp
+                                    @foreach($allClasses as $c)
+                                        <option value="{{ $c->id }}">{{ $c->name }} (Thn: {{ $c->academicYear?->year }})</option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-warning text-nowrap" id="btn-promote-submit" disabled>
+                                    <i class="bi bi-arrow-right-short"></i> Pindahkan Kelas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
-        </div>
+        </form>
 
         {{-- Mata Pelajaran E-Learning --}}
         <div class="card mt-4">
@@ -211,6 +254,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Class Subject Filter Logic
     const subjectSelect = document.getElementById('class_subject_select');
     const teacherSelect = document.getElementById('class_teacher_select');
     
@@ -244,6 +288,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+
+    // 2. Bulk Class Promotion Checkbox Logic
+    const checkAll = document.getElementById('check-all-students');
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    const submitBtn = document.getElementById('btn-promote-submit');
+
+    if (checkAll && checkboxes.length > 0) {
+        checkAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateSubmitButton();
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                if (!this.checked) {
+                    checkAll.checked = false;
+                } else {
+                    const allChecked = Array.from(checkboxes).every(c => c.checked);
+                    checkAll.checked = allChecked;
+                }
+                updateSubmitButton();
+            });
+        });
+
+        function updateSubmitButton() {
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            if (submitBtn) {
+                submitBtn.disabled = !anyChecked;
+            }
+        }
     }
 });
 </script>

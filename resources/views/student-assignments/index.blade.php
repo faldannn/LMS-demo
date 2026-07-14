@@ -30,30 +30,26 @@
                 </div>
                 
                 <div class="divide-y divide-slate-100">
-                    @foreach($classSubject->assignments as $assignment)
+                    @php
+                        $uncompleted = $classSubject->assignments->filter(function($a) {
+                            return !$a->submissions->first();
+                        })->sortByDesc('created_at');
+
+                        $completed = $classSubject->assignments->filter(function($a) {
+                            return $a->submissions->first();
+                        })->sortByDesc('created_at');
+                    @endphp
+
+                    @foreach($uncompleted as $assignment)
                         @php
-                            $submission = $assignment->submissions->first();
+                            $submission = null;
                             $statusBg = 'bg-slate-50';
                             $statusBorder = 'border-slate-200';
                             $statusText = 'Belum Dikerjakan';
                             $statusColor = 'text-slate-600';
                             $iconClass = 'bi-exclamation-circle text-slate-400';
                             
-                            if ($submission) {
-                                if ($submission->grade) {
-                                    $statusBg = 'bg-emerald-50';
-                                    $statusBorder = 'border-emerald-200';
-                                    $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
-                                    $statusColor = 'text-emerald-700';
-                                    $iconClass = 'bi-check-circle-fill text-emerald-500';
-                                } else {
-                                    $statusBg = 'bg-blue-50';
-                                    $statusBorder = 'border-blue-200';
-                                    $statusText = 'Menunggu Penilaian';
-                                    $statusColor = 'text-blue-700';
-                                    $iconClass = 'bi-clock-fill text-blue-500';
-                                }
-                            } elseif ($assignment->isPastDue()) {
+                            if ($assignment->isPastDue()) {
                                 $statusBg = 'bg-rose-50';
                                 $statusBorder = 'border-rose-200';
                                 $statusText = 'Terlambat / Melewati Tenggat';
@@ -71,13 +67,64 @@
                                     {{ $statusText }}
                                 </span>
                                 
+                                <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500" title="Waktu Pembuatan Tugas">
+                                    <i class="bi bi-calendar-plus text-slate-400"></i>
+                                    Dibuat: {{ $assignment->created_at->format('d M Y, H:i') }}
+                                </span>
+                                
                                 <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                                    <i class="bi bi-calendar-x"></i>
+                                    <i class="bi bi-calendar-x text-slate-400"></i>
                                     Tenggat: {{ $assignment->due_date ? $assignment->due_date->format('d M Y, H:i') : 'Tanpa batas waktu' }}
                                 </span>
                             </div>
                         </a>
                     @endforeach
+
+                    @if($completed->isNotEmpty())
+                        <div class="bg-slate-50/80 px-6 py-2.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-y border-slate-100 flex items-center gap-1.5">
+                            <i class="bi bi-check2-all text-emerald-500 text-sm"></i> Tugas yang Sudah Dikerjakan
+                        </div>
+
+                        @foreach($completed as $assignment)
+                            @php
+                                $submission = $assignment->submissions->first();
+                                if ($submission->grade) {
+                                    $statusBg = 'bg-emerald-50';
+                                    $statusBorder = 'border-emerald-200';
+                                    $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
+                                    $statusColor = 'text-emerald-700';
+                                    $iconClass = 'bi-check-circle-fill text-emerald-500';
+                                } else {
+                                    $statusBg = 'bg-blue-50';
+                                    $statusBorder = 'border-blue-200';
+                                    $statusText = 'Menunggu Penilaian';
+                                    $statusColor = 'text-blue-700';
+                                    $iconClass = 'bi-clock-fill text-blue-500';
+                                }
+                            @endphp
+                            
+                            <a href="{{ route('student.assignments.show', $assignment) }}" class="block px-6 py-4 transition hover:bg-slate-50">
+                                <h4 class="font-bold text-slate-900 group-hover:text-brand-700">{{ $assignment->title }}</h4>
+                                
+                                <div class="mt-3 flex flex-wrap items-center gap-3">
+                                    <span class="inline-flex items-center gap-1.5 rounded-lg border {{ $statusBorder }} {{ $statusBg }} px-2.5 py-1 text-xs font-semibold {{ $statusColor }}">
+                                        <i class="bi {{ $iconClass }}"></i>
+                                        {{ $statusText }}
+                                    </span>
+                                    
+                                    <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500" title="Waktu Pembuatan Tugas">
+                                        <i class="bi bi-calendar-plus text-slate-400"></i>
+                                        Dibuat: {{ $assignment->created_at->format('d M Y, H:i') }}
+                                    </span>
+                                    
+                                    <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                                        <i class="bi bi-calendar-x text-slate-400"></i>
+                                        Tenggat: {{ $assignment->due_date ? $assignment->due_date->format('d M Y, H:i') : 'Tanpa batas waktu' }}
+                                    </span>
+                                </div>
+                            </a>
+                        @endforeach
+                    @endif
                 </div>
             </div>
             @endif

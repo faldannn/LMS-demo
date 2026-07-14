@@ -19,6 +19,7 @@ class Classes extends Model
         'major_id',
         'homeroom_teacher_id',
         'academic_year_id',
+        'session',
         'room',
         'max_students',
     ];

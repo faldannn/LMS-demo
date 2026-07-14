@@ -170,4 +170,32 @@ class ClassController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
+    public function promote(Request $request)
+    {
+        $data = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+            'target_class_id' => 'required|string',
+        ]);
+
+        if ($data['target_class_id'] === 'lulus') {
+            $students = \App\Models\Student::whereIn('id', $data['student_ids'])->get();
+            foreach ($students as $student) {
+                $student->update(['status' => false]);
+                if ($student->user) {
+                    $student->user->update(['status' => false]);
+                }
+            }
+            return back()->with('success', count($data['student_ids']) . ' siswa berhasil diluluskan (akun dinonaktifkan).');
+        }
+
+        // Validate target class
+        $targetClass = \App\Models\Classes::findOrFail((int) $data['target_class_id']);
+        
+        \App\Models\Student::whereIn('id', $data['student_ids'])
+            ->update(['class_id' => $targetClass->id]);
+
+        return back()->with('success', count($data['student_ids']) . ' siswa berhasil dipindahkan/dinaikkan kelas.');
+    }
 }

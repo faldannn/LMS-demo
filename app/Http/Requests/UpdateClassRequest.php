@@ -26,6 +26,7 @@ class UpdateClassRequest extends FormRequest
                 // A teacher can only be homeroom for 1 class; ignore current class row
                 Rule::unique('classes', 'homeroom_teacher_id')->ignore($classId),
             ],
+            'session'            => 'required|in:pagi,siang',
             'room'               => 'nullable|string|max:20',
             'max_students'       => 'integer|min:1|max:50',
         ];

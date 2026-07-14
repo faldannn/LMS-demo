@@ -2,7 +2,10 @@
 
 namespace App\Imports;
 
-use App\Models\{Classes, Student};
+use App\Models\{Classes, Student, User};
+use App\Enums\UserRole;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\{ToModel, WithHeadingRow, WithValidation, SkipsOnError};
 use Maatwebsite\Excel\Concerns\Importable;
 
@@ -16,6 +19,14 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         if (!$class)
             return null;
 
+        $user = User::create([
+            'username' => $row['nis'],
+            'password' => Hash::make($row['nis']),
+            'name' => $row['nama'],
+            'role' => UserRole::Siswa,
+            'status' => true,
+        ]);
+
         return new Student([
             'nis' => $row['nis'],
             'nisn' => $row['nisn'] ?? null,
@@ -25,6 +36,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'class_id' => $class->id,
             'parent_name' => $row['nama_ortu'] ?? null,
             'parent_phone' => $row['no_hp_ortu'] ?? null,
+            'user_id' => $user->id,
+            'status' => true,
         ]);
     }
 
@@ -39,7 +52,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
     public function onError(\Throwable $e): void
     {
-        \Log::warning('Import error: ' . $e->getMessage());
+        Log::warning('Import error: ' . $e->getMessage());
     }
 }
 

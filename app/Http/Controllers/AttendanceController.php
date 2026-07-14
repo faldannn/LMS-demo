@@ -115,7 +115,8 @@ class AttendanceController extends Controller
             $classId = null;
         }
 
-        $session = $request->get('session', 'pagi');
+        $selectedClass = $classId ? Classes::find($classId) : null;
+        $session = $request->get('session', $selectedClass?->session ?? 'pagi');
 
         $students = $classId
             ? Student::forClass($classId)->active()->orderBy('name')->get()
@@ -157,6 +158,23 @@ class AttendanceController extends Controller
 
     public function show(Attendance $attendance, Request $request)
     {
+        if ($request->filled('date') || $request->filled('session')) {
+            $date = $request->input('date', $attendance->date->toDateString());
+            $session = $request->input('session', $attendance->session);
+
+            $targetAttendance = Attendance::where([
+                'class_id' => $attendance->class_id,
+                'date' => $date,
+                'session' => $session,
+            ])->first();
+
+            if ($targetAttendance) {
+                return redirect()->route('attendance.show', $targetAttendance);
+            }
+
+            return back()->with('error', 'Data absensi untuk tanggal ' . Carbon::parse($date)->translatedFormat('d F Y') . ' sesi ' . ucfirst($session) . ' tidak ditemukan.');
+        }
+
         $user = auth()->user();
         if ($user->isGuru()) {
             $teacher = $user->teacher;

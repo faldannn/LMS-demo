@@ -82,6 +82,31 @@
         </div>
         @endif
 
+        @php
+            $uniqueSubjects = $classSubjects->pluck('subject')->filter()->unique('id')->sortBy('name')->values();
+        @endphp
+        @if($uniqueSubjects->isNotEmpty())
+        <div class="flex flex-col gap-2 md:flex-row md:items-center border-b border-slate-100 pb-3 mt-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0 md:mr-2">Mata Pelajaran:</span>
+            <div class="flex gap-1.5 overflow-x-auto pb-1 whitespace-nowrap scrollbar-none">
+                <button type="button" 
+                        onclick="filterSubject('all')" 
+                        id="btn-subject-all"
+                        class="subject-filter-btn inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ring-1 transition-all duration-200 bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-500/10 scale-105">
+                    Semua Mapel
+                </button>
+                @foreach($uniqueSubjects as $sub)
+                    <button type="button" 
+                            onclick="filterSubject('{{ $sub->id }}')" 
+                            id="btn-subject-{{ $sub->id }}"
+                            class="subject-filter-btn inline-flex items-center justify-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200/80 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm">
+                        {{ $sub->name }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- Class Groups --}}
         <div class="space-y-8 mt-4" id="class-sections-container">
             @foreach($grouped as $classId => $subjects)
@@ -110,7 +135,7 @@
                     {{-- Class Subject Grid --}}
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach($subjects as $cs)
-                        <div data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:ring-brand-200">
+                        <div data-subject-id="{{ $cs->subject_id }}" data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:ring-brand-200">
                             {{-- Accent bar --}}
                             <div class="h-1 bg-brand-500"></div>
 
@@ -165,11 +190,12 @@
         </div>
 
         {{-- Filter Script --}}
-        @if($grouped->count() > 1 || $teachers->isNotEmpty())
+        @if($grouped->count() > 1 || $teachers->isNotEmpty() || $uniqueSubjects->isNotEmpty())
         @push('scripts')
         <script>
             let selectedClassId = 'all';
             let selectedTeacherId = 'all';
+            let selectedSubjectId = 'all';
             let searchQuery = '';
 
             document.addEventListener('DOMContentLoaded', function() {
@@ -220,6 +246,25 @@
                 applyFilters();
             }
 
+            function filterSubject(subjectId) {
+                selectedSubjectId = subjectId;
+                
+                // Update filter subject buttons
+                const buttons = document.querySelectorAll('.subject-filter-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
+                    btn.classList.add('bg-white', 'text-slate-600', 'ring-slate-200/80', 'font-semibold');
+                });
+
+                const activeBtn = document.getElementById(`btn-subject-${subjectId}`);
+                if (activeBtn) {
+                    activeBtn.classList.remove('bg-white', 'text-slate-600', 'ring-slate-200/80', 'font-semibold');
+                    activeBtn.classList.add('bg-brand-600', 'text-white', 'ring-brand-600', 'shadow-md', 'shadow-brand-500/20', 'scale-105', 'font-bold');
+                }
+
+                applyFilters();
+            }
+
             function applyFilters() {
                 const sections = document.querySelectorAll('.class-section');
                 
@@ -230,14 +275,16 @@
                     
                     cards.forEach(card => {
                         const teacherId = card.getAttribute('data-teacher-id');
+                        const subjectId = card.getAttribute('data-subject-id');
                         const subjectName = card.querySelector('h4').textContent.toLowerCase();
                         const teacherName = card.querySelector('.font-medium').textContent.toLowerCase();
                         
                         const matchesClass = (selectedClassId === 'all' || classId === selectedClassId);
                         const matchesTeacher = (selectedTeacherId === 'all' || teacherId === selectedTeacherId);
+                        const matchesSubject = (selectedSubjectId === 'all' || subjectId === selectedSubjectId);
                         const matchesSearch = (subjectName.includes(searchQuery) || teacherName.includes(searchQuery));
                         
-                        if (matchesClass && matchesTeacher && matchesSearch) {
+                        if (matchesClass && matchesTeacher && matchesSubject && matchesSearch) {
                             card.style.display = 'flex';
                             visibleCardsCount++;
                         } else {

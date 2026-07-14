@@ -25,6 +25,7 @@ class StoreClassRequest extends FormRequest
                 Rule::unique('classes', 'homeroom_teacher_id'),
             ],
             'academic_year_id'   => 'required|exists:academic_years,id',
+            'session'            => 'required|in:pagi,siang',
             'room'               => 'nullable|string|max:20',
             'max_students'       => 'integer|min:1|max:50',
         ];
