@@ -77,6 +77,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     Route::middleware('can:manage-admin')->prefix('admin')->group(function () {
         require __DIR__ . '/master-data.php';
 
+        Route::get('students/import/template', [StudentController::class, 'importTemplate'])->name('students.import.template');
         registerMasterDataRoutes('students', StudentController::class);
         Route::get('students/{student}/attendance-history', [StudentController::class, 'attendanceHistory'])
             ->name('students.attendance-history');
@@ -84,6 +85,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             ->name('students.print-card');
         Route::resource('students', StudentController::class);
 
+        Route::get('teachers/import/template', [TeacherController::class, 'importTemplate'])->name('teachers.import.template');
         registerMasterDataRoutes('teachers', TeacherController::class);
         Route::post('teachers/{teacher}/homeroom', [TeacherController::class, 'updateHomeroom'])->name('teachers.homeroom.update');
         Route::post('teachers/{teacher}/subjects', [TeacherController::class, 'storeClassSubject'])->name('teachers.subjects.store');

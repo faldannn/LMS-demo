@@ -5,7 +5,13 @@
 @section('content')
 <div class="space-y-6">
     {{-- Toolbar --}}
-    <x-master-data-toolbar createRoute="{{ route('teachers.create') }}" createLabel="Tambah Guru" :trashedRoute="route('teachers.trashed')">
+    <x-master-data-toolbar 
+        createRoute="{{ route('teachers.create') }}" 
+        createLabel="Tambah Guru" 
+        :trashedRoute="route('teachers.trashed')"
+        importRoute="{{ route('teachers.import') }}"
+        templateRoute="{{ route('teachers.import.template') }}"
+    >
         <p class="text-sm text-slate-500">Total: <strong class="text-slate-800">{{ $teachers->total() }}</strong> guru</p>
     </x-master-data-toolbar>
 

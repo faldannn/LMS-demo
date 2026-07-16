@@ -1,6 +1,7 @@
 @props([
     'createRoute' => null,
     'importRoute' => null,
+    'templateRoute' => null,
     'exportExcelRoute' => null,
     'exportPdfRoute' => null,
     'trashedRoute' => null,
@@ -23,6 +24,11 @@
         @if($exportPdfRoute)
             <a href="{{ $exportPdfRoute }}" class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-sm font-medium text-rose-700 shadow-sm transition hover:bg-rose-50">
                 <i class="bi bi-file-earmark-pdf"></i>PDF
+            </a>
+        @endif
+        @if($templateRoute)
+            <a href="{{ $templateRoute }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
+                <i class="bi bi-download"></i>Unduh Template
             </a>
         @endif
         @if($importRoute)
@@ -54,6 +60,14 @@
                 <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100">
                 @error('file')<p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>@enderror
             </div>
+            @if($templateRoute)
+            <div class="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+                Format kolom harus sesuai template. Silakan unduh format template di tombol berikut:<br>
+                <a href="{{ $templateRoute }}" class="mt-2 inline-flex items-center gap-1.5 rounded bg-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300 transition">
+                    <i class="bi bi-download"></i> Unduh Format CSV
+                </a>
+            </div>
+            @endif
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">Batal</button>
                 <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">Upload</button>

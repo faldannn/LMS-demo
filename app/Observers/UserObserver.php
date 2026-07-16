@@ -11,11 +11,11 @@ class UserObserver
 {
     public function saved(User $user): void
     {
-        if ($user->wasRecentlyCreated) {
+        $roleValue = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
+
+        if ($user->wasRecentlyCreated && in_array($roleValue, ['siswa', 'guru'])) {
             return;
         }
-
-        $roleValue = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
         if ($roleValue === 'siswa') {
             $user->loadMissing('student');

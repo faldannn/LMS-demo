@@ -111,6 +111,33 @@ class SyncAllToCbt extends Command
             }
         }
 
+        // 4. Sync Admins & Staff (Superadmin, Admin, Kepala Sekolah, etc.)
+        $nonAcademicUsers = User::whereNotIn('role', ['siswa', 'guru'])->get();
+        $this->info("Syncing {$nonAcademicUsers->count()} admins and staff...");
+        foreach ($nonAcademicUsers as $u) {
+            $roleValue = $u->role instanceof \App\Enums\UserRole ? $u->role->value : (string) $u->role;
+            $cbtRole = match ($roleValue) {
+                'superadmin' => 'admin',
+                'admin', 'kepala_sekolah' => 'admin',
+                default => 'pengawas',
+            };
+
+            $payload = [
+                'username' => $u->username,
+                'name' => $u->name,
+                'role' => $cbtRole,
+                'email' => $u->email,
+                'password' => $u->password,
+            ];
+            try {
+                Http::timeout(5)
+                    ->withHeaders(['X-Sync-Secret' => $secretKey])
+                    ->post(rtrim($apiUrl, '/') . '/sync/user', $payload);
+            } catch (\Exception $e) {
+                $this->warn("Failed to sync admin/staff {$u->username}: " . $e->getMessage());
+            }
+        }
+
         $this->info('Sync completed successfully!');
         return Command::SUCCESS;
     }

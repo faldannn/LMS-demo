@@ -166,4 +166,38 @@ class StudentController extends Controller
 
         return view('students.print-card', compact('student', 'qrSvg'));
     }
+
+    public function importTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="Format_Import_Siswa.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $columns = ['nis', 'nisn', 'nama', 'kelas', 'jk', 'tanggal_lahir', 'nama_ortu', 'no_hp_ortu'];
+
+        $callback = function() use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            // Add a sample row to guide users
+            fputcsv($file, [
+                '2025021', // nis
+                '0012345678', // nisn
+                'Ahmad Yusuf', // nama
+                'X-RPL-1', // kelas (must exist in classes table)
+                'L', // jk (L/P)
+                '2008-04-12', // tanggal_lahir (YYYY-MM-DD)
+                'Bambang Yusuf', // nama_ortu
+                '081234567890' // no_hp_ortu
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

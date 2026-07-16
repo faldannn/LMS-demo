@@ -99,10 +99,6 @@ class User extends Authenticatable
             }
         }
 
-        if ($current === 'superadmin') {
-            return true;
-        }
-
         return in_array($current, $roles, true);
     }
 

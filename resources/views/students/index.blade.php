@@ -8,6 +8,9 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">Total: <strong class="text-slate-800">{{ $students->total() }}</strong> siswa</p>
         <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('students.import.template') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
+                <i class="bi bi-download"></i>Unduh Template
+            </a>
             <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3.5 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50">
                 <i class="bi bi-upload"></i>Import Excel
             </button>
@@ -181,7 +184,12 @@
                 <div class="text-sm text-brand-800">
                     <strong>Instruksi Format Excel:</strong><br>
                     Gunakan kolom berikut secara berurutan:<br>
-                    <code class="mt-1 inline-block rounded bg-brand-100 px-2 py-0.5 text-xs">NIS, NISN, Nama, JK (L/P), Tanggal_Lahir, Kelas, Nama_Ortu, No_HP_Ortu</code>
+                    <code class="mt-1 inline-block rounded bg-brand-100 px-2 py-0.5 text-xs mb-3">NIS, NISN, Nama, JK (L/P), Tanggal_Lahir, Kelas, Nama_Ortu, No_HP_Ortu</code>
+                    <div>
+                        <a href="{{ route('students.import.template') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
+                            <i class="bi bi-download"></i> Unduh Template CSV
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

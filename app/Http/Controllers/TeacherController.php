@@ -202,4 +202,37 @@ class TeacherController extends Controller
 
         return back()->with('success', 'Tugas mengajar berhasil dihapus.');
     }
+
+    public function importTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="Format_Import_Guru.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $columns = ['nip', 'nama', 'email', 'tanggal_lahir', 'mapel', 'telepon', 'password'];
+
+        $callback = function() use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            // Add a sample row to guide users
+            fputcsv($file, [
+                '198503052019031002', // NIP
+                'Budi Santoso, S.Pd', // Nama
+                'budi.santoso@email.com', // Email
+                '1985-03-05', // Tanggal Lahir (YYYY-MM-DD)
+                'Matematika', // Mapel
+                '081234567890', // Telepon
+                'Password123' // Password (Optional)
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
