@@ -176,8 +176,8 @@ class AttendanceService
                 COUNT(*) as total,
                 SUM(ad.status IN ('hadir','terlambat')) as present
             ")
-            ->havingRaw("(present / total * 100) < ?", [$threshold])
-            ->orderByRaw("(present / total * 100) ASC")
+            ->havingRaw("(SUM(ad.status IN ('hadir','terlambat')) / COUNT(*) * 100) < ?", [$threshold])
+            ->orderByRaw("(SUM(ad.status IN ('hadir','terlambat')) / COUNT(*) * 100) ASC")
             ->limit($limit)
             ->get();
 
