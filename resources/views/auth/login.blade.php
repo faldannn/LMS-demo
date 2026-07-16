@@ -119,29 +119,12 @@ p-1">
             </button>
         </form>
 
-        @if(config('app.debug'))
-        <div class="my-3 border-t border-white/10"></div>
-        <div class="mb-3 text-center text-xs font-bold text-white/40">DEMO CEPAT (Dev Only)</div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" class="rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/60 transition-colors hover:border-brand-500 hover:bg-brand-500/20 hover:text-white" onclick="fillLogin('198001012005011003','kepsek123')">🏫 Kepala Sekolah</button>
-            <button type="button" class="rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/60 transition-colors hover:border-brand-500 hover:bg-brand-500/20 hover:text-white" onclick="fillLogin('199001012020121001','guru123')">📚 Guru</button>
-            <button type="button" class="col-span-2 rounded-lg border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white/60 transition-colors hover:border-brand-500 hover:bg-brand-500/20 hover:text-white" onclick="fillLogin('2025001','2025001')">🎒 Siswa</button>
-        </div>
-        <div class="mt-2 text-center text-[11px] text-white/30">Demo: Klik tombol di atas untuk login cepat</div>
-        @endif
-
         <div class="mt-2 text-center text-[10px] text-white/30">
             &copy; {{ date('Y') }} {{ config('school.name') }} &middot; {{ config('school.developer', 'NexDigi System') }}
         </div>
     </div>
 
     <script>
-        function fillLogin(username, password) {
-            document.getElementById('username').value = username;
-            document.getElementById('password').value = password;
-            document.querySelector('button[type="submit"]').click();
-        }
-
         function togglePasswordVisibility(inputId, button) {
             const input = document.getElementById(inputId);
             const icon = button.querySelector('i');
