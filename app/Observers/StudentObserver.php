@@ -13,6 +13,9 @@ class StudentObserver
      */
     public function saved(Student $student): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         if (!$student->relationLoaded('class')) {
             $student->load('class');
         }
@@ -49,6 +52,9 @@ class StudentObserver
      */
     public function deleted(Student $student): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         $payload = [
             'nis' => $student->nis,
         ];

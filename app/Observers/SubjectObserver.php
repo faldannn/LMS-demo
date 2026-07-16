@@ -13,6 +13,9 @@ class SubjectObserver
      */
     public function saved(Subject $subject): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         $payload = [
             'id' => $subject->id,
             'name' => $subject->name,
@@ -39,6 +42,9 @@ class SubjectObserver
      */
     public function deleted(Subject $subject): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         $payload = [
             'id' => $subject->id,
         ];

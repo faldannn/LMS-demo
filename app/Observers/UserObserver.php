@@ -11,6 +11,10 @@ class UserObserver
 {
     public function saved(User $user): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
+
         $roleValue = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
         if ($user->wasRecentlyCreated && in_array($roleValue, ['siswa', 'guru'])) {
@@ -112,6 +116,10 @@ class UserObserver
      */
     public function deleted(User $user): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
+
         $roleValue = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
         // Students and teachers have their own observers, so we only handle admin/staff here

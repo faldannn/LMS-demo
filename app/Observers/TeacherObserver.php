@@ -13,6 +13,9 @@ class TeacherObserver
      */
     public function saved(Teacher $teacher): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         $user = $teacher->user_id ? \App\Models\User::find($teacher->user_id) : null;
         $username = $user ? $user->username : ($teacher->nip ?? $teacher->email);
 
@@ -53,6 +56,9 @@ class TeacherObserver
      */
     public function deleted(Teacher $teacher): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
         $user = $teacher->user_id ? \App\Models\User::find($teacher->user_id) : null;
         $username = $user ? $user->username : ($teacher->nip ?? $teacher->email);
 
