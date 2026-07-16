@@ -14,7 +14,7 @@ class StoreUserRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'username' => 'required|string|max:50|unique:users|alpha_dash',
             'password' => [
                 'required',
@@ -26,5 +26,26 @@ class StoreUserRequest extends FormRequest
             'email' => 'nullable|email|unique:users',
             'role' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\UserRole::class)],
         ];
+
+        if ($this->input('role') === 'siswa') {
+            $rules['nis'] = 'required|string|unique:students,nis';
+            $rules['nisn'] = 'nullable|string|unique:students,nisn';
+            $rules['gender'] = 'required|in:L,P';
+            $rules['class_id'] = 'required|exists:classes,id';
+            $rules['dob'] = 'nullable|date';
+            $rules['pob'] = 'nullable|string';
+            $rules['parent_name'] = 'nullable|string';
+            $rules['parent_phone'] = 'nullable|string';
+            $rules['parent_email'] = 'nullable|email';
+            $rules['address'] = 'nullable|string';
+        } elseif ($this->input('role') === 'guru') {
+            $rules['nip'] = 'nullable|string|unique:teachers,nip';
+            $rules['dob'] = 'required|date';
+            $rules['phone'] = 'nullable|string';
+            $rules['subject_ids'] = 'required|array';
+            $rules['subject_ids.*'] = 'exists:subjects,id';
+        }
+
+        return $rules;
     }
 }

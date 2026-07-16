@@ -35,43 +35,158 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('users.create');
+        $classes = \App\Models\Classes::orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        return view('users.create', compact('classes', 'subjects'));
     }
 
     public function store(StoreUserRequest $request)
     {
         $data = $request->validated();
 
-        $data['password'] = Hash::make($data['password']);
-        $user = User::create($data);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request) {
+            $userData = [
+                'name' => $data['name'],
+                'username' => $data['username'],
+                'email' => $data['email'] ?? null,
+                'role' => $data['role'],
+                'password' => Hash::make($data['password']),
+                'status' => true,
+            ];
 
-        $this->activityLogService->logCrud('user_create', $user, "User {$user->username} dibuat");
+            $user = User::create($userData);
 
-        return redirect()->route('users.index')
-            ->with('success', "User {$data['name']} berhasil ditambahkan.");
+            if ($data['role'] === 'siswa') {
+                $studentData = [
+                    'user_id' => $user->id,
+                    'nis' => $data['nis'],
+                    'nisn' => $data['nisn'] ?? null,
+                    'name' => $data['name'],
+                    'gender' => $data['gender'],
+                    'dob' => $data['dob'] ?? null,
+                    'pob' => $data['pob'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'class_id' => $data['class_id'],
+                    'parent_name' => $data['parent_name'] ?? null,
+                    'parent_phone' => $data['parent_phone'] ?? null,
+                    'parent_email' => $data['parent_email'] ?? null,
+                    'status' => true,
+                ];
+                \App\Models\Student::create($studentData);
+            } elseif ($data['role'] === 'guru') {
+                $teacherData = [
+                    'user_id' => $user->id,
+                    'nip' => $data['nip'] ?? null,
+                    'name' => $data['name'],
+                    'dob' => $data['dob'],
+                    'phone' => $data['phone'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'status' => true,
+                ];
+                $teacher = \App\Models\Teacher::create($teacherData);
+                if (!empty($data['subject_ids'])) {
+                    $teacher->subjects()->sync($data['subject_ids']);
+                }
+            }
+
+            $this->activityLogService->logCrud('user_create', $user, "User {$user->username} dibuat");
+
+            return redirect()->route('users.index')
+                ->with('success', "User {$data['name']} berhasil ditambahkan.");
+        });
     }
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        $user->load(['student', 'teacher.subjects']);
+        $classes = \App\Models\Classes::orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        return view('users.edit', compact('user', 'classes', 'subjects'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
     {
         $data = $request->validated();
 
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $user, $request) {
+            $oldRole = $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role;
+            $newRole = $data['role'];
 
-        $user->update($data);
+            $userData = [
+                'name' => $data['name'],
+                'username' => $data['username'],
+                'email' => $data['email'] ?? null,
+                'role' => $newRole,
+            ];
 
-        $this->activityLogService->logCrud('user_update', $user, "User {$user->username} diperbarui");
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
 
-        return redirect()->route('users.index')
-            ->with('success', "User {$user->name} berhasil diperbarui.");
+            $user->update($userData);
+
+            // Delete old relation records if role changes
+            if ($oldRole !== $newRole) {
+                if ($oldRole === 'siswa' && $user->student) {
+                    $user->student->delete();
+                }
+                if ($oldRole === 'guru' && $user->teacher) {
+                    $user->teacher->delete();
+                }
+            }
+
+            // Create/Update relation records
+            if ($newRole === 'siswa') {
+                $studentData = [
+                    'nis' => $data['nis'],
+                    'nisn' => $data['nisn'] ?? null,
+                    'name' => $data['name'],
+                    'gender' => $data['gender'],
+                    'dob' => $data['dob'] ?? null,
+                    'pob' => $data['pob'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'class_id' => $data['class_id'],
+                    'parent_name' => $data['parent_name'] ?? null,
+                    'parent_phone' => $data['parent_phone'] ?? null,
+                    'parent_email' => $data['parent_email'] ?? null,
+                    'status' => (bool)($user->status),
+                ];
+                
+                $student = $user->student;
+                if ($student) {
+                    $student->update($studentData);
+                } else {
+                    $studentData['user_id'] = $user->id;
+                    \App\Models\Student::create($studentData);
+                }
+            } elseif ($newRole === 'guru') {
+                $teacherData = [
+                    'nip' => $data['nip'] ?? null,
+                    'name' => $data['name'],
+                    'dob' => $data['dob'],
+                    'phone' => $data['phone'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'status' => (bool)($user->status),
+                ];
+
+                $teacher = $user->teacher;
+                if ($teacher) {
+                    $teacher->update($teacherData);
+                } else {
+                    $teacherData['user_id'] = $user->id;
+                    $teacher = \App\Models\Teacher::create($teacherData);
+                }
+
+                if (isset($data['subject_ids'])) {
+                    $teacher->subjects()->sync($data['subject_ids']);
+                }
+            }
+
+            $this->activityLogService->logCrud('user_update', $user, "User {$user->username} diperbarui");
+
+            return redirect()->route('users.index')
+                ->with('success', "User {$user->name} berhasil diperbarui.");
+        });
     }
 
     public function destroy(User $user)
@@ -111,7 +226,7 @@ class UserController extends Controller
         } elseif ($user->role === \App\Enums\UserRole::Siswa && $user->student) {
             $newPass = $user->student->dob ? $user->student->dob->format('Y-m-d') : (string) $user->student->nis;
         } else {
-            $newPass = \Illuminate\Support\Str::random(12);
+            $newPass = 'Password123';
         }
 
         $user->update(['password' => Hash::make($newPass)]);

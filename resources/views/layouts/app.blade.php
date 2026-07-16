@@ -242,6 +242,18 @@
         window.showToast = (icon, title) => {
             Toast.fire({ icon: icon, title: title });
         };
+
+        window.togglePasswordVisibility = (inputId, button) => {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        };
     </script>
 
     @stack('scripts')

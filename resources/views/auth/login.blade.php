@@ -96,8 +96,12 @@ p-1">
                     <i class="bi bi-lock absolute top-1/2 -translate-y-1/2 text-white/40" style="left: 1rem;"></i>
                     
                     <input type="password" id="password" name="password" placeholder="Masukkan password..." required
-                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 pr-4 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10"
-                        style="padding-left: 2.75rem;">
+                        class="w-full rounded-xl border border-white/10 bg-white/5 h-12 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-brand-500 focus:bg-white/10"
+                        style="padding-left: 2.75rem; padding-right: 3rem;">
+                    
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white focus:outline-none" onclick="togglePasswordVisibility('password', this)">
+                        <i class="bi bi-eye"></i>
+                    </button>
                 </div>
             </div>
 
@@ -136,6 +140,18 @@ p-1">
             document.getElementById('username').value = username;
             document.getElementById('password').value = password;
             document.querySelector('button[type="submit"]').click();
+        }
+
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
         }
     </script>
 </body>

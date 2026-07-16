@@ -109,17 +109,35 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label fw-semibold">Password Lama <span class="text-danger">*</span></label>
-                            <input type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" required>
-                            @error('current_password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="relative">
+                                <input type="password" name="current_password" id="current_password" class="form-control pr-10 @error('current_password') is-invalid @enderror" required>
+                                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('current_password', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            @error('current_password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Password Baru <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" required minlength="6">
-                            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="relative">
+                                <input type="password" name="password" id="password" class="form-control pr-10 @error('password') is-invalid @enderror" required minlength="6">
+                                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('password', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text text-[11px] text-slate-500 mt-1">
+                                Password minimal 6 karakter.
+                            </div>
+                            @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Konfirmasi Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password_confirmation" class="form-control" required>
+                            <div class="relative">
+                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control pr-10" required>
+                                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('password_confirmation', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="d-grid mt-3">
