@@ -27,7 +27,7 @@ class StudentService extends BaseMasterDataService
 
             $password = null;
             if (!empty($data['create_account'])) {
-                $password = (string) $data['nis'];
+                $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $data['nis'];
                 $data['status'] = true;
                 $user = User::create([
                     'username' => $data['nis'],

@@ -30,6 +30,8 @@ class TeacherObserver
             'role' => 'guru',
             'tanggal_lahir' => $teacher->dob ? $teacher->dob->format('Y-m-d') : null,
             'subjects' => $subjects,
+            'email' => $teacher->email ?? $user?->email,
+            'password' => $user?->password,
         ];
 
         try {

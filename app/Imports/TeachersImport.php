@@ -22,9 +22,20 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     public function model(array $row): ?Teacher
     {
         $username = $row['nip'] ?? $row['email'] ?? Str::slug($row['nama'], '.');
+
+        $dob = null;
+        if (!empty($row['tanggal_lahir'])) {
+            if (is_numeric($row['tanggal_lahir'])) {
+                $dob = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['tanggal_lahir'])->format('Y-m-d');
+            } else {
+                $dob = date('Y-m-d', strtotime($row['tanggal_lahir']));
+            }
+        }
+        $password = $dob ? $dob : self::DEFAULT_PASSWORD;
+
         $user = User::create([
             'username' => $username,
-            'password' => Hash::make($row['password'] ?? self::DEFAULT_PASSWORD),
+            'password' => Hash::make($row['password'] ?? $password),
             'name' => $row['nama'],
             'email' => $row['email'] ?? null,
             'role' => UserRole::Guru,
@@ -34,6 +45,7 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         return new Teacher([
             'nip' => $row['nip'] ?? null,
             'name' => $row['nama'],
+            'dob' => $dob,
             'subject' => $row['mapel'] ?? null,
             'phone' => $row['telepon'] ?? null,
             'email' => $row['email'] ?? null,

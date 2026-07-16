@@ -38,7 +38,16 @@ class AuthService
             ]);
         }
 
-        $user = User::where('username', $credentials['username'])->first();
+        $loginInput = $credentials['username'];
+        $user = User::where('username', $loginInput)
+            ->orWhere('email', $loginInput)
+            ->orWhereHas('teacher', function($query) use ($loginInput) {
+                $query->where('nip', $loginInput);
+            })
+            ->orWhereHas('student', function($query) use ($loginInput) {
+                $query->where('nis', $loginInput);
+            })
+            ->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($throttleKey, 60);

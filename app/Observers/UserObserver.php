@@ -9,15 +9,72 @@ use Illuminate\Support\Facades\Log;
 
 class UserObserver
 {
-    /**
-     * Handle the User "saved" event.
-     */
     public function saved(User $user): void
     {
+        if ($user->wasRecentlyCreated) {
+            return;
+        }
+
         $roleValue = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
 
-        // Students are synced via StudentObserver, teachers via TeacherObserver, so we only sync admin/staff here
-        if ($roleValue === 'siswa' || $roleValue === 'guru') {
+        if ($roleValue === 'siswa') {
+            $user->loadMissing('student');
+            $student = $user->student;
+            if ($student) {
+                if (!$student->relationLoaded('class')) {
+                    $student->load('class');
+                }
+                $payload = [
+                    'nis' => $student->nis,
+                    'nama' => $student->name,
+                    'kelas' => $student->class?->name,
+                    'ruangan' => $student->class?->room,
+                    'tanggal_lahir' => $student->dob ? $student->dob->format('Y-m-d') : null,
+                    'password' => $user->password,
+                ];
+                try {
+                    $apiUrl = env('CBT_API_URL');
+                    $secretKey = env('SYNC_SECRET_KEY');
+                    if ($apiUrl && $secretKey) {
+                        Http::timeout(5)
+                            ->withHeaders(['X-Sync-Secret' => $secretKey])
+                            ->post(rtrim($apiUrl, '/') . '/sync/student', $payload);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('CBT Student Sync via UserObserver failed: ' . $e->getMessage());
+                }
+            }
+            return;
+        }
+
+        if ($roleValue === 'guru') {
+            $user->loadMissing('teacher');
+            $teacher = $user->teacher;
+            if ($teacher) {
+                $subjects = $teacher->subject 
+                    ? array_map('trim', explode(',', $teacher->subject))
+                    : [];
+                $payload = [
+                    'username' => $user->username,
+                    'name' => $teacher->name,
+                    'role' => 'guru',
+                    'tanggal_lahir' => $teacher->dob ? $teacher->dob->format('Y-m-d') : null,
+                    'subjects' => $subjects,
+                    'email' => $teacher->email ?? $user->email,
+                    'password' => $user->password,
+                ];
+                try {
+                    $apiUrl = env('CBT_API_URL');
+                    $secretKey = env('SYNC_SECRET_KEY');
+                    if ($apiUrl && $secretKey) {
+                        Http::timeout(5)
+                            ->withHeaders(['X-Sync-Secret' => $secretKey])
+                            ->post(rtrim($apiUrl, '/') . '/sync/user', $payload);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('CBT Teacher Sync via UserObserver failed: ' . $e->getMessage());
+                }
+            }
             return;
         }
 
@@ -32,6 +89,8 @@ class UserObserver
             'username' => $user->username,
             'name' => $user->name,
             'role' => $cbtRole,
+            'email' => $user->email,
+            'password' => $user->password,
         ];
 
         try {

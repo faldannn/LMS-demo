@@ -17,12 +17,17 @@ class StudentObserver
             $student->load('class');
         }
 
+        if (!$student->relationLoaded('user')) {
+            $student->load('user');
+        }
+        $user = $student->user;
         $payload = [
             'nis' => $student->nis,
             'nama' => $student->name,
             'kelas' => $student->class?->name,
             'ruangan' => $student->class?->room,
             'tanggal_lahir' => $student->dob ? $student->dob->format('Y-m-d') : null,
+            'password' => $user?->password,
         ];
 
         try {

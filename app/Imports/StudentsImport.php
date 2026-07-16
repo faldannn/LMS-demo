@@ -19,9 +19,19 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         if (!$class)
             return null;
 
+        $dob = null;
+        if (!empty($row['tanggal_lahir'])) {
+            if (is_numeric($row['tanggal_lahir'])) {
+                $dob = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['tanggal_lahir'])->format('Y-m-d');
+            } else {
+                $dob = date('Y-m-d', strtotime($row['tanggal_lahir']));
+            }
+        }
+        $password = $dob ? $dob : (string) $row['nis'];
+
         $user = User::create([
             'username' => $row['nis'],
-            'password' => Hash::make($row['nis']),
+            'password' => Hash::make($password),
             'name' => $row['nama'],
             'role' => UserRole::Siswa,
             'status' => true,
@@ -32,7 +42,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'nisn' => $row['nisn'] ?? null,
             'name' => $row['nama'],
             'gender' => strtoupper($row['jk'] ?? 'L') === 'L' ? 'L' : 'P',
-            'dob' => $row['tanggal_lahir'] ?? null,
+            'dob' => $dob,
             'class_id' => $class->id,
             'parent_name' => $row['nama_ortu'] ?? null,
             'parent_phone' => $row['no_hp_ortu'] ?? null,

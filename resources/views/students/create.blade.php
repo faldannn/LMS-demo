@@ -79,7 +79,7 @@
                     </div>
                     <div>
                         <span class="block text-sm font-semibold text-slate-800">Buat Akun Siswa</span>
-                        <span class="block text-xs text-slate-500">Jika diaktifkan, akun login akan dibuat otomatis dengan username = NIS dan password = NIS. Jika tidak, status siswa akan disimpan nonaktif.</span>
+                        <span class="block text-xs text-slate-500">Jika diaktifkan, akun login akan dibuat otomatis dengan username = NIS dan password = Tanggal Lahir (YYYY-MM-DD) atau NIS (jika tanggal lahir kosong). Jika tidak, status siswa akan disimpan nonaktif.</span>
                     </div>
                 </label>
             </x-card>

@@ -29,7 +29,7 @@ class TeacherService extends BaseMasterDataService
             }
 
             $username = $data['nip'] ?? $data['email'] ?? Str::slug($data['name'], '.');
-            $password = self::DEFAULT_PASSWORD;
+            $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : self::DEFAULT_PASSWORD;
 
             $user = User::create([
                 'username' => $username,
