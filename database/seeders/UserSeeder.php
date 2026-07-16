@@ -12,12 +12,23 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
+            ['username' => 'superadmin'],
+            [
+                'password' => Hash::make('superadmin123'),
+                'name' => 'Super Admin',
+                'email' => 'admin@assyafiiyah02bekasi.sch.id',
+                'role' => UserRole::SuperAdmin,
+                'status' => true,
+            ]
+        );
+
+        User::updateOrCreate(
             ['username' => '198001012005011003'],
             [
                 'password' => Hash::make('kepsek123'),
                 'name' => 'Kepala Sekolah',
                 'email' => 'kepala@assyafiiyah02bekasi.sch.id',
-                'role' => UserRole::KepalaSekolah,
+                'role' => UserRole::Admin,
                 'status' => true,
             ]
         );

@@ -4,14 +4,16 @@ namespace App\Enums;
 
 enum UserRole: string
 {
-    case KepalaSekolah = 'kepala_sekolah';
+    case SuperAdmin = 'superadmin';
+    case Admin = 'admin';
     case Guru = 'guru';
     case Siswa = 'siswa';
 
     public function label(): string
     {
         return match ($this) {
-            self::KepalaSekolah => 'Kepala Sekolah',
+            self::SuperAdmin => 'Super Admin',
+            self::Admin => 'Admin',
             self::Guru => 'Guru',
             self::Siswa => 'Siswa',
         };
@@ -28,7 +30,8 @@ enum UserRole: string
     public static function fromLegacy(string $role): self
     {
         return match ($role) {
-            'admin', 'kepala_sekolah' => self::KepalaSekolah,
+            'superadmin' => self::SuperAdmin,
+            'admin', 'kepala_sekolah' => self::Admin,
             'guru' => self::Guru,
             'siswa', 'orangtua' => self::Siswa,
             default => self::Guru,

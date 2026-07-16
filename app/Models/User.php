@@ -59,7 +59,17 @@ class User extends Authenticatable
 
     public function isKepalaSekolah(): bool
     {
-        return $this->role === UserRole::KepalaSekolah;
+        return $this->isAdmin() || $this->isSuperAdmin();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === UserRole::SuperAdmin;
     }
 
     public function isGuru(): bool
@@ -82,6 +92,16 @@ class User extends Authenticatable
     {
         $roles = (array) $roles;
         $current = $this->role instanceof UserRole ? $this->role->value : (string) $this->role;
+
+        if (in_array('admin', $roles, true) || in_array('kepala_sekolah', $roles, true)) {
+            if ($current === 'admin' || $current === 'superadmin') {
+                return true;
+            }
+        }
+
+        if ($current === 'superadmin') {
+            return true;
+        }
 
         return in_array($current, $roles, true);
     }

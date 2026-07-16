@@ -109,7 +109,7 @@ class AuthService
         return match ($user->role) {
             UserRole::Siswa => route('dashboard'),
             UserRole::Guru => route('dashboard'),
-            UserRole::KepalaSekolah => route('dashboard'),
+            UserRole::Admin, UserRole::SuperAdmin => route('dashboard'),
             default => route('dashboard'),
         };
     }
@@ -119,7 +119,7 @@ class AuthService
         return match ($user->role) {
             UserRole::Siswa => 'dashboard.siswa',
             UserRole::Guru => 'dashboard.guru',
-            UserRole::KepalaSekolah => 'dashboard.kepala-sekolah',
+            UserRole::Admin, UserRole::SuperAdmin => 'dashboard.kepala-sekolah',
             default => 'dashboard.kepala-sekolah',
         };
     }

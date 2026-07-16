@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Teacher::observe(\App\Observers\TeacherObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
         \App\Models\Subject::observe(\App\Observers\SubjectObserver::class);
+        \App\Models\Classes::observe(\App\Observers\ClassObserver::class);
 
         if (!$this->app->environment('production')) {
             \Illuminate\Database\Eloquent\Model::preventLazyLoading();
@@ -30,13 +31,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Gate::before(function ($user, $ability) {
-            if ($user->hasRole(UserRole::KepalaSekolah->value)) {
+            if ($user->hasRole(['admin', 'superadmin'])) {
                 return true;
             }
         });
 
         Gate::define('manage-admin', function ($user) {
-            return $user->isKepalaSekolah();
+            return $user->isAdmin() || $user->isSuperAdmin();
         });
 
         Gate::define('access-elearning', function ($user) {

@@ -21,6 +21,7 @@ class StudentObserver
             'nis' => $student->nis,
             'nama' => $student->name,
             'kelas' => $student->class?->name,
+            'ruangan' => $student->class?->room,
             'tanggal_lahir' => $student->dob ? $student->dob->format('Y-m-d') : null,
         ];
 

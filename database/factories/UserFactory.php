@@ -30,7 +30,17 @@ class UserFactory extends Factory
 
     public function kepalaSekolah(): static
     {
-        return $this->state(fn () => ['role' => UserRole::KepalaSekolah]);
+        return $this->state(fn () => ['role' => UserRole::Admin]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => UserRole::Admin]);
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn () => ['role' => UserRole::SuperAdmin]);
     }
 
     public function guru(): static

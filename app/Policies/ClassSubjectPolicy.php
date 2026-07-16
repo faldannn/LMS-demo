@@ -13,7 +13,7 @@ class ClassSubjectPolicy
 
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, [UserRole::KepalaSekolah, UserRole::Guru, UserRole::Siswa], true);
+        return in_array($user->role, [UserRole::Admin, UserRole::SuperAdmin, UserRole::Guru, UserRole::Siswa], true);
     }
 
     public function view(User $user, ClassSubject $classSubject): bool

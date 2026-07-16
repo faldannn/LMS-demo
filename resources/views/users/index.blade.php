@@ -49,7 +49,7 @@
             </div>
         </div>
 
-        {{-- Kepala Sekolah --}}
+        {{-- Admin & Superadmin --}}
         <div class="relative overflow-hidden rounded-2xl p-4 text-white shadow-lg" style="background: linear-gradient(135deg, #b45309, #d97706);">
             <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/10"></div>
             <div class="relative z-10 flex items-center gap-3">
@@ -57,8 +57,8 @@
                     <i class="bi bi-shield-fill-check text-lg"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold leading-none">{{ $users->getCollection()->where('role', \App\Enums\UserRole::KepalaSekolah)->count() }}</div>
-                    <div class="mt-1 text-xs font-medium opacity-80">Kepala Sekolah</div>
+                    <div class="text-2xl font-extrabold leading-none">{{ $users->getCollection()->filter(fn($u) => $u->isAdmin() || $u->isSuperAdmin())->count() }}</div>
+                    <div class="mt-1 text-xs font-medium opacity-80">Admin & Superadmin</div>
                 </div>
             </div>
         </div>
@@ -80,7 +80,8 @@
             <div class="sm:w-40">
                 <select name="role" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20">
                     <option value="">Semua Role</option>
-                    <option value="kepala_sekolah" {{ request('role')==='kepala_sekolah' ? 'selected':'' }}>Kepala Sekolah</option>
+                    <option value="superadmin"      {{ request('role')==='superadmin'      ? 'selected':'' }}>Super Admin</option>
+                    <option value="admin"           {{ request('role')==='admin'           ? 'selected':'' }}>Admin</option>
                     <option value="guru"            {{ request('role')==='guru'            ? 'selected':'' }}>Guru</option>
                     <option value="siswa"           {{ request('role')==='siswa'           ? 'selected':'' }}>Siswa</option>
                 </select>
@@ -128,12 +129,14 @@
                         @php
                             $roleKey = $user->role instanceof \App\Enums\UserRole ? $user->role->value : (string) $user->role;
                             $avatarGradients = [
-                                'kepala_sekolah' => 'linear-gradient(135deg, #b45309, #d97706)',
+                                'superadmin'     => 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                                'admin'          => 'linear-gradient(135deg, #b45309, #d97706)',
                                 'guru'           => 'linear-gradient(135deg, #0369a1, #0284c7)',
                                 'siswa'          => 'linear-gradient(135deg, #065f46, #059669)',
                             ];
                             $roleColors = [
-                                'kepala_sekolah' => ['#fef3c7', '#92400e'],
+                                'superadmin'     => ['#e0e7ff', '#4338ca'],
+                                'admin'          => ['#fef3c7', '#92400e'],
                                 'guru'           => ['#dbeafe', '#1d4ed8'],
                                 'siswa'          => ['#d1fae5', '#065f46'],
                             ];

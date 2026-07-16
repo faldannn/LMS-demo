@@ -22,7 +22,8 @@ class SsoController extends Controller
             'uid' => $user->username,
             'nama' => $user->name,
             'role' => match ($user->role?->value ?? (string) $user->role) {
-                'kepala_sekolah' => 'admin',
+                'superadmin' => 'admin',
+                'admin', 'kepala_sekolah' => 'admin',
                 'guru' => 'guru',
                 'siswa' => 'siswa',
                 default => 'pengawas',

@@ -19,7 +19,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:100',
             'email' => "nullable|email|unique:users,email,{$id}",
-            'role' => 'required|in:kepala_sekolah,guru,siswa',
+            'role' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\UserRole::class)],
             'password' => [
                 'nullable',
                 'string',

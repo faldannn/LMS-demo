@@ -22,7 +22,8 @@ class UserObserver
         }
 
         $cbtRole = match ($roleValue) {
-            'kepala_sekolah' => 'admin',
+            'superadmin' => 'admin',
+            'admin', 'kepala_sekolah' => 'admin',
             'guru' => 'guru',
             default => 'pengawas',
         };

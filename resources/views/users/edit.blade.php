@@ -37,9 +37,10 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                                <option value="kepala_sekolah" {{ old('role', $user->role)==='kepala_sekolah' ? 'selected':'' }}>Kepala Sekolah</option>
-                                <option value="guru" {{ old('role', $user->role)==='guru' ? 'selected':'' }}>Guru</option>
-                                <option value="siswa" {{ old('role', $user->role)==='siswa' ? 'selected':'' }}>Siswa</option>
+                                <option value="superadmin" {{ old('role', $user->role->value ?? $user->role)==='superadmin' ? 'selected':'' }}>Super Admin</option>
+                                <option value="admin" {{ old('role', $user->role->value ?? $user->role)==='admin' ? 'selected':'' }}>Admin</option>
+                                <option value="guru" {{ old('role', $user->role->value ?? $user->role)==='guru' ? 'selected':'' }}>Guru</option>
+                                <option value="siswa" {{ old('role', $user->role->value ?? $user->role)==='siswa' ? 'selected':'' }}>Siswa</option>
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -50,7 +51,6 @@
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-save me-2"></i>Simpan Perubahan</button>
                         @if($user->id !== auth()->id())
-                            <form id="del-u{{ $user->id }}" method="POST" action="{{ route('users.destroy', $user) }}">@csrf @method('DELETE')</form>
                             <button type="button" class="btn btn-outline-danger"
                                 data-confirm="Hapus user {{ $user->name }}?" data-form="del-u{{ $user->id }}">
                                 <i class="bi bi-trash"></i>
@@ -58,6 +58,9 @@
                         @endif
                     </div>
                 </form>
+                @if($user->id !== auth()->id())
+                    <form id="del-u{{ $user->id }}" method="POST" action="{{ route('users.destroy', $user) }}">@csrf @method('DELETE')</form>
+                @endif
             </div>
         </div>
     </div>

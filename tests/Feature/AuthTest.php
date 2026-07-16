@@ -20,7 +20,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'username' => 'testadmin',
             'password' => bcrypt('password123'),
-            'role' => 'kepala_sekolah',
+            'role' => 'admin',
             'status' => true,
         ]);
 

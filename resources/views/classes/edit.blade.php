@@ -82,13 +82,13 @@
                     </div>
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-save me-2"></i>Simpan</button>
-                        <form id="del-c{{ $class->id }}" method="POST" action="{{ route('classes.destroy', $class) }}">@csrf @method('DELETE')</form>
                         <button type="button" class="btn btn-outline-danger"
                             data-confirm="Hapus kelas {{ $class->name }}?" data-form="del-c{{ $class->id }}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </form>
+                <form id="del-c{{ $class->id }}" method="POST" action="{{ route('classes.destroy', $class) }}">@csrf @method('DELETE')</form>
             </div>
         </div>
     </div>
