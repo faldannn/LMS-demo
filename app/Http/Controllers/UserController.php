@@ -103,14 +103,24 @@ class UserController extends Controller
 
     public function resetPassword(User $user)
     {
-        $newPass = \Illuminate\Support\Str::random(12);
+        $user->loadMissing(['student', 'teacher']);
+        
+        $newPass = null;
+        if ($user->role === \App\Enums\UserRole::Guru && $user->teacher) {
+            $newPass = $user->teacher->dob ? $user->teacher->dob->format('Y-m-d') : 'guru123';
+        } elseif ($user->role === \App\Enums\UserRole::Siswa && $user->student) {
+            $newPass = $user->student->dob ? $user->student->dob->format('Y-m-d') : (string) $user->student->nis;
+        } else {
+            $newPass = \Illuminate\Support\Str::random(12);
+        }
+
         $user->update(['password' => Hash::make($newPass)]);
 
         $this->sessionService->revokeAllForUser($user->id);
 
         $this->activityLogService->log('user_reset_password', auth()->user(), $user, "Password user {$user->username} direset");
 
-        return back()->with('success', "Password {$user->name} berhasil direset. Semua sesi user telah dicabut. Silakan informasikan password baru melalui saluran yang aman.");
+        return back()->with('success', "Password {$user->name} berhasil direset ke default ({$newPass}). Semua sesi user telah dicabut.");
     }
 
     public function profile()

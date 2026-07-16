@@ -49,7 +49,30 @@ class AuthService
             })
             ->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        $passwordAttempts = [$credentials['password']];
+        $rawPass = trim($credentials['password']);
+        if (preg_match('/^(\d{2})[\-\/](\d{2})[\-\/](\d{4})$/', $rawPass, $m)) {
+            $passwordAttempts[] = "{$m[3]}-{$m[2]}-{$m[1]}";
+        } elseif (preg_match('/^(\d{4})[\-\/](\d{2})[\-\/](\d{2})$/', $rawPass, $m)) {
+            $passwordAttempts[] = "{$m[1]}-{$m[2]}-{$m[3]}";
+        } elseif (preg_match('/^(\d{2})(\d{2})(\d{4})$/', $rawPass, $m)) {
+            $passwordAttempts[] = "{$m[3]}-{$m[2]}-{$m[1]}";
+        } elseif (preg_match('/^(\d{4})(\d{2})(\d{2})$/', $rawPass, $m)) {
+            $passwordAttempts[] = "{$m[1]}-{$m[2]}-{$m[3]}";
+        }
+        $passwordAttempts = array_unique($passwordAttempts);
+
+        $passwordCorrect = false;
+        if ($user) {
+            foreach ($passwordAttempts as $attempt) {
+                if (Hash::check($attempt, $user->password)) {
+                    $passwordCorrect = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$user || !$passwordCorrect) {
             RateLimiter::hit($throttleKey, 60);
             $this->recordLoginAttempt(
                 username: $credentials['username'],
