@@ -13,59 +13,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     
-    @if (file_exists(public_path('build/manifest.json')))
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
 
-<body
-class="relative flex min-h-screen items-center justify-center overflow-x-hidden
-bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600
-px-4 py-8 sm:px-6 lg:px-8
-font-sans antialiased
-selection:bg-brand-500 selection:text-white">
-    
-    <!-- Background Ornaments -->
-<div class="absolute -left-40 -top-40 h-72 w-72 rounded-full bg-brand-400/20 blur-[120px]"></div>
+<body class="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 font-sans antialiased selection:bg-brand-500 selection:text-white">
+    <div class="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Background Ornaments -->
+        <div class="absolute -left-40 -top-40 h-72 w-72 rounded-full bg-brand-400/20 blur-[120px]"></div>
+        <div class="absolute -right-40 -bottom-40 h-72 w-72 rounded-full bg-brand-600/20 blur-[120px]"></div>
 
-<div class="absolute -right-40 -bottom-40 h-72 w-72 rounded-full bg-brand-600/20 blur-[120px]"></div>
-
-<div
-class="relative z-10
-w-full
-max-w-sm
-sm:max-w-md
-lg:max-w-lg
-rounded-2xl
-border border-white/10
-bg-white/10
-backdrop-blur-2xl
-shadow-2xl
-shadow-brand-900/40
-p-6
-sm:p-8
-lg:p-10">
+        <div class="relative z-10 w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-brand-900/40 p-6 sm:p-8">
         <div class="mb-8 text-center">
-<div
-class="mx-auto mb-5
-flex
-h-16
-w-16
-sm:h-20
-sm:w-20
-items-center
-justify-center
-overflow-hidden
-rounded-full
-bg-white/10
-ring-1
-ring-white/20
-shadow-lg
-shadow-brand-500/20
-p-1">
-                    <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo Sekolah" class="h-full w-full rounded-full object-contain p-1 bg-white">
-                </div>
-            <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white">{{ config('school.name') }}</h1>
+            <div class="mx-auto mb-5 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20 shadow-lg shadow-brand-500/20 p-1">
+                <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo Sekolah" class="h-full w-full rounded-full object-contain p-1 bg-white">
+            </div>
+            <h1 class="text-lg sm:text-xl md:text-2xl font-extrabold text-white text-center leading-snug">{{ config('school.name') }}</h1>
             <p class="mt-2 text-xs sm:text-sm text-white/70">Sistem Pembelajaran Digital</p>
         </div>
 
@@ -115,7 +79,7 @@ p-1">
                     <div class="relative h-full w-8 bg-white/20"></div>
                 </div>
                 <i class="bi bi-box-arrow-in-right relative z-10 text-lg leading-none"></i>
-                <span class="relative z-10">Masuk ke Sistem</span>
+                <span class="relative z-10">Masuk Sekarang</span>
             </button>
         </form>
 
@@ -123,6 +87,7 @@ p-1">
             &copy; {{ date('Y') }} {{ config('school.name') }} &middot; {{ config('school.developer', 'NexDigi System') }}
         </div>
     </div>
+</div>
 
     <script>
         function togglePasswordVisibility(inputId, button) {
