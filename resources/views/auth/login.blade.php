@@ -21,10 +21,10 @@
 <body class="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 font-sans antialiased selection:bg-brand-500 selection:text-white">
     <div class="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
         <!-- Background Ornaments -->
-        <div class="absolute -left-40 -top-40 h-72 w-72 rounded-full bg-brand-400/20 blur-[120px]"></div>
+        <div class="absolute -left-40 -top-40 h-72 w-72 rounded-full bg-brand-500/20 blur-[120px]"></div>
         <div class="absolute -right-40 -bottom-40 h-72 w-72 rounded-full bg-brand-600/20 blur-[120px]"></div>
 
-        <div class="relative z-10 w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-brand-900/40 p-6 sm:p-8">
+        <div class="relative z-10 w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-brand-800/40 p-6 sm:p-8" style="max-width: 420px;">
         <div class="mb-8 text-center">
             <div class="mx-auto mb-5 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20 shadow-lg shadow-brand-500/20 p-1">
                 <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo Sekolah" class="h-full w-full rounded-full object-contain p-1 bg-white">
@@ -74,7 +74,7 @@
                 <label for="remember" class="cursor-pointer text-xs font-medium text-white/60 hover:text-white/80">Ingat Saya</label>
             </div>
 
-            <button type="submit" class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-500 h-12 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-400 hover:shadow-brand-500/50 active:scale-[0.98]">
+            <button type="submit" class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-500 h-12 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-600 hover:shadow-brand-500/50 active:scale-[0.98]">
                 <div class="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
                     <div class="relative h-full w-8 bg-white/20"></div>
                 </div>
@@ -87,7 +87,6 @@
             &copy; {{ date('Y') }} {{ config('school.name') }} &middot; {{ config('school.developer', 'NexDigi System') }}
         </div>
     </div>
-</div>
 
     <script>
         function togglePasswordVisibility(inputId, button) {
