@@ -124,6 +124,55 @@ class ScheduleController extends Controller
             ->with('success', 'Jadwal berhasil ditambahkan.');
     }
 
+    public function edit(Schedule $schedule)
+    {
+        $classes = Classes::orderBy('name')->get();
+        $teachers = Teacher::active()->with('subjects')->orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $days = ['1' => 'Senin', '2' => 'Selasa', '3' => 'Rabu', '4' => 'Kamis', '5' => 'Jumat', '6' => 'Sabtu'];
+        
+        // Format time to H:i format for easier comparison in select options
+        if ($schedule->start_time) {
+            $schedule->start_time_formatted = \Carbon\Carbon::parse($schedule->start_time)->format('H:i');
+        }
+        if ($schedule->end_time) {
+            $schedule->end_time_formatted = \Carbon\Carbon::parse($schedule->end_time)->format('H:i');
+        }
+
+        return view('schedules.edit', compact('schedule', 'classes', 'teachers', 'subjects', 'days'));
+    }
+
+    public function update(Request $request, Schedule $schedule)
+    {
+        $data = $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'teacher_id' => 'required|exists:teachers,id',
+            'subject' => 'required|string|max:100',
+            'day_of_week' => 'required|integer|between:1,6',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'room' => 'nullable|string|max:20',
+        ]);
+        
+        $schedule->update($data);
+
+        // Auto-create ClassSubject mapping if not exists
+        $activeYear = AcademicYear::active();
+        $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
+        if ($subjectModel && $activeYear) {
+            ClassSubject::firstOrCreate([
+                'class_id' => $data['class_id'],
+                'subject_id' => $subjectModel->id,
+                'academic_year_id' => $activeYear->id,
+            ], [
+                'teacher_id' => $data['teacher_id'],
+            ]);
+        }
+
+        return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
+            ->with('success', 'Jadwal berhasil diperbarui.');
+    }
+
     public function destroy(Schedule $schedule)
     {
         $classId = $schedule->class_id;

@@ -189,6 +189,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::middleware('can:manage-admin')->group(function () {
                 Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
                 Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+                Route::get('schedules/{schedule}/edit', [ScheduleController::class, 'edit'])->name('schedules.edit');
+                Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
                 Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
             });
         });

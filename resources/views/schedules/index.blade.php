@@ -14,14 +14,21 @@
 </div>
 
 @unless(auth()->user()->isSiswa())
-<div class="card mb-4">
+<div class="card mb-4 shadow-sm">
     <div class="card-body py-3">
-        <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4">
+        <form method="GET" class="row g-3 align-items-end" id="filter-form">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small fw-semibold text-muted mb-1">Sesi Kelas</label>
+                <select id="session-select" class="form-select">
+                    <option value="pagi">🌅 Sesi Pagi</option>
+                    <option value="siang">🌇 Sesi Siang</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-sm-6">
                 <label class="form-label small fw-semibold text-muted mb-1">Pilih Kelas</label>
-                <select name="class_id" class="form-select" onchange="this.form.submit()">
+                <select name="class_id" id="class-select" class="form-select" onchange="this.form.submit()">
                     @foreach($classes as $c)
-                        <option value="{{ $c->id }}" {{ $classId == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                        <option value="{{ $c->id }}" data-session="{{ $c->session ?? 'pagi' }}" {{ $classId == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -151,6 +158,9 @@
                                                     </a>
                                                 @endif
                                                 @role('kepala_sekolah')
+                                                    <a href="{{ route('schedules.edit', $sched) }}" class="btn btn-xs btn-outline-secondary" title="Edit">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
                                                     <form id="del-s{{ $sched->id }}" method="POST" action="{{ route('schedules.destroy', $sched) }}">@csrf @method('DELETE')</form>
                                                     <button class="btn btn-xs btn-outline-danger"
                                                         data-confirm="Hapus jadwal {{ $sched->subject }}?"
@@ -181,3 +191,61 @@
     @endif
 @endif
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sessionSelect = document.getElementById('session-select');
+    const classSelect = document.getElementById('class-select');
+    
+    if (sessionSelect && classSelect) {
+        const originalOptions = Array.from(classSelect.options);
+        
+        function filterClasses(isInitial = false) {
+            const selectedSession = sessionSelect.value;
+            const currentSelectedValue = classSelect.value;
+            
+            // Clear and filter
+            classSelect.innerHTML = '';
+            const filteredOptions = originalOptions.filter(option => {
+                return option.getAttribute('data-session') === selectedSession;
+            });
+            
+            filteredOptions.forEach(option => classSelect.appendChild(option));
+            
+            if (isInitial) {
+                // On initial load, preserve current selection if it matches the session
+                const hasSelectedValue = filteredOptions.some(opt => opt.value === currentSelectedValue);
+                if (hasSelectedValue) {
+                    classSelect.value = currentSelectedValue;
+                } else if (filteredOptions.length > 0) {
+                    classSelect.value = filteredOptions[0].value;
+                }
+            } else {
+                // On user change, select first class of that session and submit
+                if (filteredOptions.length > 0) {
+                    classSelect.value = filteredOptions[0].value;
+                    classSelect.form.submit();
+                }
+            }
+        }
+        
+        // Auto-detect session on load based on currently selected class
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        if (selectedOption) {
+            const classSession = selectedOption.getAttribute('data-session');
+            if (classSession) {
+                sessionSelect.value = classSession;
+            }
+        }
+        
+        // Run filter initially without triggering form submit
+        filterClasses(true);
+        
+        sessionSelect.addEventListener('change', function() {
+            filterClasses(false);
+        });
+    }
+});
+</script>
+@endpush
