@@ -27,6 +27,7 @@ class UpdateTeacherRequest extends FormRequest
             'phone' => 'nullable|string|max:20',
             'email' => "nullable|email|max:100|unique:teachers,email,{$id}",
             'status' => 'boolean',
+            'password' => 'nullable|string|min:6',
         ];
     }
 }

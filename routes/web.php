@@ -90,6 +90,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('teachers/{teacher}/homeroom', [TeacherController::class, 'updateHomeroom'])->name('teachers.homeroom.update');
         Route::post('teachers/{teacher}/subjects', [TeacherController::class, 'storeClassSubject'])->name('teachers.subjects.store');
         Route::delete('teachers/{teacher}/subjects/{classSubject}', [TeacherController::class, 'destroyClassSubject'])->name('teachers.subjects.destroy');
+        Route::post('teachers/{teacher}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
         Route::resource('teachers', TeacherController::class);
 
         registerMasterDataRoutes('classes', ClassController::class);

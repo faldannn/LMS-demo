@@ -15,13 +15,17 @@ use App\Models\Teacher;
 use App\Services\MasterData\TeacherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use App\Services\ActivityLogService;
 
 class TeacherController extends Controller
 {
     use HandlesMasterDataActions;
 
-    public function __construct(private readonly TeacherService $service)
-    {
+    public function __construct(
+        private readonly TeacherService $service,
+        private readonly ActivityLogService $activityLogService
+    ) {
     }
 
     protected function masterDataService(): TeacherService
@@ -213,7 +217,15 @@ class TeacherController extends Controller
             'Expires' => '0'
         ];
 
-        $columns = ['nip', 'nama', 'email', 'tanggal_lahir', 'mapel', 'telepon', 'password'];
+        $columns = [
+            'Email Address',
+            'Nama Lengkap',
+            'Tempat Tanggal Lahir (Tempat, Tanggal, Bulan, Tahun)',
+            'Email',
+            'Nomer Telepon Whatsapp',
+            'Guru Mata Pelajaran',
+            'Wali kelas (jika bukan walas maka tidak perlu di isi)'
+        ];
 
         $callback = function() use ($columns) {
             $file = fopen('php://output', 'w');
@@ -221,18 +233,39 @@ class TeacherController extends Controller
             
             // Add a sample row to guide users
             fputcsv($file, [
-                '198503052019031002', // NIP
-                'Budi Santoso, S.Pd', // Nama
+                'budi.santoso@email.com', // Email Address
+                'Budi Santoso, S.Pd', // Nama Lengkap
+                'Bekasi, 5 Maret 1985', // Tempat Tanggal Lahir (Tempat, Tanggal, Bulan, Tahun)
                 'budi.santoso@email.com', // Email
-                '1985-03-05', // Tanggal Lahir (YYYY-MM-DD)
-                'Matematika', // Mapel
-                '081234567890', // Telepon
-                'Password123' // Password (Optional)
+                '081234567890', // Nomer Telepon Whatsapp
+                'Matematika dan Fisika', // Guru Mata Pelajaran
+                'X.1' // Wali kelas (jika bukan walas maka tidak perlu di isi)
             ]);
             
             fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function resetPassword(Teacher $teacher)
+    {
+        $user = $teacher->user;
+        if (!$user) {
+            return back()->withErrors(['error' => 'Akun user tidak ditemukan untuk guru ini.']);
+        }
+
+        $newPass = $teacher->dob ? $teacher->dob->format('Y-m-d') : 'guru123';
+        
+        $user->update(['password' => Hash::make($newPass)]);
+
+        $this->activityLogService->log(
+            action: 'teacher_reset_password',
+            user: auth()->user(),
+            subject: $teacher,
+            description: "Password untuk guru {$teacher->name} direset ke default ({$newPass})."
+        );
+
+        return back()->with('success', "Password untuk guru {$teacher->name} berhasil direset ke default ({$newPass}).");
     }
 }

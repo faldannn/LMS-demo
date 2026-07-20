@@ -46,7 +46,7 @@
 
 @if($importRoute)
 {{-- Modal Import --}}
-<div id="importModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm" onclick="if(event.target===this)this.classList.add('hidden')">
+<div id="importModal" class="fixed inset-0 z-[60] {{ $errors->has('file') ? '' : 'hidden' }} flex items-center justify-center bg-slate-900/50 backdrop-blur-sm" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <form method="POST" action="{{ $importRoute }}" enctype="multipart/form-data">
             @csrf

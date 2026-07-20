@@ -42,7 +42,7 @@ class TeacherService extends BaseMasterDataService
 
             $subjectIds = $data['subject_ids'] ?? [];
             if (!empty($subjectIds)) {
-                $subjectNames = \App\Models\Subject::whereIn('id', $subjectIds)->pluck('name')->toArray();
+                $subjectNames = \App\Models\Subject::query()->whereIn('id', $subjectIds)->pluck('name')->toArray();
                 $data['subject'] = implode(', ', $subjectNames);
             } else {
                 $data['subject'] = null;
@@ -75,7 +75,7 @@ class TeacherService extends BaseMasterDataService
 
         $subjectIds = $data['subject_ids'] ?? [];
         if (!empty($subjectIds)) {
-            $subjectNames = \App\Models\Subject::whereIn('id', $subjectIds)->pluck('name')->toArray();
+            $subjectNames = \App\Models\Subject::query()->whereIn('id', $subjectIds)->pluck('name')->toArray();
             $data['subject'] = implode(', ', $subjectNames);
         } else {
             $data['subject'] = null;
@@ -85,10 +85,16 @@ class TeacherService extends BaseMasterDataService
         $teacher = parent::update($model, $data);
         $teacher->subjects()->sync($subjectIds);
 
-        $teacher->user?->update([
+        $userUpdates = [
             'name' => $data['name'],
             'email' => $data['email'] ?? $teacher->user->email,
-        ]);
+        ];
+
+        if (!empty($data['password'])) {
+            $userUpdates['password'] = Hash::make($data['password']);
+        }
+
+        $teacher->user?->update($userUpdates);
 
         return $teacher;
     }
@@ -102,8 +108,16 @@ class TeacherService extends BaseMasterDataService
     public function forceDelete(int $id): bool
     {
         $teacher = $this->find($id, true);
-        $teacher->user?->forceDelete();
+        $user = $teacher->user;
 
-        return parent::forceDelete($id);
+        // Delete the teacher model first to trigger all Eloquent events and avoid cascade race condition
+        $result = parent::forceDelete($id);
+
+        // Delete the associated user afterwards
+        if ($user) {
+            $user->delete();
+        }
+
+        return $result;
     }
 }

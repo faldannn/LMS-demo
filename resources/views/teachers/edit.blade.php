@@ -42,8 +42,11 @@
                     </div>
                     <x-form-input name="phone" label="No. HP" value="{{ old('phone', $teacher->phone) }}" />
                     
-                    <div class="sm:col-span-2">
+                    <div>
                         <x-form-input name="email" type="email" label="Email" value="{{ old('email', $teacher->email) }}" />
+                    </div>
+                    <div>
+                        <x-form-input name="password" type="password" label="Ganti Password (Kosongkan jika tidak diubah)" placeholder="Masukkan password baru" />
                     </div>
                     
                     <div class="sm:col-span-2">

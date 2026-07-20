@@ -7,9 +7,17 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div></div>
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-warning"
+            data-confirm="Reset password guru {{ $teacher->name }} ke default (format tanggal lahir YYYY-MM-DD)?"
+            data-form="reset-{{ $teacher->id }}">
+            <i class="bi bi-key me-1"></i>Reset Password
+        </button>
         <a href="{{ route('teachers.edit', $teacher) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
         <a href="{{ route('teachers.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
     </div>
+    <form id="reset-{{ $teacher->id }}" method="POST" action="{{ route('teachers.reset-password', $teacher) }}" class="d-none">
+        @csrf
+    </form>
 </div>
 
 <div class="row g-4">

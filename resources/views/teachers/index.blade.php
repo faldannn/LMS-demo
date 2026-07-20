@@ -101,12 +101,20 @@
                         <a href="{{ route('teachers.edit', $teacher) }}" class="px-2.5 py-1.5 text-slate-500 transition hover:bg-brand-50 hover:text-brand-600" title="Edit">
                             <i class="bi bi-pencil-fill"></i>
                         </a>
+                        <button type="button" class="px-2.5 py-1.5 text-slate-500 transition hover:bg-amber-50 hover:text-amber-600"
+                            data-confirm="Reset password guru {{ $teacher->name }} ke default (format tanggal lahir YYYY-MM-DD)?"
+                            data-form="reset-{{ $teacher->id }}" title="Reset Password">
+                            <i class="bi bi-key-fill"></i>
+                        </button>
                         <button class="px-2.5 py-1.5 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600" 
                             data-confirm="Hapus guru {{ $teacher->name }}?" 
                             data-form="del-{{ $teacher->id }}" title="Hapus">
                             <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
+                    <form id="reset-{{ $teacher->id }}" method="POST" action="{{ route('teachers.reset-password', $teacher) }}" class="hidden">
+                        @csrf
+                    </form>
                     <form id="del-{{ $teacher->id }}" method="POST" action="{{ route('teachers.destroy', $teacher) }}" class="hidden">
                         @csrf @method('DELETE')
                     </form>
