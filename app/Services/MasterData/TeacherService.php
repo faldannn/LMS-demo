@@ -81,6 +81,8 @@ class TeacherService extends BaseMasterDataService
             $data['subject'] = null;
         }
 
+        $password = $data['password'] ?? null;
+        unset($data['password']);
         unset($data['subject_ids']);
         $teacher = parent::update($model, $data);
         $teacher->subjects()->sync($subjectIds);
@@ -90,8 +92,8 @@ class TeacherService extends BaseMasterDataService
             'email' => $data['email'] ?? $teacher->user->email,
         ];
 
-        if (!empty($data['password'])) {
-            $userUpdates['password'] = Hash::make($data['password']);
+        if (!empty($password)) {
+            $userUpdates['password'] = Hash::make($password);
         }
 
         $teacher->user?->update($userUpdates);

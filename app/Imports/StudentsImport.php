@@ -13,6 +13,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 {
     use Importable;
 
+    public array $importedIds = [];
+
     public function model(array $row): ?Student
     {
         $class = Classes::where('name', $row['kelas'] ?? '')->first();
@@ -29,26 +31,36 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         }
         $password = $dob ? $dob : (string) $row['nis'];
 
-        $user = User::create([
-            'username' => $row['nis'],
-            'password' => Hash::make($password),
-            'name' => $row['nama'],
-            'role' => UserRole::Siswa,
-            'status' => true,
-        ]);
+        $student = User::withoutEvents(function () use ($row, $class, $dob, $password) {
+            $user = User::create([
+                'username' => $row['nis'],
+                'password' => Hash::make($password),
+                'name' => $row['nama'],
+                'role' => UserRole::Siswa,
+                'status' => true,
+            ]);
 
-        return new Student([
-            'nis' => $row['nis'],
-            'nisn' => $row['nisn'] ?? null,
-            'name' => $row['nama'],
-            'gender' => strtoupper($row['jk'] ?? 'L') === 'L' ? 'L' : 'P',
-            'dob' => $dob,
-            'class_id' => $class->id,
-            'parent_name' => $row['nama_ortu'] ?? null,
-            'parent_phone' => $row['no_hp_ortu'] ?? null,
-            'user_id' => $user->id,
-            'status' => true,
-        ]);
+            return Student::withoutEvents(function () use ($row, $class, $dob, $user) {
+                return Student::create([
+                    'nis' => $row['nis'],
+                    'nisn' => $row['nisn'] ?? null,
+                    'name' => $row['nama'],
+                    'gender' => strtoupper($row['jk'] ?? 'L') === 'L' ? 'L' : 'P',
+                    'dob' => $dob,
+                    'class_id' => $class->id,
+                    'parent_name' => $row['nama_ortu'] ?? null,
+                    'parent_phone' => $row['no_hp_ortu'] ?? null,
+                    'user_id' => $user->id,
+                    'status' => true,
+                ]);
+            });
+        });
+
+        if ($student) {
+            $this->importedIds[] = $student->id;
+        }
+
+        return null;
     }
 
     public function rules(): array

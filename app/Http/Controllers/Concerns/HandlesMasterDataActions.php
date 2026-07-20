@@ -89,7 +89,13 @@ trait HandlesMasterDataActions
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv|max:4096']);
 
         try {
-            Excel::import(new $importClass(), $request->file('file'));
+            $importInstance = new $importClass();
+            Excel::import($importInstance, $request->file('file'));
+
+            if (!empty($importInstance->importedIds)) {
+                $type = $this->routePrefix() === 'teachers' ? 'teacher' : 'student';
+                \App\Jobs\SyncCbtAfterImport::dispatch($type, $importInstance->importedIds);
+            }
 
             return redirect()->route($this->routePrefix() . '.index')
                 ->with('success', 'Import data berhasil.');

@@ -22,6 +22,8 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
     private const DEFAULT_PASSWORD = 'guru123';
 
+    public array $importedIds = [];
+
     private $subjectsCache = null;
     private $classesCache = null;
 
@@ -189,6 +191,10 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 return $teacher;
             });
         });
+
+        if ($teacher) {
+            $this->importedIds[] = $teacher->id;
+        }
 
         return null;
     }

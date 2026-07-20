@@ -46,4 +46,46 @@ class TeacherAccountCreationTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_kepala_sekolah_can_update_teacher_and_change_password(): void
+    {
+        $kepalaSekolah = User::factory()->kepalaSekolah()->create(['status' => true]);
+        
+        $user = User::factory()->guru()->create([
+            'username' => '199001012020121001',
+            'password' => Hash::make('password_lama'),
+            'name' => 'Guru Lama',
+            'email' => 'guru.lama@example.com',
+            'status' => true,
+        ]);
+        
+        $teacher = Teacher::create([
+            'nip' => '199001012020121001',
+            'name' => 'Guru Lama',
+            'dob' => '1990-01-01',
+            'email' => 'guru.lama@example.com',
+            'user_id' => $user->id,
+            'status' => true,
+        ]);
+
+        $this->actingAs($kepalaSekolah)
+            ->put(route('teachers.update', $teacher), [
+                'nip' => '199001012020121001',
+                'name' => 'Guru Edit',
+                'dob' => '1990-01-02',
+                'phone' => '08123456789',
+                'email' => 'guru.edit@example.com',
+                'status' => true,
+                'password' => 'password_baru',
+            ])
+            ->assertRedirect(route('teachers.index'));
+
+        $teacher->refresh();
+        $this->assertSame('Guru Edit', $teacher->name);
+        $this->assertSame('1990-01-02', $teacher->dob->format('Y-m-d'));
+        
+        $user->refresh();
+        $this->assertSame('guru.edit@example.com', $user->email);
+        $this->assertTrue(Hash::check('password_baru', $user->password));
+    }
 }
