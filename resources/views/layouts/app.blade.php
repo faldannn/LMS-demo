@@ -131,9 +131,11 @@
             el.addEventListener('click', function (e) {
                 e.preventDefault();
                 const form = document.getElementById(this.dataset.form);
+                const rawMsg = this.dataset.confirm || 'Apakah Anda yakin?';
+                const htmlMsg = rawMsg.replace(/\\n/g, '<br>').replace(/\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>');
                 Swal.fire({
                     title: 'Konfirmasi',
-                    text: this.dataset.confirm || 'Apakah Anda yakin?',
+                    html: htmlMsg,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
@@ -163,10 +165,11 @@
                 }
                 
                 form.removeAttribute('onsubmit');
+                const htmlMsg = message.replace(/\\n/g, '<br>').replace(/\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>');
                 
                 Swal.fire({
                     title: 'Konfirmasi',
-                    text: message,
+                    html: htmlMsg,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
@@ -202,9 +205,11 @@
                         message = match[1];
                     }
                     
+                    const htmlMsg = message.replace(/\\n/g, '<br>').replace(/\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>');
+
                     Swal.fire({
                         title: 'Konfirmasi',
-                        text: message,
+                        html: htmlMsg,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#ef4444',

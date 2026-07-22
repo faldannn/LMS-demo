@@ -8,6 +8,9 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">Total: <strong class="text-slate-800">{{ $students->total() }}</strong> siswa</p>
         <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('students.trashed') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900">
+                <i class="bi bi-trash3 text-rose-500"></i>Sampah
+            </a>
             <a href="{{ route('students.import.template') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50">
                 <i class="bi bi-download"></i>Unduh Template
             </a>
@@ -135,12 +138,20 @@
                                 <a href="{{ route('students.edit', $student) }}" class="px-2.5 py-1.5 text-slate-500 transition hover:bg-brand-50 hover:text-brand-600" title="Edit">
                                     <i class="bi bi-pencil-fill"></i>
                                 </a>
+                                <button type="button" class="px-2.5 py-1.5 text-slate-500 transition hover:bg-amber-50 hover:text-amber-600" 
+                                    onclick="if(confirm('Reset password {{ addslashes($student->name) }} ke default (Tanggal Lahir/NIS)?')) document.getElementById('reset-pw-s{{ $student->id }}').submit();"
+                                    title="Reset Password ke Default">
+                                    <i class="bi bi-key-fill"></i>
+                                </button>
                                 <button class="px-2.5 py-1.5 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600" 
                                     data-confirm="Hapus siswa {{ $student->name }}?" 
                                     data-form="del-{{ $student->id }}" title="Hapus">
                                     <i class="bi bi-trash-fill"></i>
                                 </button>
                             </div>
+                            <form id="reset-pw-s{{ $student->id }}" method="POST" action="{{ route('students.reset-password', $student) }}" class="hidden">
+                                @csrf
+                            </form>
                             <form id="del-{{ $student->id }}" method="POST" action="{{ route('students.destroy', $student) }}" class="hidden">
                                 @csrf @method('DELETE')
                             </form>

@@ -66,7 +66,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     public function rules(): array
     {
         return [
-            'nis' => 'required|unique:students,nis',
+            'nis' => 'required|unique:students,nis,NULL,id,deleted_at,NULL|unique:users,username',
             'nama' => 'required|string',
             'kelas' => 'required|string',
         ];

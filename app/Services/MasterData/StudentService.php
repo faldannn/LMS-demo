@@ -7,9 +7,12 @@ use App\Models\Student;
 use App\Models\User;
 use App\Repositories\StudentRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StudentService extends BaseMasterDataService
 {
@@ -29,15 +32,24 @@ class StudentService extends BaseMasterDataService
             if (!empty($data['create_account'])) {
                 $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $data['nis'];
                 $data['status'] = true;
-                $user = User::create([
-                    'username' => $data['nis'],
-                    'password' => Hash::make($password),
-                    'name' => $data['name'],
-                    'email' => $data['parent_email'] ?? null,
-                    'role' => UserRole::Siswa,
-                    'status' => true,
-                ]);
-                $data['user_id'] = $user->id;
+                try {
+                    $user = User::create([
+                        'username' => $data['nis'],
+                        'password' => Hash::make($password),
+                        'name' => $data['name'],
+                        'email' => $data['parent_email'] ?? null,
+                        'role' => UserRole::Siswa,
+                        'status' => true,
+                    ]);
+                    $data['user_id'] = $user->id;
+                } catch (UniqueConstraintViolationException | QueryException $e) {
+                    if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'users_username_unique')) {
+                        throw ValidationException::withMessages([
+                            'nis' => 'NIS ini sudah terdaftar pada data akun pengguna (username).',
+                        ]);
+                    }
+                    throw $e;
+                }
             } else {
                 $data['status'] = false;
             }
@@ -61,14 +73,94 @@ class StudentService extends BaseMasterDataService
             }
             $data['photo'] = $data['photo']->store('students/photos', 'public');
         }
-        unset($data['create_account']);
+        $createAccount = !empty($data['create_account']);
+        $password = $data['password'] ?? null;
+        unset($data['create_account'], $data['password']);
 
         $student = parent::update($model, $data);
 
+        $userUpdates = [
+            'username' => $student->nis,
+            'name' => $student->name,
+            'status' => (bool) ($data['status'] ?? false),
+        ];
+        if (!empty($data['parent_email'])) {
+            $userUpdates['email'] = $data['parent_email'];
+        }
+        if (!empty($password)) {
+            $userUpdates['password'] = Hash::make($password);
+        }
+
         if ($student->user) {
-            $student->user->update(['status' => (bool) ($data['status'] ?? false)]);
+            $student->user->update($userUpdates);
+        } else {
+            $passToUse = !empty($password) ? $password : (!empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $data['nis']);
+            $user = User::create([
+                'username' => $student->nis,
+                'password' => Hash::make($passToUse),
+                'name' => $student->name,
+                'email' => $student->parent_email ?? null,
+                'role' => UserRole::Siswa,
+                'status' => true,
+            ]);
+            $student->update([
+                'user_id' => $user->id,
+                'status' => true,
+            ]);
+        }
+
+        return $student;
+    }
+
+    public function delete(Model $model): bool
+    {
+        /** @var Student $model */
+        $user = $model->user;
+        $result = parent::delete($model);
+
+        if ($user) {
+            $user->delete();
+        }
+
+        return $result;
+    }
+
+    public function forceDelete(int $id): bool
+    {
+        $student = $this->find($id, true);
+        $user = $student->user;
+
+        $result = parent::forceDelete($id);
+
+        if ($user) {
+            $user->delete();
+        }
+
+        return $result;
+    }
+
+    public function restore(int $id): Model
+    {
+        /** @var Student $student */
+        $student = parent::restore($id);
+
+        if (!$student->user) {
+            $password = !empty($student->dob) ? $student->dob->format('Y-m-d') : (string) $student->nis;
+            $user = User::create([
+                'username' => $student->nis,
+                'password' => Hash::make($password),
+                'name' => $student->name,
+                'email' => $student->parent_email ?? null,
+                'role' => UserRole::Siswa,
+                'status' => true,
+            ]);
+            $student->update([
+                'user_id' => $user->id,
+                'status' => true,
+            ]);
         }
 
         return $student;
     }
 }
+

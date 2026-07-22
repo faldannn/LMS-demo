@@ -197,9 +197,51 @@ class UserController extends Controller
 
         $this->activityLogService->log('user_delete', auth()->user(), $user, "User {$user->username} dihapus");
 
+        if ($user->student) {
+            $user->student->delete();
+        }
+        if ($user->teacher) {
+            $user->teacher->delete();
+        }
+
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+        return back()->with('success', 'User berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('user_ids', []);
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_filter(array_map('intval', (array) $ids));
+
+        $ids = array_values(array_diff($ids, [Auth::id()]));
+
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'Pilih setidaknya satu user untuk dihapus.']);
+        }
+
+        $users = User::with(['student', 'teacher'])->whereIn('id', $ids)->get();
+        $count = 0;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($users, &$count) {
+            foreach ($users as $user) {
+                if ($user->student) {
+                    $user->student->delete();
+                }
+                if ($user->teacher) {
+                    $user->teacher->delete();
+                }
+                $user->delete();
+                $count++;
+            }
+        });
+
+        $this->activityLogService->log('user_bulk_delete', auth()->user(), null, "Menghapus {$count} user secara massal");
+
+        return back()->with('success', "{$count} user berhasil dihapus.");
     }
 
     public function toggleStatus(User $user)

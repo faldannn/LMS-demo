@@ -75,9 +75,22 @@
                 </div>
             </x-card>
 
+            <x-card title="Password Akun Siswa" icon="bi-key" glass="true">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password Baru Login</label>
+                    <input type="password" name="password" placeholder="Kosongkan jika tidak diubah" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition focus:border-brand-500 focus:ring-brand-500">
+                    @error('password')<span class="mt-1 block text-xs font-semibold text-rose-500">{{ $message }}</span>@enderror
+                    <span class="mt-1 block text-xs text-slate-500">Ketik password baru jika ingin merubah password login siswa ini.</span>
+                </div>
+            </x-card>
+
             <div class="space-y-3">
                 <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                     <i class="bi bi-save"></i>Simpan Perubahan
+                </button>
+                <button type="button" onclick="if(confirm('Reset password {{ addslashes($student->name) }} ke default (Tanggal Lahir/NIS)?')) document.getElementById('reset-pw-{{ $student->id }}').submit();"
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-6 py-2.5 text-sm font-bold text-amber-700 shadow-sm transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
+                    <i class="bi bi-key-fill"></i>Reset Password ke Default
                 </button>
                 <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-6 py-3 text-base font-bold text-rose-600 shadow-sm transition hover:bg-rose-50 hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
                     data-confirm="Hapus siswa {{ $student->name }}?" data-form="del-{{ $student->id }}">
@@ -87,6 +100,9 @@
         </div>
     </form>
 
+    <form id="reset-pw-{{ $student->id }}" method="POST" action="{{ route('students.reset-password', $student) }}" class="hidden">
+        @csrf
+    </form>
     <form id="del-{{ $student->id }}" method="POST" action="{{ route('students.destroy', $student) }}" class="hidden">
         @csrf @method('DELETE')
     </form>

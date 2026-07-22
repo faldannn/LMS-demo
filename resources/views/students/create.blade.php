@@ -72,17 +72,7 @@
                 </div>
             </x-card>
 
-            <x-card title="Akun Sistem" icon="bi-shield-check" glass="true">
-                <label class="relative flex cursor-pointer items-start gap-3">
-                    <div class="flex h-6 items-center">
-                        <input type="checkbox" name="create_account" id="create_account" class="h-5 w-5 rounded border-slate-300 text-brand-600 transition focus:ring-brand-500" {{ old('create_account') ? 'checked' : '' }}>
-                    </div>
-                    <div>
-                        <span class="block text-sm font-semibold text-slate-800">Buat Akun Siswa</span>
-                        <span class="block text-xs text-slate-500">Jika diaktifkan, akun login akan dibuat otomatis dengan username = NIS dan password = Tanggal Lahir (YYYY-MM-DD) atau NIS (jika tanggal lahir kosong). Jika tidak, status siswa akan disimpan nonaktif.</span>
-                    </div>
-                </label>
-            </x-card>
+
 
             <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                 <i class="bi bi-save"></i>Simpan Data Siswa

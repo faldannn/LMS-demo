@@ -83,6 +83,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             ->name('students.attendance-history');
         Route::get('students/{student}/print-card', [StudentController::class, 'printCard'])
             ->name('students.print-card');
+        Route::post('students/{student}/reset-password', [StudentController::class, 'resetPassword'])
+            ->name('students.reset-password');
         Route::resource('students', StudentController::class);
 
         Route::get('teachers/import/template', [TeacherController::class, 'importTemplate'])->name('teachers.import.template');
@@ -112,6 +114,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         registerMasterDataRoutes('semesters', SemesterController::class, false);
         Route::resource('semesters', SemesterController::class);
 
+        Route::delete('users/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
         Route::resource('users', UserController::class)->except(['show']);
         Route::put('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
         Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');

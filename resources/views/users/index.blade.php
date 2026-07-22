@@ -99,6 +99,12 @@
                 </a>
             </div>
 
+            {{-- Bulk Delete Button --}}
+            <button type="button" id="bulkDeleteBtn" onclick="submitBulkDelete()" class="hidden inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700">
+                <i class="bi bi-trash-fill"></i>
+                <span>Hapus Terpilih (<span id="selectedCount">0</span>)</span>
+            </button>
+
             {{-- Add User Button --}}
             <div class="flex items-center">
                 <a href="{{ route('users.create') }}" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 sm:w-auto">
@@ -115,6 +121,9 @@
             <table class="w-full text-sm text-left text-slate-600">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
                     <tr>
+                        <th class="px-3 py-3 font-semibold text-center" style="width: 40px">
+                            <input type="checkbox" id="selectAllUsers" class="h-4 w-4 rounded border-slate-300 text-brand-600 transition focus:ring-brand-500" title="Pilih Semua">
+                        </th>
                         <th class="px-4 py-3 font-semibold" style="width: 48px">#</th>
                         <th class="px-4 py-3 font-semibold">User</th>
                         <th class="px-4 py-3 font-semibold">Username</th>
@@ -144,6 +153,13 @@
                             [$roleBg, $roleFg] = $roleColors[$roleKey] ?? ['#f1f5f9', '#64748b'];
                         @endphp
                         <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                            <td class="px-3 py-3 text-center">
+                                @if($user->id !== auth()->id())
+                                    <input type="checkbox" class="user-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 transition focus:ring-brand-500" value="{{ $user->id }}">
+                                @else
+                                    <span class="text-slate-300">&mdash;</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 font-semibold text-slate-400">
                                 {{ $users->firstItem() + $i }}
                             </td>
@@ -254,4 +270,59 @@
         @endif
     </div>
 </div>
+
+<form id="bulkDeleteForm" method="POST" action="{{ route('users.bulk-destroy') }}" class="hidden">
+    @csrf @method('DELETE')
+    <input type="hidden" name="user_ids" id="bulkUserIds">
+</form>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('selectAllUsers');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    const bulkBtn = document.getElementById('bulkDeleteBtn');
+    const countSpan = document.getElementById('selectedCount');
+
+    function updateBulkButton() {
+        const checked = document.querySelectorAll('.user-checkbox:checked');
+        const count = checked.length;
+        if (countSpan) countSpan.textContent = count;
+        if (bulkBtn) {
+            if (count > 0) {
+                bulkBtn.classList.remove('hidden');
+            } else {
+                bulkBtn.classList.add('hidden');
+            }
+        }
+        if (selectAll) {
+            selectAll.checked = (checkboxes.length > 0 && checked.length === checkboxes.length);
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            updateBulkButton();
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateBulkButton);
+    });
+});
+
+function submitBulkDelete() {
+    const checked = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+    if (checked.length === 0) return;
+
+    if (confirm(`Yakin ingin menghapus ${checked.length} user terpilih? Akun user dan data terkait (siswa/guru) akan ikut dihapus.`)) {
+        document.getElementById('bulkUserIds').value = checked.join(',');
+        document.getElementById('bulkDeleteForm').submit();
+    }
+}
+</script>
+@endpush

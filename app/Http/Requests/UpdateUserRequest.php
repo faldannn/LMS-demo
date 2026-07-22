@@ -20,12 +20,7 @@ class UpdateUserRequest extends FormRequest
             'name' => 'required|string|max:100',
             'email' => "nullable|email|unique:users,email,{$id}",
             'role' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\UserRole::class)],
-            'password' => [
-                'nullable',
-                'string',
-                'confirmed',
-                \Illuminate\Validation\Rules\Password::min(8)->mixedCase()->numbers(),
-            ],
+            'password' => 'nullable|string|min:6',
             'username' => "sometimes|required|string|max:50|unique:users,username,{$id}|alpha_dash",
         ];
 

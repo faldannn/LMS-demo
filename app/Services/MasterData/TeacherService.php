@@ -104,7 +104,14 @@ class TeacherService extends BaseMasterDataService
     public function delete(Model $model): bool
     {
         /** @var Teacher $model */
-        return parent::delete($model);
+        $user = $model->user;
+        $result = parent::delete($model);
+
+        if ($user) {
+            $user->delete();
+        }
+
+        return $result;
     }
 
     public function forceDelete(int $id): bool
@@ -121,5 +128,28 @@ class TeacherService extends BaseMasterDataService
         }
 
         return $result;
+    }
+
+    public function restore(int $id): Model
+    {
+        /** @var Teacher $teacher */
+        $teacher = parent::restore($id);
+
+        if (!$teacher->user) {
+            $username = $teacher->nip ?? $teacher->email ?? \Illuminate\Support\Str::slug($teacher->name, '.');
+            $password = !empty($teacher->dob) ? $teacher->dob->format('Y-m-d') : self::DEFAULT_PASSWORD;
+
+            $user = User::create([
+                'username' => $username,
+                'password' => Hash::make($password),
+                'name' => $teacher->name,
+                'email' => $teacher->email ?? null,
+                'role' => UserRole::Guru,
+                'status' => true,
+            ]);
+            $teacher->update(['user_id' => $user->id, 'status' => true]);
+        }
+
+        return $teacher;
     }
 }

@@ -82,7 +82,7 @@ class StudentController extends Controller
     public function store(StoreStudentRequest $request)
     {
         $data = $request->validated();
-        $data['create_account'] = $request->boolean('create_account');
+        $data['create_account'] = true;
         $student = $this->service->create($data);
 
         $msg = "Siswa {$student->name} berhasil ditambahkan.";
@@ -125,7 +125,29 @@ class StudentController extends Controller
         $name = $student->name;
         $this->service->delete($student);
 
-        return redirect()->route('students.index')->with('success', "Siswa {$name} berhasil dihapus.");
+        return back()->with('success', "Siswa {$name} berhasil dihapus.");
+    }
+
+    public function resetPassword(Student $student)
+    {
+        $newPass = $student->dob ? $student->dob->format('Y-m-d') : (string) $student->nis;
+
+        if ($student->user) {
+            $student->user->update(['password' => \Illuminate\Support\Facades\Hash::make($newPass)]);
+            app(\App\Services\SessionManagementService::class)->revokeAllForUser($student->user->id);
+            return back()->with('success', "Password akun siswa {$student->name} berhasil direset ke default ({$newPass}).");
+        } else {
+            $user = \App\Models\User::create([
+                'username' => $student->nis,
+                'password' => \Illuminate\Support\Facades\Hash::make($newPass),
+                'name' => $student->name,
+                'email' => $student->parent_email ?? null,
+                'role' => \App\Enums\UserRole::Siswa,
+                'status' => true,
+            ]);
+            $student->update(['user_id' => $user->id, 'status' => true]);
+            return back()->with('success', "Akun siswa berhasil dibuat dan password direset ke default ({$newPass}).");
+        }
     }
 
     public function attendanceHistory(Student $student, Request $request)

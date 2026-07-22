@@ -34,6 +34,11 @@
                                 value="{{ old('email', $user->email) }}">
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password Baru <span class="text-muted font-normal text-xs">(Kosongkan jika tidak diubah)</span></label>
+                            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Ketik password baru...">
+                            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" class="form-select @error('role') is-invalid @enderror" required>
@@ -149,11 +154,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="alert alert-info mt-3 mb-0">
-                        <i class="bi bi-info-circle me-2"></i>Untuk mengubah password, gunakan fitur Reset Password di halaman daftar user.
-                    </div>
-                    <div class="d-flex gap-2 mt-4">
+                    <div class="d-flex flex-wrap gap-2 mt-4">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-save me-2"></i>Simpan Perubahan</button>
+                        <button type="button" class="btn btn-warning text-dark"
+                            onclick="if(confirm('Reset password {{ addslashes($user->name) }} ke default?')) document.getElementById('reset-pw-u{{ $user->id }}').submit();">
+                            <i class="bi bi-key me-1"></i>Reset Password Default
+                        </button>
                         @if($user->id !== auth()->id())
                             <button type="button" class="btn btn-outline-danger"
                                 data-confirm="Hapus user {{ $user->name }}?" data-form="del-u{{ $user->id }}">
@@ -161,6 +167,9 @@
                             </button>
                         @endif
                     </div>
+                </form>
+                <form id="reset-pw-u{{ $user->id }}" method="POST" action="{{ route('users.reset-password', $user) }}" class="d-none">
+                    @csrf @method('PUT')
                 </form>
                 @if($user->id !== auth()->id())
                     <form id="del-u{{ $user->id }}" method="POST" action="{{ route('users.destroy', $user) }}">@csrf @method('DELETE')</form>

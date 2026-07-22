@@ -42,42 +42,37 @@ class StudentTest extends TestCase
                 'gender' => 'L',
                 'class_id' => $this->class->id,
                 'status' => true,
-                'create_account' => false,
             ])
             ->assertRedirect(route('students.index'));
 
-        $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa', 'status' => 0]);
-        $this->assertDatabaseMissing('users', ['username' => '2025099']);
+        $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa', 'status' => 1]);
+        $this->assertDatabaseHas('users', ['username' => '2025099']);
     }
 
-    public function test_admin_can_create_student_account_with_nis_login(): void
+    public function test_student_can_login_with_nis_and_dob(): void
     {
-        $nis = '2025100';
+        $nis = '2025200';
+        $dob = '2005-08-17';
 
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => $nis,
-                'name' => 'Test Siswa Akun',
+                'name' => 'Siswa Tanggal Lahir',
                 'gender' => 'L',
+                'dob' => $dob,
                 'class_id' => $this->class->id,
                 'status' => true,
-                'create_account' => true,
             ])
             ->assertRedirect(route('students.index'));
 
-        $student = Student::where('nis', $nis)->firstOrFail();
         $user = User::where('username', $nis)->firstOrFail();
-
-        $this->assertSame($user->id, $student->user_id);
-        $this->assertTrue($student->status);
-        $this->assertTrue($user->status);
-        $this->assertTrue(Hash::check($nis, $user->password));
 
         $this->post(route('logout'));
 
+        // Test login with YYYY-MM-DD
         $this->post(route('login.post'), [
             'username' => $nis,
-            'password' => $nis,
+            'password' => '2005-08-17',
         ])->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticatedAs($user);
@@ -176,6 +171,27 @@ class StudentTest extends TestCase
             ->assertSessionHasErrors('nis');
     }
 
+    public function test_duplicate_nis_matching_existing_user_username_rejected(): void
+    {
+        User::create([
+            'username' => '2025001',
+            'password' => Hash::make('password'),
+            'name' => 'Existing User',
+            'role' => \App\Enums\UserRole::Siswa,
+            'status' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('students.store'), [
+                'nis' => '2025001',
+                'name' => 'New Student',
+                'gender' => 'L',
+                'class_id' => $this->class->id,
+                'create_account' => true,
+            ])
+            ->assertSessionHasErrors('nis');
+    }
+
     public function test_admin_can_delete_student(): void
     {
         $student = Student::create([
@@ -187,6 +203,7 @@ class StudentTest extends TestCase
         ]);
 
         $this->actingAs($this->admin)
+            ->from(route('students.index'))
             ->delete(route('students.destroy', $student))
             ->assertRedirect(route('students.index'));
 
