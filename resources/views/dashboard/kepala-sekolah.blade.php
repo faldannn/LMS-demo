@@ -5,7 +5,7 @@
 @section('content')
 <div id="dashboard-root" class="space-y-6">
     @include('dashboard.partials.hero', [
-        'title' => 'Dashboard Kepala Sekolah',
+        'title' => 'Dashboard ' . $user->name,
         'subtitle' => 'Pantau data akademik, kehadiran, aktivitas LMS, dan pengumuman sekolah secara real-time.',
     ])
 
