@@ -10,6 +10,7 @@ use App\Imports\TeachersImport;
 use App\Models\AcademicYear;
 use App\Models\Classes;
 use App\Models\ClassSubject;
+use App\Models\Schedule;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\MasterData\TeacherService;
@@ -168,7 +169,7 @@ class TeacherController extends Controller
 
         $teacher->loadMissing('subjects');
         if (!$teacher->subjects->contains($data['subject_id'])) {
-            return back()->withErrors(['subject_id' => 'Mata pelajaran yang dipilih tidak diampu oleh guru ini.']);
+            $teacher->subjects()->syncWithoutDetaching([$data['subject_id']]);
         }
 
         $activeYear = AcademicYear::active();
@@ -176,23 +177,23 @@ class TeacherController extends Controller
             return back()->withErrors(['error' => 'Tidak ada tahun ajaran aktif.']);
         }
 
-        // Check if this class and subject already has a teacher
-        $existing = ClassSubject::where([
+        ClassSubject::updateOrCreate([
             'class_id' => $data['class_id'],
             'subject_id' => $data['subject_id'],
             'academic_year_id' => $activeYear->id,
-        ])->first();
+        ], [
+            'teacher_id' => $teacher->id,
+        ]);
 
-        if ($existing) {
-            // Update the teacher instead of duplicate or error
-            $existing->update(['teacher_id' => $teacher->id]);
-        } else {
-            ClassSubject::create([
-                'class_id' => $data['class_id'],
-                'subject_id' => $data['subject_id'],
-                'academic_year_id' => $activeYear->id,
-                'teacher_id' => $teacher->id,
-            ]);
+        // Also update matching schedules for this class and subject
+        $subject = Subject::find($data['subject_id']);
+        if ($subject) {
+            Schedule::where('class_id', $data['class_id'])
+                ->where(function ($q) use ($subject) {
+                    $q->where('subject', $subject->name)
+                      ->orWhere('subject', 'like', "%{$subject->name}%");
+                })
+                ->update(['teacher_id' => $teacher->id]);
         }
 
         return back()->with('success', 'Tugas mengajar berhasil ditambahkan.');

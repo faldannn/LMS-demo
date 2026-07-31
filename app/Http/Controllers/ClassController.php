@@ -11,6 +11,7 @@ use App\Models\AcademicYear;
 use App\Models\ClassSubject;
 use App\Models\Classes;
 use App\Models\Major;
+use App\Models\Schedule;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\MasterData\ClassService;
@@ -119,7 +120,7 @@ class ClassController extends Controller
 
         $teacher = Teacher::with('subjects')->findOrFail($data['teacher_id']);
         if (!$teacher->subjects->contains($data['subject_id'])) {
-            return back()->withErrors(['teacher_id' => "Guru {$teacher->name} tidak mengampu mata pelajaran ini."]);
+            $teacher->subjects()->syncWithoutDetaching([$data['subject_id']]);
         }
 
         $activeYear = AcademicYear::active();
@@ -127,11 +128,22 @@ class ClassController extends Controller
             return back()->withErrors(['error' => 'Tidak ada tahun ajaran aktif.']);
         }
 
-        ClassSubject::firstOrCreate([
+        ClassSubject::updateOrCreate([
             'class_id' => $class->id,
             'subject_id' => $data['subject_id'],
             'academic_year_id' => $activeYear->id,
         ], ['teacher_id' => $data['teacher_id']]);
+
+        // Synchronize matching schedules to the new teacher
+        $subject = Subject::find($data['subject_id']);
+        if ($subject) {
+            Schedule::where('class_id', $class->id)
+                ->where(function ($q) use ($subject) {
+                    $q->where('subject', $subject->name)
+                      ->orWhere('subject', 'like', "%{$subject->name}%");
+                })
+                ->update(['teacher_id' => $data['teacher_id']]);
+        }
 
         return back()->with('success', 'Mata pelajaran berhasil ditambahkan ke kelas ini.');
     }

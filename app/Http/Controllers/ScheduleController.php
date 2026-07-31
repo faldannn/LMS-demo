@@ -108,16 +108,21 @@ class ScheduleController extends Controller
         
         $schedule = Schedule::create($data);
 
-        // Auto-create ClassSubject mapping if not exists
+        // Auto-create/update ClassSubject mapping
         $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
         if ($subjectModel && $activeYear) {
-            ClassSubject::firstOrCreate([
+            ClassSubject::updateOrCreate([
                 'class_id' => $data['class_id'],
                 'subject_id' => $subjectModel->id,
                 'academic_year_id' => $activeYear->id,
             ], [
                 'teacher_id' => $data['teacher_id'],
             ]);
+
+            $teacher = Teacher::find($data['teacher_id']);
+            if ($teacher) {
+                $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
+            }
         }
 
         return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
@@ -156,17 +161,22 @@ class ScheduleController extends Controller
         
         $schedule->update($data);
 
-        // Auto-create ClassSubject mapping if not exists
+        // Auto-create/update ClassSubject mapping
         $activeYear = AcademicYear::active();
         $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
         if ($subjectModel && $activeYear) {
-            ClassSubject::firstOrCreate([
+            ClassSubject::updateOrCreate([
                 'class_id' => $data['class_id'],
                 'subject_id' => $subjectModel->id,
                 'academic_year_id' => $activeYear->id,
             ], [
                 'teacher_id' => $data['teacher_id'],
             ]);
+
+            $teacher = Teacher::find($data['teacher_id']);
+            if ($teacher) {
+                $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
+            }
         }
 
         return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
