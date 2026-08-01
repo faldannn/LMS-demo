@@ -47,10 +47,10 @@
                             @endforeach
                         </div>
                         <div style="width:120px">
-                            <input type="time" name="details[{{ $student->id }}][check_in]"
-                                class="form-control form-control-sm"
-                                value="{{ old("details.{$student->id}.check_in", $det?->check_in ? $det->check_in->format('H:i') : '') }}"
-                                placeholder="Jam masuk">
+                            <input type="text" name="details[{{ $student->id }}][check_in]"
+                                class="form-control form-control-sm text-center font-semibold text-slate-600 bg-slate-100 cursor-not-allowed"
+                                value="{{ old("details.{$student->id}.check_in", $det?->check_in ? $det->check_in->format('H:i') : now()->format('H:i')) }}"
+                                readonly tabindex="-1" style="pointer-events: none;">
                         </div>
                         <div style="width:180px">
                             <input type="text" name="details[{{ $student->id }}][notes]"

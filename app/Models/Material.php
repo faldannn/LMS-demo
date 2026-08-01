@@ -86,19 +86,21 @@ class Material extends Model
     public function getTypeIconAttribute(): string
     {
         return match ($this->type) {
+            'text' => 'bi-file-earmark-text',
             'pdf' => 'bi-file-earmark-pdf',
             'ppt' => 'bi-file-earmark-ppt',
             'video' => 'bi-camera-video',
             'youtube' => 'bi-youtube',
             'link' => 'bi-link-45deg',
             'image' => 'bi-image',
-            default => 'bi-file-earmark',
+            default => 'bi-file-earmark-text',
         };
     }
 
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
+            'text' => 'Teks / Artikel',
             'pdf' => 'PDF',
             'ppt' => 'PowerPoint',
             'video' => 'Video',
@@ -118,7 +120,7 @@ class Material extends Model
 
     public function isDownloadable(): bool
     {
-        return in_array($this->type, ['pdf', 'ppt', 'video', 'image'], true) && $this->file_path;
+        return in_array($this->type, ['pdf', 'ppt', 'video', 'image'], true) && !empty($this->file_path);
     }
 
     protected static function booted()

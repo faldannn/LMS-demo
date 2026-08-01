@@ -37,7 +37,8 @@
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-slate-700">Tipe Materi <span class="text-rose-500">*</span></label>
                             <select name="type" id="typeSelect" class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500" required>
-                                <option value="pdf" @selected(old('type')=='pdf')>PDF</option>
+                                <option value="text" @selected(old('type')=='text')>Teks / Artikel (Tanpa File / Opsional)</option>
+                                <option value="pdf" @selected(old('type', 'text')=='pdf')>PDF</option>
                                 <option value="ppt" @selected(old('type')=='ppt')>PowerPoint (PPT/PPTX)</option>
                                 <option value="video" @selected(old('type')=='video')>Video (Upload)</option>
                                 <option value="youtube" @selected(old('type')=='youtube')>YouTube (Embed)</option>
@@ -47,9 +48,9 @@
                         </div>
 
                         <div class="sm:col-span-2" id="fileGroup">
-                            <label class="mb-1.5 block text-sm font-medium text-slate-700">Unggah File</label>
+                            <label class="mb-1.5 block text-sm font-medium text-slate-700">Unggah File <span class="text-xs font-normal text-slate-500">(Opsional)</span></label>
                             <input type="file" name="file" class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500 @error('file') border-rose-500 focus:border-rose-500 focus:ring-rose-500 @enderror">
-                            <p class="mt-1.5 text-xs text-slate-500">PDF: .pdf | PPT: .ppt/.pptx | Video: mp4, webm | Maks 500MB</p>
+                            <p class="mt-1.5 text-xs text-slate-500">PDF: .pdf | PPT: .ppt/.pptx | Video: mp4, webm | Maks 500MB (Opsional)</p>
                             @error('file')<p class="mt-1 text-xs text-rose-500">{{ $message }}</p>@enderror
                         </div>
 

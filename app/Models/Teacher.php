@@ -48,6 +48,11 @@ class Teacher extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function teacherAttendances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TeacherAttendance::class);
+    }
+
     public function subjects(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Subject::class, 'teacher_subject');

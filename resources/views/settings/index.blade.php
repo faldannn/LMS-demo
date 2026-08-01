@@ -49,6 +49,36 @@
                             <input type="text" name="academic_year" class="form-control"
                                 value="{{ old('academic_year', $settings['academic_year']) }}" placeholder="2025/2026">
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar-week me-1 text-primary"></i>
+                                Hari Operasional Sekolah
+                            </label>
+                            @php $opDays = old('school_operational_days', $settings['school_operational_days'] ?? '5_days'); @endphp
+                            <div class="d-flex gap-3 flex-wrap mt-1">
+                                <div class="form-check form-check-inline border rounded-3 px-3 py-2 flex-fill {{ $opDays === '5_days' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary-subtle' }}" style="cursor:pointer" onclick="document.getElementById('op5').click()">
+                                    <input class="form-check-input" type="radio" name="school_operational_days" id="op5" value="5_days" {{ $opDays === '5_days' ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-semibold" for="op5" style="cursor:pointer">
+                                        <i class="bi bi-calendar5 me-1 text-primary"></i>
+                                        5 Hari Sekolah
+                                        <small class="d-block text-muted fw-normal">Senin — Jumat &nbsp;|&nbsp; Libur: Sabtu &amp; Minggu</small>
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline border rounded-3 px-3 py-2 flex-fill {{ $opDays === '6_days' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary-subtle' }}" style="cursor:pointer" onclick="document.getElementById('op6').click()">
+                                    <input class="form-check-input" type="radio" name="school_operational_days" id="op6" value="6_days" {{ $opDays === '6_days' ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-semibold" for="op6" style="cursor:pointer">
+                                        <i class="bi bi-calendar6 me-1 text-success"></i>
+                                        6 Hari Sekolah
+                                        <small class="d-block text-muted fw-normal">Senin — Sabtu &nbsp;|&nbsp; Libur: Hanya Minggu</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text mt-1">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Pengaturan ini menentukan hari pembuatan jadwal dan validasi presensi sistem.
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="d-grid mt-4">
@@ -72,64 +102,117 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('settings.attendance') }}">
                     @csrf
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Batas Jam Terlambat</label>
-                            <input type="time" name="late_limit" class="form-control @error('late_limit') is-invalid @enderror"
-                                value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}">
-                            @error('late_limit')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">Siswa masuk setelah waktu ini dianggap terlambat.</div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Min. Kehadiran (%)</label>
-                            <div class="input-group">
-                                <input type="number" name="min_attendance" class="form-control @error('min_attendance') is-invalid @enderror"
-                                    value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100">
+
+                    {{-- 1. Pengaturan Absensi Siswa --}}
+                    <div class="rounded-3 p-3 bg-light border mb-4">
+                        <h6 class="fw-bold text-primary mb-3">
+                            <i class="bi bi-people me-2"></i>Pengaturan Absensi Siswa
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Batas Jam Terlambat (Pagi)</label>
+                                <input type="time" name="late_limit" class="form-control @error('late_limit') is-invalid @enderror"
+                                    value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}">
+                                @error('late_limit')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Siswa pagi masuk setelah waktu ini dianggap terlambat.</div>
                             </div>
-                            @error('min_attendance')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">Batas persentase peringatan kehadiran.</div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Batas Jam Terlambat (Siang)</label>
+                                <input type="time" name="late_limit_siang" class="form-control @error('late_limit_siang') is-invalid @enderror"
+                                    value="{{ old('late_limit_siang', substr($settings['late_limit_siang'], 0, 5)) }}">
+                                @error('late_limit_siang')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Siswa siang masuk setelah waktu ini dianggap terlambat.</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Min. Kehadiran Siswa (%)</label>
+                                <div class="input-group">
+                                    <input type="number" name="min_attendance" class="form-control @error('min_attendance') is-invalid @enderror"
+                                        value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100">
+                                </div>
+                                @error('min_attendance')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Batas persentase peringatan kehadiran siswa.</div>
+                            </div>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Latitude</label>
-                            <input type="number" step="any" id="geofence_lat" name="geofence_lat" class="form-control" 
-                                value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
+                    </div>
+
+                    {{-- 2. Pengaturan Absensi Guru --}}
+                    <div class="rounded-3 p-3 bg-light border mb-4">
+                        <h6 class="fw-bold text-success mb-3">
+                            <i class="bi bi-person-badge me-2"></i>Pengaturan Absensi Guru (Masuk & Pulang)
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Batas Jam Terlambat Guru</label>
+                                <input type="time" name="teacher_late_limit" class="form-control @error('teacher_late_limit') is-invalid @enderror"
+                                    value="{{ old('teacher_late_limit', substr($settings['teacher_late_limit'], 0, 5)) }}">
+                                @error('teacher_late_limit')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Guru masuk setelah waktu ini dianggap terlambat.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Jam Mulai Absen Pulang Guru</label>
+                                <input type="time" name="teacher_checkout_start" class="form-control @error('teacher_checkout_start') is-invalid @enderror"
+                                    value="{{ old('teacher_checkout_start', substr($settings['teacher_checkout_start'], 0, 5)) }}">
+                                @error('teacher_checkout_start')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Guru dapat melakukan absen pulang mulai jam ini.</div>
+                            </div>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Longitude</label>
-                            <input type="number" step="any" id="geofence_lng" name="geofence_lng" class="form-control" 
-                                value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Radius (m)</label>
-                            <input type="number" name="geofence_radius" class="form-control" 
-                                value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000" required>
-                        </div>
-                        
-                        <div class="col-12 mt-2">
-                            <button type="button" id="btnGetLocation" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-geo-alt"></i> Ambil Lokasi Saat Ini
-                            </button>
-                            <span id="locationStatus" class="ms-2 small text-muted"></span>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Min. Deteksi Wajah</label>
-                            <input type="number" step="0.01" name="face_detection_min" class="form-control" 
-                                value="{{ old('face_detection_min', $settings['face_detection_min']) }}" required>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Min. Face Match</label>
-                            <input type="number" step="0.01" name="face_match_min" class="form-control" 
-                                value="{{ old('face_match_min', $settings['face_match_min']) }}" required>
+                    </div>
+
+                    {{-- 3. Pengaturan Geofence GPS & Deteksi Wajah --}}
+                    <div class="rounded-3 p-3 bg-light border mb-3">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-geo-alt me-2"></i>Pengaturan Geofence GPS & Deteksi Wajah
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Latitude</label>
+                                <input type="number" step="any" id="geofence_lat" name="geofence_lat" class="form-control" 
+                                    value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Longitude</label>
+                                <input type="number" step="any" id="geofence_lng" name="geofence_lng" class="form-control" 
+                                    value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Radius Sekolah (Meter)</label>
+                                <input type="number" name="geofence_radius" class="form-control" 
+                                    value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000" required>
+                            </div>
+                            
+                            <div class="col-12 mt-2">
+                                <button type="button" id="btnGetLocation" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-geo-alt"></i> Ambil Lokasi Saat Ini
+                                </button>
+                                <span id="locationStatus" class="ms-2 small text-muted"></span>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Min. Deteksi Wajah</label>
+                                <input type="number" step="0.01" name="face_detection_min" class="form-control" 
+                                    value="{{ old('face_detection_min', $settings['face_detection_min']) }}" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Min. Face Match</label>
+                                <input type="number" step="0.01" name="face_match_min" class="form-control" 
+                                    value="{{ old('face_match_min', $settings['face_match_min']) }}" required>
+                            </div>
                         </div>
                     </div>
 
@@ -138,7 +221,7 @@
                             <i class="bi bi-info-circle me-1"></i> Pengaturan Aktif:
                         </h6>
                         <ul class="mb-0 small ps-3">
-                            <li>Status terlambat: setelah jam <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong></li>
+                            <li>Status terlambat siswa: Pagi > <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong> | Siang > <strong>{{ substr($settings['late_limit_siang'], 0, 5) }}</strong></li>
                             <li>Batas kehadiran minimal: <strong>{{ $settings['min_attendance'] }}%</strong></li>
                             <li>Geofence: <strong>{{ $settings['geofence_lat'] }}, {{ $settings['geofence_lng'] }}</strong> (Radius: <strong>{{ $settings['geofence_radius'] }}m</strong>)</li>
                         </ul>

@@ -34,7 +34,7 @@
                 <select name="month" class="form-select">
                     @foreach(range(1,12) as $m)
                         <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                            {{ \Carbon\Carbon::create(null, (int) $m)->translatedFormat('F') }}
                         </option>
                     @endforeach
                 </select>
@@ -110,7 +110,7 @@
         <div class="border-b border-slate-100 bg-slate-50/80 px-5 py-4 flex items-center gap-2">
             <i class="bi bi-calendar3 text-brand-600"></i>
             <h3 class="font-bold text-slate-800">
-                Riwayat Bulan {{ \Carbon\Carbon::create()->month($month)->translatedFormat('F') }} {{ $year }}
+                Riwayat Bulan {{ \Carbon\Carbon::create(null, (int) $month)->translatedFormat('F') }} {{ $year }}
             </h3>
         </div>
         <div class="overflow-x-auto">

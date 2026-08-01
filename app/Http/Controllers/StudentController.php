@@ -152,8 +152,8 @@ class StudentController extends Controller
 
     public function attendanceHistory(Student $student, Request $request)
     {
-        $month = $request->get('month', now()->month);
-        $year = $request->get('year', now()->year);
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
 
         $history = $student->attendanceDetails()
             ->with('attendance')

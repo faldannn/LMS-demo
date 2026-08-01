@@ -13,17 +13,8 @@ class StoreAttendanceRequest extends FormRequest
             return false;
         }
 
-        if ($user->isGuru()) {
-            $classId = $this->input('class_id');
-            $teacher = $user->teacher;
-            if (!$teacher) {
-                return false;
-            }
-            
-            $isHomeroom = $teacher->homeroomClasses()->where('id', $classId)->exists();
-            if (!$isHomeroom) {
-                return false;
-            }
+        if ($user->isGuru() && !$user->teacher) {
+            return false;
         }
 
         return true;
@@ -37,7 +28,7 @@ class StoreAttendanceRequest extends FormRequest
             'session' => 'in:pagi,siang',
             'details' => 'required|array|min:1',
             'details.*.status' => 'required|in:hadir,sakit,izin,alfa,terlambat',
-            'details.*.check_in' => 'nullable|date_format:H:i',
+            'details.*.check_in' => 'nullable',
             'details.*.notes' => 'nullable|string|max:255',
         ];
     }

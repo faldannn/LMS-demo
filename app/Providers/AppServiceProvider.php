@@ -103,6 +103,9 @@ class AppServiceProvider extends ServiceProvider
 
                 'attendance.start_time' => $settings['att_start_time'] ?? config('attendance.start_time'),
                 'attendance.late_limit' => $settings['att_late_limit'] ?? config('attendance.late_limit'),
+                'attendance.late_limit_siang' => $settings['att_late_limit_siang'] ?? config('attendance.late_limit_siang', '13:00:00'),
+                'attendance.teacher_late_limit' => $settings['att_teacher_late_limit'] ?? config('attendance.teacher_late_limit', '07:15:00'),
+                'attendance.teacher_checkout_start' => $settings['att_teacher_checkout_start'] ?? config('attendance.teacher_checkout_start', '15:00:00'),
                 'attendance.end_time' => $settings['att_end_time'] ?? config('attendance.end_time'),
                 'attendance.min_percentage' => $settings['att_min_pct'] ?? config('attendance.min_percentage'),
                 'attendance.working_days' => $settings['att_working_days'] ?? config('attendance.working_days'),

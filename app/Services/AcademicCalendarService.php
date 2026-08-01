@@ -12,7 +12,7 @@ class AcademicCalendarService
     {
         $month ??= now()->month;
         $year ??= now()->year;
-        $start = Carbon::create($year, $month, 1)->startOfMonth();
+        $start = Carbon::create((int) $year, (int) $month, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
         $query = AcademicCalendarEvent::with(['creator:id,name', 'class:id,name'])

@@ -22,6 +22,9 @@ class SettingController extends Controller
             'school_email'     => config('school.email', ''),
             'school_logo'      => config('school.logo', ''),
             'late_limit'       => config('attendance.late_limit', '07:15'),
+            'late_limit_siang' => config('attendance.late_limit_siang', '13:00'),
+            'teacher_late_limit' => config('attendance.teacher_late_limit', '07:15'),
+            'teacher_checkout_start' => config('attendance.teacher_checkout_start', '15:00'),
             'min_attendance'   => config('attendance.min_percentage', 75),
             'geofence_lat'     => config('attendance.geofence.latitude'),
             'geofence_lng'     => config('attendance.geofence.longitude'),
@@ -29,6 +32,7 @@ class SettingController extends Controller
             'face_detection_min' => config('attendance.face.detection_min_confidence'),
             'face_match_min'   => config('attendance.face.match_min_confidence'),
             'academic_year'    => config('school.academic_year', date('Y') . '/' . (date('Y') + 1)),
+            'school_operational_days' => Setting::get('school_operational_days', '5_days'),
         ];
 
         return view('settings.index', compact('settings'));
@@ -42,6 +46,7 @@ class SettingController extends Controller
             'school_phone'   => 'nullable|string|max:30',
             'school_email'   => 'nullable|email|max:100',
             'academic_year'  => 'nullable|string|max:20',
+            'school_operational_days' => 'required|in:5_days,6_days',
         ]);
 
         Setting::set('school_name', $data['school_name'], 'school');
@@ -49,6 +54,7 @@ class SettingController extends Controller
         Setting::set('school_phone', $data['school_phone'] ?? '', 'school');
         Setting::set('school_email', $data['school_email'] ?? '', 'school');
         Setting::set('school_academic_year', $data['academic_year'] ?? '', 'school');
+        Setting::set('school_operational_days', $data['school_operational_days'], 'school');
 
         $this->activityLogService->logSettings('school', array_keys($data));
 
@@ -59,16 +65,22 @@ class SettingController extends Controller
     public function updateAttendance(Request $request)
     {
         $data = $request->validate([
-            'late_limit'     => 'required|date_format:H:i',
-            'min_attendance' => 'required|integer|min:1|max:100',
-            'geofence_lat'   => 'required|numeric|between:-90,90',
-            'geofence_lng'   => 'required|numeric|between:-180,180',
-            'geofence_radius'=> 'required|integer|min:10|max:5000',
-            'face_detection_min' => 'required|numeric|min:0.1|max:1',
-            'face_match_min' => 'required|numeric|min:0.1|max:1',
+            'late_limit'             => 'required|date_format:H:i',
+            'late_limit_siang'       => 'required|date_format:H:i',
+            'teacher_late_limit'     => 'required|date_format:H:i',
+            'teacher_checkout_start' => 'required|date_format:H:i',
+            'min_attendance'         => 'required|integer|min:1|max:100',
+            'geofence_lat'           => 'required|numeric|between:-90,90',
+            'geofence_lng'           => 'required|numeric|between:-180,180',
+            'geofence_radius'        => 'required|integer|min:10|max:5000',
+            'face_detection_min'     => 'required|numeric|min:0.1|max:1',
+            'face_match_min'         => 'required|numeric|min:0.1|max:1',
         ]);
 
         Setting::set('att_late_limit', $data['late_limit'] . ':00', 'attendance');
+        Setting::set('att_late_limit_siang', $data['late_limit_siang'] . ':00', 'attendance');
+        Setting::set('att_teacher_late_limit', $data['teacher_late_limit'] . ':00', 'attendance');
+        Setting::set('att_teacher_checkout_start', $data['teacher_checkout_start'] . ':00', 'attendance');
         Setting::set('att_min_pct', $data['min_attendance'], 'attendance');
         Setting::set('att_geofence_lat', $data['geofence_lat'], 'attendance');
         Setting::set('att_geofence_lng', $data['geofence_lng'], 'attendance');

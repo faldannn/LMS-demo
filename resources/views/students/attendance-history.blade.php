@@ -23,7 +23,7 @@
                 <select name="month" class="form-select">
                     @foreach(range(1,12) as $m)
                         <option value="{{ $m }}" {{ $m == $month ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                            {{ \Carbon\Carbon::create(null, (int) $m)->translatedFormat('F') }}
                         </option>
                     @endforeach
                 </select>
@@ -75,7 +75,7 @@
 <div class="card">
     <div class="card-header">
         <i class="bi bi-calendar3 me-2 text-primary"></i>
-        Riwayat Bulan {{ \Carbon\Carbon::create()->month($month)->translatedFormat('F') }} {{ $year }}
+        Riwayat Bulan {{ \Carbon\Carbon::create(null, (int) $month)->translatedFormat('F') }} {{ $year }}
         <span class="badge bg-primary ms-2">{{ $totalDays }} hari</span>
     </div>
     <div class="table-responsive">

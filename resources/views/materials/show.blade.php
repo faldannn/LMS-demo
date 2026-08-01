@@ -52,8 +52,8 @@
             @endif
 
             {{-- Content Area --}}
-            <div class="mt-6 border-t border-slate-100 pt-6">
-                @if($material->type === 'youtube' && $material->youtube_embed_url)
+            @if($material->type === 'youtube' && $material->youtube_embed_url)
+                <div class="mt-6 border-t border-slate-100 pt-6">
                     <div class="relative w-full overflow-hidden rounded-xl bg-slate-900 pt-[56.25%] shadow-sm">
                         <iframe class="absolute inset-0 h-full w-full" src="{{ $material->youtube_embed_url }}" allowfullscreen title="YouTube"></iframe>
                     </div>
@@ -64,13 +64,15 @@
                         </a>
                     </div>
                     @endif
-
-                @elseif($material->type === 'link' && $material->url)
+                </div>
+            @elseif($material->type === 'link' && $material->url)
+                <div class="mt-6 border-t border-slate-100 pt-6">
                     <a href="{{ $material->url }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700">
                         <i class="bi bi-box-arrow-up-right"></i>Buka Tautan
                     </a>
-
-                @elseif($material->isDownloadable())
+                </div>
+            @elseif($material->isDownloadable())
+                <div class="mt-6 border-t border-slate-100 pt-6">
                     <a href="{{ route('materials.download', $material) }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700">
                         <i class="bi bi-download"></i>Unduh {{ $material->type_label }} ({{ $material->file_size_formatted }})
                     </a>
@@ -83,14 +85,8 @@
                         </video>
                     </div>
                     @endif
-
-                @else
-                    <div class="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                        <i class="bi bi-exclamation-triangle-fill text-amber-500"></i>
-                        <p class="font-medium">Konten materi tidak tersedia atau format tidak didukung.</p>
-                    </div>
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
     </div>
 

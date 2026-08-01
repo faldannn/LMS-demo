@@ -52,19 +52,15 @@
 
     @if(auth()->user()->isSiswa())
         @php
-            $studentDays = [
-                1 => ['name' => 'Senin', 'icon' => 'bi-calendar-day'],
-                2 => ['name' => 'Selasa', 'icon' => 'bi-calendar-day'],
-                3 => ['name' => 'Rabu', 'icon' => 'bi-calendar-day'],
-                4 => ['name' => 'Kamis', 'icon' => 'bi-calendar-day'],
-                5 => ['name' => 'Jumat', 'icon' => 'bi-calendar-day']
-            ];
+            // Use operational days from controller (5 or 6 days based on admin setting)
+            $studentDaysMapped = collect($operationalDays ?? ['1'=>'Senin','2'=>'Selasa','3'=>'Rabu','4'=>'Kamis','5'=>'Jumat'])
+                ->map(fn($name) => ['name' => $name, 'icon' => 'bi-calendar-day']);
         @endphp
 
-        <div class="grid grid-cols-1 gap-5 md:grid-cols-3 xl:grid-cols-5">
-            @foreach($studentDays as $dayNum => $dayInfo)
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-3 xl:grid-cols-{{ count($studentDaysMapped) >= 6 ? '6' : '5' }}">
+            @foreach($studentDaysMapped as $dayNum => $dayInfo)
                 @php
-                    $daySchedules = $schedules->get($dayNum, collect());
+                    $daySchedules = $schedules->get((int)$dayNum, collect());
                 @endphp
                 <div class="card flex flex-col shadow-sm border border-slate-200 rounded-2xl bg-white mb-0 h-full">
                     <div class="card-header bg-slate-50/80 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
@@ -117,6 +113,8 @@
         </div>
     @else
         @php $dayNames = ['','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']; @endphp
+        {{-- Only show day tabs within the operational setting --}}
+        @php $maxDayNum = $maxDay ?? 5; @endphp
 
         @forelse($schedules as $dayNum => $daySchedules)
             <div class="card mb-3">

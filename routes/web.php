@@ -185,6 +185,10 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             // Attendance management
             Route::get('attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
             Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+            Route::post('attendance/quick-save', [AttendanceController::class, 'quickSave'])->name('attendance.quick-save');
+            Route::post('attendance/save-session-notes', [AttendanceController::class, 'saveSessionNotes'])->name('attendance.save-session-notes');
+            Route::get('attendance/homeroom/create', [AttendanceController::class, 'homeroomCreate'])->name('attendance.homeroom-create');
+            Route::post('attendance/homeroom', [AttendanceController::class, 'homeroomStore'])->name('attendance.homeroom-store');
             Route::get('attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
             Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
@@ -205,7 +209,15 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('attendance/self-checkin', [SelfAttendanceController::class, 'index'])->name('attendance.self-checkin');
     });
 
+    // Teacher Attendance Web Route
+    Route::middleware('can:access-staff')->group(function () {
+        Route::get('teacher/attendance/checkin', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkinView'])
+            ->name('attendance.teacher-checkin');
+    });
+
     Route::prefix('lms')->group(function () {
+        Route::get('attendance/export/students/excel', [AttendanceController::class, 'exportStudentsExcel'])->name('attendance.export.students.excel');
+        Route::get('attendance/export/teachers/excel', [AttendanceController::class, 'exportTeachersExcel'])->name('attendance.export.teachers.excel');
         Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
         Route::get('attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
@@ -277,6 +289,13 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('face-profile', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'saveFaceProfile'])->name('face-profile');
         Route::post('check-in', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'checkIn'])->name('check-in');
         Route::get('history', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'history'])->name('history');
+    });
+
+    Route::middleware(['throttle:30,1'])
+        ->prefix('api/attendance/teacher')->name('api.attendance.teacher.')->group(function () {
+        Route::get('status', [\App\Http\Controllers\TeacherAttendanceController::class, 'status'])->name('status');
+        Route::post('check-in', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkIn'])->name('check-in');
+        Route::post('check-out', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkOut'])->name('check-out');
     });
 
 });

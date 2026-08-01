@@ -279,11 +279,20 @@ class AttendanceService
     {
         $detailsData = [];
         foreach ($details as $studentId => $detail) {
+            $checkIn = null;
+            if (!empty($detail['check_in'])) {
+                try {
+                    $checkIn = \Carbon\Carbon::parse($detail['check_in'])->format('H:i:s');
+                } catch (\Exception $e) {
+                    $checkIn = null;
+                }
+            }
+
             $detailsData[] = [
                 'attendance_id' => $attendanceId,
                 'student_id'    => (int) $studentId,
                 'status'        => $detail['status'],
-                'check_in'      => $detail['check_in'] ?? null,
+                'check_in'      => $checkIn,
                 'notes'         => $detail['notes'] ?? null,
             ];
         }

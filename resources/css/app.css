@@ -201,11 +201,11 @@
     .page-item.disabled .page-link { @apply text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed; }
 
     /* ── Attendance Status Badges ── */
-    .badge-status-hadir { @apply bg-emerald-100 text-emerald-800; }
-    .badge-status-terlambat { @apply bg-amber-100 text-amber-800; }
-    .badge-status-sakit { @apply bg-sky-100 text-sky-800; }
-    .badge-status-izin { @apply bg-blue-100 text-blue-800; }
-    .badge-status-alfa { @apply bg-rose-100 text-rose-800; }
+    .badge-status-hadir { @apply bg-emerald-600 text-white font-extrabold shadow-2xs px-2.5 py-1 rounded-full; }
+    .badge-status-terlambat { @apply bg-amber-500 text-white font-black shadow-xs px-2.5 py-1 rounded-full; }
+    .badge-status-sakit { @apply bg-amber-600 text-white font-black shadow-xs px-2.5 py-1 rounded-full; }
+    .badge-status-izin { @apply bg-sky-600 text-white font-black shadow-xs px-2.5 py-1 rounded-full; }
+    .badge-status-alfa { @apply bg-rose-600 text-white font-black shadow-xs ring-2 ring-rose-300 px-2.5 py-1 rounded-full; }
 
     /* ── Custom Admin Attendance Status Pills ── */
     .status-group .btn-check {

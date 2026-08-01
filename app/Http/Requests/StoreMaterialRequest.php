@@ -16,8 +16,8 @@ class StoreMaterialRequest extends FormRequest
         return [
             'title' => 'required|string|max:200',
             'description' => 'nullable|string',
-            'type' => 'required|in:pdf,ppt,video,youtube,image,link',
-            'file' => 'required_if:type,pdf,ppt,video,image|nullable|' . \App\Services\FileStorageService::validationRule(
+            'type' => 'required|in:text,pdf,ppt,video,youtube,image,link',
+            'file' => 'nullable|' . \App\Services\FileStorageService::validationRule(
                 match ($this->type) {
                     'pdf' => 'document',
                     'ppt' => 'presentation',

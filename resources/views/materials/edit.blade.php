@@ -38,6 +38,7 @@
                             <label class="mb-1.5 block text-sm font-medium text-slate-700">Tipe Materi <span class="text-rose-500">*</span></label>
                             @php $currentType = old('type', $material->type === 'document' ? 'pdf' : $material->type); @endphp
                             <select name="type" id="typeSelect" class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500" required>
+                                <option value="text" @selected($currentType=='text')>Teks / Artikel (Tanpa File / Opsional)</option>
                                 <option value="pdf" @selected($currentType=='pdf')>PDF</option>
                                 <option value="ppt" @selected($currentType=='ppt')>PowerPoint</option>
                                 <option value="video" @selected($currentType=='video')>Video</option>

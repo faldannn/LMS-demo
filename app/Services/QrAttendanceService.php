@@ -76,7 +76,7 @@ class QrAttendanceService
             return ['success' => false, 'message' => $message];
         }
 
-        $status = $this->determineStatus();
+        $status = $this->determineStatus($student);
 
         AttendanceDetail::create([
             'attendance_id' => $attendance->id,
@@ -166,9 +166,12 @@ class QrAttendanceService
             ]);
     }
 
-    private function determineStatus(): string
+    private function determineStatus(?Student $student = null): string
     {
-        $lateLimit = config('attendance.late_limit', '07:15:00');
+        $session = $student?->class?->session ?? 'pagi';
+        $lateLimit = $session === 'siang'
+            ? config('attendance.late_limit_siang', '13:00:00')
+            : config('attendance.late_limit', '07:15:00');
 
         return now()->format('H:i:s') > $lateLimit ? 'terlambat' : 'hadir';
     }

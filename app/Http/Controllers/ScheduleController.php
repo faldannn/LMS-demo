@@ -2,11 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{AcademicYear, Classes, ClassSubject, Schedule, Teacher};
+use App\Models\{AcademicYear, Classes, ClassSubject, Schedule, Setting, Teacher};
 use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
+    private function getOperationalDays(): array
+    {
+        $mode = Setting::get('school_operational_days', '5_days');
+        $days = [
+            '1' => 'Senin',
+            '2' => 'Selasa',
+            '3' => 'Rabu',
+            '4' => 'Kamis',
+            '5' => 'Jumat',
+        ];
+        if ($mode === '6_days') {
+            $days['6'] = 'Sabtu';
+        }
+        return $days;
+    }
+
+    private function getMaxDayOfWeek(): int
+    {
+        return Setting::get('school_operational_days', '5_days') === '6_days' ? 6 : 5;
+    }
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -36,7 +56,10 @@ class ScheduleController extends Controller
         }
 
         $class = Classes::find($classId);
+        // Days 1=Senin … 6=Sabtu — full list for display; filter by setting
+        $operationalDays = $this->getOperationalDays();
         $days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        $maxDay = $this->getMaxDayOfWeek();
 
         $schedulesList = Schedule::with('teacher')
             ->where('class_id', $classId)
@@ -79,28 +102,30 @@ class ScheduleController extends Controller
 
         $schedules = $schedulesList->groupBy('day_of_week');
 
-        return view('schedules.index', compact('classes', 'class', 'schedules', 'days', 'classId'));
+        return view('schedules.index', compact('classes', 'class', 'schedules', 'days', 'classId', 'operationalDays', 'maxDay'));
     }
 
     public function create()
     {
-        $classes = Classes::orderBy('name')->get();
+        $classes  = Classes::orderBy('name')->get();
         $teachers = Teacher::active()->with('subjects')->orderBy('name')->get();
         $subjects = \App\Models\Subject::orderBy('name')->get();
-        $days = ['1' => 'Senin', '2' => 'Selasa', '3' => 'Rabu', '4' => 'Kamis', '5' => 'Jumat', '6' => 'Sabtu'];
-        return view('schedules.create', compact('classes', 'teachers', 'subjects', 'days'));
+        $days     = $this->getOperationalDays();
+        $maxDay   = $this->getMaxDayOfWeek();
+        return view('schedules.create', compact('classes', 'teachers', 'subjects', 'days', 'maxDay'));
     }
 
     public function store(Request $request)
     {
+        $maxDay = $this->getMaxDayOfWeek();
         $data = $request->validate([
-            'class_id' => 'required|exists:classes,id',
+            'class_id'   => 'required|exists:classes,id',
             'teacher_id' => 'required|exists:teachers,id',
-            'subject' => 'required|string|max:100',
-            'day_of_week' => 'required|integer|between:1,6',
+            'subject'    => 'required|string|max:100',
+            'day_of_week'=> "required|integer|between:1,{$maxDay}",
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'room' => 'nullable|string|max:20',
+            'end_time'   => 'required|date_format:H:i|after:start_time',
+            'room'       => 'nullable|string|max:20',
         ]);
         
         $activeYear = AcademicYear::active();
@@ -131,10 +156,11 @@ class ScheduleController extends Controller
 
     public function edit(Schedule $schedule)
     {
-        $classes = Classes::orderBy('name')->get();
+        $classes  = Classes::orderBy('name')->get();
         $teachers = Teacher::active()->with('subjects')->orderBy('name')->get();
         $subjects = \App\Models\Subject::orderBy('name')->get();
-        $days = ['1' => 'Senin', '2' => 'Selasa', '3' => 'Rabu', '4' => 'Kamis', '5' => 'Jumat', '6' => 'Sabtu'];
+        $days     = $this->getOperationalDays();
+        $maxDay   = $this->getMaxDayOfWeek();
         
         // Format time to H:i format for easier comparison in select options
         if ($schedule->start_time) {
@@ -144,19 +170,20 @@ class ScheduleController extends Controller
             $schedule->end_time_formatted = \Carbon\Carbon::parse($schedule->end_time)->format('H:i');
         }
 
-        return view('schedules.edit', compact('schedule', 'classes', 'teachers', 'subjects', 'days'));
+        return view('schedules.edit', compact('schedule', 'classes', 'teachers', 'subjects', 'days', 'maxDay'));
     }
 
     public function update(Request $request, Schedule $schedule)
     {
+        $maxDay = $this->getMaxDayOfWeek();
         $data = $request->validate([
-            'class_id' => 'required|exists:classes,id',
+            'class_id'   => 'required|exists:classes,id',
             'teacher_id' => 'required|exists:teachers,id',
-            'subject' => 'required|string|max:100',
-            'day_of_week' => 'required|integer|between:1,6',
+            'subject'    => 'required|string|max:100',
+            'day_of_week'=> "required|integer|between:1,{$maxDay}",
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'room' => 'nullable|string|max:20',
+            'end_time'   => 'required|date_format:H:i|after:start_time',
+            'room'       => 'nullable|string|max:20',
         ]);
         
         $schedule->update($data);
