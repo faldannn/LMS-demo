@@ -5,10 +5,14 @@
 
 @section('content')
 <div class="space-y-6">
-    {{-- Action Buttons - Stacked on mobile, horizontal on desktop --}}
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div></div>
-        <div class="flex flex-col gap-2 sm:flex-row sm:gap-2">
+    <x-detail-header>
+        <div>
+            <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">Detail Siswa</p>
+            <h5 class="mb-1 text-slate-900 fw-bold">{{ $student->name }}</h5>
+            <div class="text-muted" style="font-size:13px">NIS {{ $student->nis }} · {{ $student->class?->name ?? '-' }}</div>
+        </div>
+
+        <x-slot:actions>
             <a href="{{ route('students.attendance-history', $student) }}" class="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-500 bg-white px-4 py-2.5 text-sm font-semibold text-sky-600 shadow-sm transition hover:bg-sky-50 sm:px-4 sm:py-2">
                 <i class="bi bi-calendar3"></i>
                 <span>Riwayat Absensi</span>
@@ -21,8 +25,8 @@
                 <i class="bi bi-arrow-left"></i>
                 <span>Kembali</span>
             </a>
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-detail-header>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {{-- Info Siswa --}}

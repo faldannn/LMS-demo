@@ -3,17 +3,32 @@
 @section('page-title', 'Detail Absensi')
 
 @section('content')
+<<<<<<< HEAD
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-primary px-3 py-2 text-xs font-bold rounded-xl shadow-2xs">{{ ucfirst($attendance->session) }}</span>
             <span class="fw-bold text-slate-800" style="font-size:16px">{{ $attendance->date->translatedFormat('l, d F Y') }}</span>
         </div>
         <div class="d-flex align-items-center gap-2">
+=======
+    <x-detail-header>
+        <div>
+            <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">Detail Absensi</p>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <span class="badge bg-primary">{{ ucfirst($attendance->session) }}</span>
+                <span class="fw-bold" style="font-size:16px">{{ $attendance->date->translatedFormat('l, d F Y') }}</span>
+            </div>
+            <span class="text-muted" style="font-size:13px">{{ $attendance->class?->name ?? '-' }} · {{ $attendance->teacher?->name ?? '-' }}</span>
+        </div>
+
+        <x-slot:actions>
+>>>>>>> 22cb6d5e63fef503ee51802cfe664b4334c3e30a
             @role('admin,guru')
                 <a href="{{ route('attendance.homeroom-create', ['class_id' => $attendance->class_id, 'date' => $attendance->date->toDateString()]) }}" class="btn btn-primary btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm text-decoration-none d-inline-flex align-items-center gap-1.5">
                     <i class="bi bi-pencil-square"></i> Edit / Input Absensi Kelas
                 </a>
             @endrole
+<<<<<<< HEAD
             @if(auth()->user()->isGuru())
                 <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm text-decoration-none d-inline-flex align-items-center gap-1.5">
                     <i class="bi bi-arrow-left"></i> Kembali ke Dashboard
@@ -25,6 +40,13 @@
             @endif
         </div>
     </div>
+=======
+            <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Kembali
+            </a>
+        </x-slot:actions>
+    </x-detail-header>
+>>>>>>> 22cb6d5e63fef503ee51802cfe664b4334c3e30a
 
     {{-- ── 4 STAT CARDS ── --}}
     <div class="row g-3 mb-4">
