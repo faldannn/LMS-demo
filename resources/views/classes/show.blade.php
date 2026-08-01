@@ -49,15 +49,37 @@
         <div class="card mt-4">
             <div class="card-header"><i class="bi bi-calendar3 me-2 text-primary"></i>Jadwal Kelas</div>
             <div class="card-body p-0">
-                @php $days = ['','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']; @endphp
-                @forelse($class->schedules as $sched)
-                    <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">
-                        <span class="badge bg-secondary" style="min-width:56px">{{ $days[$sched->day_of_week] }}</span>
-                        <div style="flex:1;font-size:13px">
-                            <div class="fw-semibold">{{ $sched->subject }}</div>
-                            <div class="text-muted" style="font-size:11px">{{ $sched->teacher?->name }}</div>
+                @php
+                    $days = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'];
+                    $groupedSchedules = $class->schedules->groupBy('day_of_week')->sortKeys();
+                @endphp
+
+                @forelse($groupedSchedules as $dayNumber => $schedules)
+                    @php $sortedSchedules = $schedules->sortBy('start_time')->values(); @endphp
+
+                    <div class="px-3 py-3 {{ !$loop->first ? 'border-top' : '' }}">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="badge bg-primary" style="min-width:72px">{{ $days[$dayNumber] ?? 'Hari '.$dayNumber }}</span>
+                            <span class="text-muted" style="font-size:12px">{{ $sortedSchedules->count() }} mata pelajaran</span>
                         </div>
-                        <span style="font-size:11px;font-family:'JetBrains Mono',monospace">{{ substr($sched->start_time,0,5) }}-{{ substr($sched->end_time,0,5) }}</span>
+
+                        <div class="overflow-x-auto pb-1" style="-webkit-overflow-scrolling:touch;">
+                            <div class="d-flex flex-nowrap gap-2" style="min-width:max-content;">
+                                @foreach($sortedSchedules as $sched)
+                                    <div class="flex-shrink-0 rounded-3 border border-light-subtle bg-light p-3" style="width:220px; min-width:220px;">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                            <span class="badge bg-secondary" style="font-size:10px">{{ $days[$dayNumber] ?? 'Hari '.$dayNumber }}</span>
+                                            <span style="font-size:11px;font-family:'JetBrains Mono',monospace">{{ substr((string) $sched->start_time,0,5) }}-{{ substr((string) $sched->end_time,0,5) }}</span>
+                                        </div>
+                                        <div class="fw-semibold text-truncate">{{ $sched->subject }}</div>
+                                        <div class="text-muted text-truncate mt-1" style="font-size:11px">{{ $sched->teacher?->name }}</div>
+                                        @if($sched->room)
+                                            <div class="text-muted mt-2" style="font-size:11px">Ruang: {{ $sched->room }}</div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 @empty
                     <div class="text-center text-muted py-3" style="font-size:13px">Belum ada jadwal.</div>
