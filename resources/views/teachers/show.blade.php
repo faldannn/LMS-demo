@@ -4,13 +4,18 @@
 @section('page-title', 'Detail Guru')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div></div>
-    <div class="d-flex gap-2">
+<x-detail-header>
+    <div>
+        <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">Detail Guru</p>
+        <h5 class="fw-bold mb-1">{{ $teacher->name }}</h5>
+        <span class="text-muted" style="font-size:13px">{{ $teacher->nip ?? 'Tanpa NIP' }}</span>
+    </div>
+
+    <x-slot:actions>
         <a href="{{ route('teachers.edit', $teacher) }}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
         <a href="{{ route('teachers.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
-    </div>
-</div>
+    </x-slot:actions>
+</x-detail-header>
 
 <div class="row g-4">
     <div class="col-md-4">

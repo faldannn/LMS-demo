@@ -3,12 +3,17 @@
 @section('page-title', 'Detail Absensi')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <x-detail-header>
         <div>
-            <span class="badge bg-primary me-2">{{ ucfirst($attendance->session) }}</span>
-            <span class="fw-bold" style="font-size:16px">{{ $attendance->date->translatedFormat('l, d F Y') }}</span>
+            <p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">Detail Absensi</p>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <span class="badge bg-primary">{{ ucfirst($attendance->session) }}</span>
+                <span class="fw-bold" style="font-size:16px">{{ $attendance->date->translatedFormat('l, d F Y') }}</span>
+            </div>
+            <span class="text-muted" style="font-size:13px">{{ $attendance->class?->name ?? '-' }} · {{ $attendance->teacher?->name ?? '-' }}</span>
         </div>
-        <div class="d-flex gap-2">
+
+        <x-slot:actions>
             @role('admin,guru')
                 <a href="{{ route('attendance.edit', $attendance) }}" class="btn btn-primary">
                     <i class="bi bi-pencil me-1"></i>Edit Absensi
@@ -17,8 +22,8 @@
             <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Kembali
             </a>
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-detail-header>
 
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
