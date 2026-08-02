@@ -317,7 +317,10 @@ class UserController extends Controller
             return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
         }
 
-        Auth::user()->update(['password' => Hash::make($request->password)]);
-        return back()->with('success', 'Password berhasil diubah.');
+        Auth::user()->update([
+            'password' => Hash::make($request->password),
+            'password_changed_at' => now(),
+        ]);
+        return back()->with('success', 'Password berhasil diubah. Sekarang Anda dapat menggunakan seluruh fasilitas LMS.');
     }
 }

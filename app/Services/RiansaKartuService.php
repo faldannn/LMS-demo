@@ -57,8 +57,9 @@ class RiansaKartuService
         }
 
         $items = $students->map(function (Student $student) {
+            $ident = (string) ($student->nisn ?: $student->nis ?: $student->id);
             return [
-                'ident'  => (string) ($student->nis ?: $student->id),
+                'ident'  => $ident,
                 'name'   => $student->name,
                 'role'   => 'siswa',
                 'grup'   => $student->class?->name ?? 'Tanpa Kelas',
@@ -109,7 +110,7 @@ class RiansaKartuService
 
     /**
      * Pull attendance logs from Riansa Kartu API using cursor (since).
-     * Endpoint: GET https://riansa.top/kartu/v1/attendance.php?since={cursor}
+     * Endpoint: GET https://riansa.top/kartu/v1/attendance.php?since={cursor}&limit=200
      */
     public function pullAttendance(): array
     {
@@ -118,11 +119,12 @@ class RiansaKartuService
             return ['success' => false, 'message' => 'API Key Riansa Kartu belum dikonfigurasi.'];
         }
 
-        $since = Setting::get('kartu_last_cursor', '');
-        $url = $this->baseUrl . '/attendance.php';
-        if (!empty($since)) {
-            $url .= '?since=' . urlencode($since);
+        $since = Setting::get('kartu_last_cursor', '0');
+        if (empty($since)) {
+            $since = '0';
         }
+
+        $url = $this->baseUrl . '/attendance.php?since=' . urlencode($since) . '&limit=200';
 
         try {
             $response = Http::withHeaders([
@@ -140,13 +142,14 @@ class RiansaKartuService
 
             $recordedCount = 0;
             foreach ($items as $item) {
-                $ident = $item['ident'] ?? $item['nis'] ?? $item['student_id'] ?? null;
+                $ident = $item['ident'] ?? $item['nisn'] ?? $item['nis'] ?? $item['student_id'] ?? null;
                 if (!$ident) {
                     continue;
                 }
 
                 $student = Student::with('class')
-                    ->where('nis', $ident)
+                    ->where('nisn', $ident)
+                    ->orWhere('nis', $ident)
                     ->orWhere('id', $ident)
                     ->first();
 
@@ -179,25 +182,27 @@ class RiansaKartuService
      */
     public function processWebhookPayload(array $payload): array
     {
-        $ident = $payload['ident'] ?? $payload['nis'] ?? $payload['student_id'] ?? $payload['code'] ?? null;
+        $ident = $payload['ident'] ?? $payload['nisn'] ?? $payload['nis'] ?? $payload['student_id'] ?? $payload['code'] ?? null;
 
         if (!$ident) {
-            return ['success' => false, 'message' => 'Identitas siswa (ident/nis) tidak ditemukan dalam payload webhook.'];
+            return ['success' => false, 'message' => 'Identitas siswa (ident/nisn/nis) tidak ditemukan dalam payload webhook.'];
         }
 
         $student = Student::with('class')
-            ->where('nis', $ident)
+            ->where('nisn', $ident)
+            ->orWhere('nis', $ident)
             ->orWhere('id', $ident)
             ->first();
 
         if (!$student) {
-            return ['success' => false, 'message' => "Siswa dengan ident/NIS '{$ident}' tidak ditemukan di LMS."];
+            return ['success' => false, 'message' => "Siswa dengan ident/NISN '{$ident}' tidak ditemukan di LMS."];
         }
 
         $result = $this->qrAttendance->recordAttendance($student);
 
-        Log::info("RiansaKartu Webhook processed for Student NIS {$ident}: " . json_encode($result));
+        Log::info("RiansaKartu Webhook processed for Student NISN {$ident}: " . json_encode($result));
 
         return $result;
     }
 }
+

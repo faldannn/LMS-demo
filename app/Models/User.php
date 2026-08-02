@@ -22,6 +22,7 @@ class User extends Authenticatable
         'avatar',
         'last_login',
         'status',
+        'password_changed_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -29,8 +30,39 @@ class User extends Authenticatable
     protected $casts = [
         'status' => 'boolean',
         'last_login' => 'datetime',
+        'password_changed_at' => 'datetime',
         'role' => UserRole::class,
     ];
+
+    public function needsPasswordChange(): bool
+    {
+        if (!$this->isSiswa()) {
+            return false;
+        }
+
+        if ($this->password_changed_at !== null) {
+            return false;
+        }
+
+        $student = $this->student;
+        if (!$student) {
+            return false;
+        }
+
+        $dobPassword = $student->dob ? $student->dob->format('Y-m-d') : null;
+        $nisPassword = (string) ($student->nisn ?: $student->nis);
+
+        if ($dobPassword && \Illuminate\Support\Facades\Hash::check($dobPassword, $this->password)) {
+            return true;
+        }
+
+        if (\Illuminate\Support\Facades\Hash::check($nisPassword, $this->password)) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     public function teacher(): HasOne
     {

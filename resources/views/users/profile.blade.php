@@ -5,7 +5,18 @@
 
 @section('content')
 <div class="row g-4 justify-content-center">
+    @if($user->needsPasswordChange())
+        <div class="col-12">
+            <div class="alert alert-danger border-2 border-danger shadow-sm">
+                <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> PERHATIAN: Wajib Ganti Password Bawaan</h5>
+                <p class="mb-0">
+                    Anda saat ini masih menggunakan password bawaan (Tanggal Lahir YYYY-MM-DD atau NISN). Demi keamanan akun Anda, <strong>Anda diwajibkan mengubah password terlebih dahulu</strong> pada form Ganti Password di bawah sebelum dapat mengakses fitur LMS lainnya.
+                </p>
+            </div>
+        </div>
+    @endif
     <div class="col-md-4">
+
         <div class="card text-center">
             <div class="card-body p-4">
                 @if($user->avatar)

@@ -95,10 +95,19 @@ trait HandlesMasterDataActions
             if (!empty($importInstance->importedIds)) {
                 $type = $this->routePrefix() === 'teachers' ? 'teacher' : 'student';
                 \App\Jobs\SyncCbtAfterImport::dispatch($type, $importInstance->importedIds);
+
+                if ($type === 'student') {
+                    try {
+                        app(\App\Services\RiansaKartuService::class)->syncMembers();
+                    } catch (\Throwable $ex) {
+                        \Illuminate\Support\Facades\Log::warning('Auto sync Riansa Kartu after import failed: ' . $ex->getMessage());
+                    }
+                }
             }
 
             return redirect()->route($this->routePrefix() . '.index')
-                ->with('success', 'Import data berhasil.');
+                ->with('success', 'Import data berhasil diselesaikan & disinkronkan ke Riansa Kartu.');
+
         } catch (\Throwable $e) {
             return back()->withErrors(['file' => 'Import gagal: ' . $e->getMessage()]);
         }
