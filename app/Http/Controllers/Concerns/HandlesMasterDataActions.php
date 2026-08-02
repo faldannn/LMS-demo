@@ -94,19 +94,16 @@ trait HandlesMasterDataActions
 
             if (!empty($importInstance->importedIds)) {
                 $type = $this->routePrefix() === 'teachers' ? 'teacher' : 'student';
-                \App\Jobs\SyncCbtAfterImport::dispatch($type, $importInstance->importedIds);
-
-                if ($type === 'student') {
-                    try {
-                        app(\App\Services\RiansaKartuService::class)->syncMembers();
-                    } catch (\Throwable $ex) {
-                        \Illuminate\Support\Facades\Log::warning('Auto sync Riansa Kartu after import failed: ' . $ex->getMessage());
-                    }
+                try {
+                    \App\Jobs\SyncCbtAfterImport::dispatch($type, $importInstance->importedIds);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('SyncCbtAfterImport dispatch error: ' . $e->getMessage());
                 }
             }
 
             return redirect()->route($this->routePrefix() . '.index')
-                ->with('success', 'Import data berhasil diselesaikan & disinkronkan ke Riansa Kartu.');
+                ->with('success', 'Import data berhasil diselesaikan secara kilat.');
+
 
         } catch (\Throwable $e) {
             return back()->withErrors(['file' => 'Import gagal: ' . $e->getMessage()]);
