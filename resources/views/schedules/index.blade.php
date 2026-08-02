@@ -7,11 +7,17 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <p class="text-muted mb-0">Jadwal pelajaran per kelas</p>
     @role('kepala_sekolah')
-        <a href="{{ route('schedules.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>Tambah Jadwal
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('schedules.batch', ['class_id' => $classId]) }}" class="btn btn-primary font-bold shadow-sm">
+                <i class="bi bi-calendar-week me-1.5"></i>Input Jadwal Mingguan (Batch)
+            </a>
+            <a href="{{ route('schedules.create') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-plus-lg me-1"></i>+ 1 Jam Pelajaran
+            </a>
+        </div>
     @endrole
 </div>
+
 
 @unless(auth()->user()->isSiswa())
 <div class="card mb-4 shadow-sm">

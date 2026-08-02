@@ -212,12 +212,16 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
             // Schedules management (Kepala Sekolah/Admin only)
             Route::middleware('can:manage-admin')->group(function () {
+                Route::get('schedules/batch', [ScheduleController::class, 'batchCreate'])->name('schedules.batch');
+                Route::post('schedules/batch', [ScheduleController::class, 'batchStore'])->name('schedules.batch-store');
+                Route::post('schedules/copy', [ScheduleController::class, 'copySchedule'])->name('schedules.copy');
                 Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
                 Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
                 Route::get('schedules/{schedule}/edit', [ScheduleController::class, 'edit'])->name('schedules.edit');
                 Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
                 Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
             });
+
         });
     });
 

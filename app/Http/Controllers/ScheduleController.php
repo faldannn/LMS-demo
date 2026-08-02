@@ -105,6 +105,135 @@ class ScheduleController extends Controller
         return view('schedules.index', compact('classes', 'class', 'schedules', 'days', 'classId', 'operationalDays', 'maxDay'));
     }
 
+    public function batchCreate(Request $request)
+    {
+        $classes = Classes::orderBy('grade')->orderBy('name')->get();
+        $classId = $request->get('class_id', $classes->first()?->id);
+        $class = Classes::find($classId);
+
+        $teachers = Teacher::active()->orderBy('name')->get();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $operationalDays = $this->getOperationalDays();
+        $maxDay = $this->getMaxDayOfWeek();
+
+        $existingSchedules = Schedule::where('class_id', $classId)
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy('day_of_week');
+
+        return view('schedules.batch', compact(
+            'classes',
+            'class',
+            'classId',
+            'teachers',
+            'subjects',
+            'operationalDays',
+            'maxDay',
+            'existingSchedules'
+        ));
+    }
+
+    public function batchStore(Request $request)
+    {
+        $request->validate([
+            'class_id' => 'required|exists:classes,id',
+            'items' => 'nullable|array',
+        ]);
+
+        $classId = $request->class_id;
+        $activeYear = AcademicYear::active();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $classId, $activeYear) {
+            Schedule::where('class_id', $classId)->delete();
+
+            $items = $request->input('items', []);
+            foreach ($items as $item) {
+                if (empty($item['subject']) || empty($item['teacher_id']) || empty($item['start_time']) || empty($item['end_time'])) {
+                    continue;
+                }
+
+                Schedule::create([
+                    'class_id' => $classId,
+                    'teacher_id' => $item['teacher_id'],
+                    'subject' => $item['subject'],
+                    'day_of_week' => (int) $item['day_of_week'],
+                    'start_time' => $item['start_time'],
+                    'end_time' => $item['end_time'],
+                    'room' => $item['room'] ?? null,
+                    'academic_year_id' => $activeYear?->id,
+                ]);
+
+                $subjectModel = \App\Models\Subject::where('name', $item['subject'])->first();
+                if ($subjectModel && $activeYear) {
+                    ClassSubject::updateOrCreate([
+                        'class_id' => $classId,
+                        'subject_id' => $subjectModel->id,
+                        'academic_year_id' => $activeYear->id,
+                    ], [
+                        'teacher_id' => $item['teacher_id'],
+                    ]);
+
+                    $teacher = Teacher::find($item['teacher_id']);
+                    if ($teacher) {
+                        $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
+                    }
+                }
+            }
+        });
+
+        $class = Classes::find($classId);
+        return redirect()->route('schedules.index', ['class_id' => $classId])
+            ->with('success', "Jadwal mingguan untuk Kelas {$class?->name} berhasil disimpan sekaligus!");
+    }
+
+    public function copySchedule(Request $request)
+    {
+        $request->validate([
+            'source_class_id' => 'required|exists:classes,id',
+            'target_class_id' => 'required|exists:classes,id|different:source_class_id',
+        ]);
+
+        $sourceSchedules = Schedule::where('class_id', $request->source_class_id)->get();
+        $targetClass = Classes::find($request->target_class_id);
+        $activeYear = AcademicYear::active();
+
+        if ($sourceSchedules->isEmpty()) {
+            return back()->withErrors(['source_class_id' => 'Kelas asal tidak memiliki jadwal untuk disalin.']);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($sourceSchedules, $request, $activeYear) {
+            Schedule::where('class_id', $request->target_class_id)->delete();
+
+            foreach ($sourceSchedules as $sched) {
+                Schedule::create([
+                    'class_id' => $request->target_class_id,
+                    'teacher_id' => $sched->teacher_id,
+                    'subject' => $sched->subject,
+                    'day_of_week' => $sched->day_of_week,
+                    'start_time' => $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '07:15',
+                    'end_time' => $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '08:00',
+                    'room' => $sched->room,
+                    'academic_year_id' => $activeYear?->id,
+                ]);
+
+                $subjectModel = \App\Models\Subject::where('name', $sched->subject)->first();
+                if ($subjectModel && $activeYear) {
+                    ClassSubject::updateOrCreate([
+                        'class_id' => $request->target_class_id,
+                        'subject_id' => $subjectModel->id,
+                        'academic_year_id' => $activeYear->id,
+                    ], [
+                        'teacher_id' => $sched->teacher_id,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('schedules.index', ['class_id' => $request->target_class_id])
+            ->with('success', "Jadwal berhasil disalin ke Kelas {$targetClass?->name}!");
+    }
+
     public function create()
     {
         $classes  = Classes::orderBy('name')->get();
@@ -114,6 +243,7 @@ class ScheduleController extends Controller
         $maxDay   = $this->getMaxDayOfWeek();
         return view('schedules.create', compact('classes', 'teachers', 'subjects', 'days', 'maxDay'));
     }
+
 
     public function store(Request $request)
     {
