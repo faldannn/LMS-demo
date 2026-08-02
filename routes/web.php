@@ -301,7 +301,10 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
         Route::get('class-subjects/{classSubject}', [StudentAssignmentController::class, 'showClassSubject'])
             ->name('student.class-subjects.show');
+        Route::post('class-subjects/{classSubject}/check-in', [StudentAssignmentController::class, 'checkInSubject'])
+            ->name('student.class-subjects.check-in');
     });
+
 
     // API self-attendance routes using web session
     Route::middleware(['throttle:30,1'])

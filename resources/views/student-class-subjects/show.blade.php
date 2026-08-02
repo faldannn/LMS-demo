@@ -42,31 +42,20 @@
                     Kelas: <span class="font-semibold text-slate-700">{{ $classSubject->class->name }}</span>
                     <span class="mx-1 text-slate-300">|</span>
                     Guru: <span class="font-semibold text-slate-700">{{ $classSubject->teacher->name }}</span>
-                    @if($classSubject->teacher->subjects->isNotEmpty())
-                        <span class="text-xs text-slate-500">({{ $classSubject->teacher->subjects->pluck('name')->join(', ') }})</span>
-                    @elseif($classSubject->teacher->subject)
-                        <span class="text-xs text-slate-500">({{ $classSubject->teacher->subject }})</span>
-                    @endif
                 </p>
             </div>
         </div>
     </div>
 
-    {{-- Info Card --}}
-    <div class="card bg-gradient-to-br from-brand-600 to-brand-800 text-white border-none shadow-md overflow-hidden">
-        <div class="card-body p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    {{-- Banner Info Card --}}
+    <div class="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 text-white p-6 shadow-md">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <span class="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white mb-2">
                     <i class="bi bi-book"></i> Kode: {{ $classSubject->subject->code ?? '-' }}
                 </span>
                 <h3 class="text-2xl font-extrabold">{{ $classSubject->subject->name }}</h3>
-                <p class="text-brand-100 text-sm mt-1">Dosen/Guru Pengampu: <span class="font-semibold text-white">{{ $classSubject->teacher->name }}</span>
-                    @if($classSubject->teacher->subjects->isNotEmpty())
-                        <span class="text-xs text-brand-100">({{ $classSubject->teacher->subjects->pluck('name')->join(', ') }})</span>
-                    @elseif($classSubject->teacher->subject)
-                        <span class="text-xs text-brand-100">({{ $classSubject->teacher->subject }})</span>
-                    @endif
-                </p>
+                <p class="text-brand-100 text-sm mt-1">Guru Pengampu: <span class="font-semibold text-white">{{ $classSubject->teacher->name }}</span></p>
             </div>
             <div class="flex gap-3">
                 <div class="rounded-xl bg-white/10 px-4 py-2.5 text-center min-w-[80px]">
@@ -81,9 +70,97 @@
         </div>
     </div>
 
+    {{-- Absensi Pelajaran Hari Ini (Student Self Attendance) --}}
+    @if(auth()->user()->isSiswa())
+        <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+            @if($studentAttendanceDetail && $studentAttendanceDetail->status === 'hadir')
+                <div class="rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-emerald-500/20">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-extrabold text-white">BERHASIL ABSEN HADIR MAPEL HARI INI</h4>
+                            <p class="text-xs text-emerald-100 font-medium">Tercatat Hadir pada Pukul {{ $studentAttendanceDetail->check_in ? \Carbon\Carbon::parse($studentAttendanceDetail->check_in)->format('H:i') : now()->format('H:i') }} WIB</p>
+                        </div>
+                    </div>
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-emerald-700 uppercase tracking-wider shadow-sm">
+                        ✅ HADIR
+                    </span>
+                </div>
+            @elseif($studentAttendanceDetail && in_array($studentAttendanceDetail->status, ['sakit', 'izin', 'alfa']))
+                <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 font-bold">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-extrabold text-rose-900">STATUS KEHADIRAN: {{ strtoupper($studentAttendanceDetail->status) }}</h4>
+                            <p class="text-[11px] text-rose-700">Status kehadiran Anda telah ditetapkan oleh Guru Pengampu.</p>
+                        </div>
+                    </div>
+                </div>
+            @elseif(!$attendanceWindow['can_check_in'])
+                <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-white font-bold text-lg shadow-md">
+                            @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                                <i class="bi bi-lock-fill"></i>
+                            @elseif(($attendanceWindow['status'] ?? '') === 'ended')
+                                <i class="bi bi-clock-history"></i>
+                            @else
+                                <i class="bi bi-calendar-x-fill"></i>
+                            @endif
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-extrabold text-slate-900">
+                                @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                                    Absensi Pelajaran Belum Dibuka
+                                @elseif(($attendanceWindow['status'] ?? '') === 'ended')
+                                    Waktu Absensi Pelajaran Telah Berakhir
+                                @else
+                                    Tidak Ada Jadwal Pelajaran Hari Ini
+                                @endif
+                            </h4>
+                            <p class="text-xs text-slate-600 mt-0.5">{{ $attendanceWindow['message'] }}</p>
+                        </div>
+                    </div>
+                    <button type="button" disabled class="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-5 py-2.5 text-xs font-extrabold text-slate-500 cursor-not-allowed shadow-none border border-slate-300">
+                        <i class="bi bi-lock"></i> 
+                        @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                            BELUM DIBUKA
+                        @elseif(($attendanceWindow['status'] ?? '') === 'ended')
+                            SUDAH BERAKHIR
+                        @else
+                            TIDAK ADA JADWAL
+                        @endif
+                    </button>
+                </div>
+            @else
+                <div class="rounded-xl border-2 border-brand-200 bg-brand-50/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white font-bold text-lg shadow-md">
+                            <i class="bi bi-hand-index-thumb-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-extrabold text-slate-900">Absensi Pelajaran Hari Ini</h4>
+                            <p class="text-xs text-slate-500">{{ $attendanceWindow['message'] }}</p>
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ route('student.class-subjects.check-in', $classSubject->id) }}">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition">
+                            <i class="bi bi-hand-index-thumb"></i> KLIK HADIR SEKARANG
+                        </button>
+                    </form>
+                </div>
+            @endif
+
+        </div>
+    @endif
+
     {{-- Main Content Grid --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        
         {{-- Materials Section --}}
         <div class="card shadow-sm border border-slate-200 rounded-2xl bg-white">
             <div class="card-header bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -91,19 +168,9 @@
                     <i class="bi bi-file-earmark-richtext text-brand-500 text-lg"></i>
                     Materi Pelajaran
                 </h3>
-                <div class="flex items-center gap-2">
-                    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                        <button type="button" onclick="toggleView('materials', 'grid')" id="btn-materials-grid" class="px-2.5 py-1.5 text-xs transition" title="Grid View">
-                            <i class="bi bi-grid-3x3-gap-fill"></i>
-                        </button>
-                        <button type="button" onclick="toggleView('materials', 'list')" id="btn-materials-list" class="px-2.5 py-1.5 text-xs transition" title="List View">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                    <span class="badge bg-primary text-[10px]">{{ $classSubject->materials->count() }} File</span>
-                </div>
+                <span class="badge bg-primary text-[10px]">{{ $classSubject->materials->count() }} File</span>
             </div>
-            <div class="card-body p-4 space-y-6">
+            <div class="card-body p-4 space-y-4">
                 @forelse($groupedMaterials as $date => $dateMaterials)
                     <div>
                         <div class="flex items-center gap-2 mb-3">
@@ -112,9 +179,7 @@
                             </span>
                             <div class="h-px bg-slate-100 flex-1"></div>
                         </div>
-                        
-                        {{-- Grid view --}}
-                        <div id="materials-grid-{{ $date }}" class="materials-grid-container grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach($dateMaterials as $material)
                                 <div class="group relative overflow-hidden rounded-xl bg-slate-50/50 p-4 border border-slate-100 transition hover:shadow-md hover:bg-white hover:border-brand-200">
                                     <div class="flex items-start gap-3">
@@ -126,7 +191,7 @@
                                             <p class="text-xs text-slate-500 mt-1 truncate">Topik: {{ $material->topic ?: 'Umum' }}</p>
                                             <div class="mt-3 flex items-center justify-between">
                                                 <span class="text-[10px] text-slate-400 font-medium">
-                                                    Dibuat: {{ $material->created_at->format('d M Y') }}
+                                                    {{ $material->created_at->format('d M Y') }}
                                                 </span>
                                                 <a href="{{ route('materials.show', $material) }}" class="text-xs font-bold text-brand-600 hover:text-brand-800 transition">
                                                     Buka <i class="bi bi-chevron-right"></i>
@@ -137,34 +202,11 @@
                                 </div>
                             @endforeach
                         </div>
-
-                        {{-- List view --}}
-                        <div id="materials-list-{{ $date }}" class="materials-list-container hidden divide-y divide-slate-100 rounded-xl border border-slate-100 bg-white">
-                            @foreach($dateMaterials as $material)
-                                <div class="flex items-center justify-between p-3 hover:bg-slate-50/50 transition">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                                            <i class="bi {{ $material->type_icon }}"></i>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $material->title }}</h4>
-                                            <span class="text-[10px] text-slate-400 font-medium">Dibuat: {{ $material->created_at->format('d M Y') }}</span>
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('materials.show', $material) }}" class="btn btn-xs btn-outline-primary">Lihat</a>
-                                </div>
-                            @endforeach
-                        </div>
                     </div>
                 @empty
-                    <div class="py-8 text-center text-slate-500">
-                        <div class="flex justify-center mb-3">
-                            <div class="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 text-2xl">
-                                <i class="bi bi-journal-x"></i>
-                            </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-700">Belum ada materi pelajaran</p>
-                        <p class="text-xs text-slate-400 mt-1">Guru belum mempublikasikan materi untuk pelajaran ini.</p>
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="bi bi-folder2-open text-3xl"></i>
+                        <p class="text-xs mt-2 font-medium">Belum ada materi pelajaran.</p>
                     </div>
                 @endforelse
             </div>
@@ -174,22 +216,12 @@
         <div class="card shadow-sm border border-slate-200 rounded-2xl bg-white">
             <div class="card-header bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
-                    <i class="bi bi-journal-check text-brand-500 text-lg"></i>
+                    <i class="bi bi-journal-check text-blue-500 text-lg"></i>
                     Tugas Pelajaran
                 </h3>
-                <div class="flex items-center gap-2">
-                    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                        <button type="button" onclick="toggleView('assignments', 'grid')" id="btn-assignments-grid" class="px-2.5 py-1.5 text-xs transition" title="Grid View">
-                            <i class="bi bi-grid-3x3-gap-fill"></i>
-                        </button>
-                        <button type="button" onclick="toggleView('assignments', 'list')" id="btn-assignments-list" class="px-2.5 py-1.5 text-xs transition" title="List View">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                    <span class="badge bg-primary text-[10px]">{{ $classSubject->assignments->count() }} Tugas</span>
-                </div>
+                <span class="badge bg-primary text-[10px]">{{ $classSubject->assignments->count() }} Tugas</span>
             </div>
-            <div class="card-body p-4 space-y-6">
+            <div class="card-body p-4 space-y-4">
                 @forelse($groupedAssignments as $date => $dateAssignments)
                     <div>
                         <div class="flex items-center gap-2 mb-3">
@@ -198,61 +230,32 @@
                             </span>
                             <div class="h-px bg-slate-100 flex-1"></div>
                         </div>
-
-                        {{-- Grid view --}}
-                        <div id="assignments-grid-{{ $date }}" class="assignments-grid-container grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             @foreach($dateAssignments as $assignment)
                                 @php
                                     $submission = $assignment->submissions->first();
-                                    $statusBg = 'bg-slate-50';
-                                    $statusBorder = 'border-slate-200';
-                                    $statusText = 'Belum Dikerjakan';
-                                    $statusColor = 'text-slate-600';
-                                    $iconClass = 'bi-exclamation-circle text-slate-400';
-                                    
-                                    if ($submission) {
-                                        if ($submission->grade) {
-                                            $statusBg = 'bg-emerald-50';
-                                            $statusBorder = 'border-emerald-200';
-                                            $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
-                                            $statusColor = 'text-emerald-700';
-                                            $iconClass = 'bi-check-circle-fill text-emerald-500';
-                                        } else {
-                                            $statusBg = 'bg-blue-50';
-                                            $statusBorder = 'border-blue-200';
-                                            $statusText = 'Menunggu Penilaian';
-                                            $statusColor = 'text-blue-700';
-                                            $iconClass = 'bi-clock-fill text-blue-500';
-                                        }
-                                    } elseif ($assignment->isPastDue()) {
-                                        $statusBg = 'bg-rose-50';
-                                        $statusBorder = 'border-rose-200';
-                                        $statusText = 'Terlambat / Melewati Tenggat';
-                                        $statusColor = 'text-rose-700';
-                                        $iconClass = 'bi-x-circle-fill text-rose-500';
-                                    }
                                 @endphp
-                                <div class="group relative overflow-hidden rounded-xl bg-slate-50/50 p-4 border border-slate-100 transition hover:shadow-md hover:bg-white hover:border-brand-200">
+                                <div class="group relative overflow-hidden rounded-xl bg-slate-50/50 p-4 border border-slate-100 transition hover:shadow-md hover:bg-white hover:border-blue-200">
                                     <div class="flex items-start gap-3">
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                                            <i class="bi bi-file-earmark-check"></i>
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                            <i class="bi bi-file-earmark-text"></i>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <h4 class="font-bold text-slate-900 text-sm truncate group-hover:text-brand-600 transition">{{ $assignment->title }}</h4>
-                                            <div class="mt-2">
-                                                <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600 ring-1 ring-slate-200">
-                                                    {{ ucfirst($assignment->type) }}
+                                            <h4 class="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition">{{ $assignment->title }}</h4>
+                                            @if($submission)
+                                                <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                                                    <i class="bi bi-check-circle"></i> Sudah Dikirim
                                                 </span>
-                                                <span class="inline-flex items-center gap-1 rounded-lg border {{ $statusBorder }} {{ $statusBg }} px-2 py-0.5 text-[10px] font-semibold {{ $statusColor }} ml-1">
-                                                    <i class="bi {{ $iconClass }}"></i>
-                                                    {{ $statusText }}
+                                            @else
+                                                <span class="inline-flex items-center gap-1 mt-1 text-[10px] font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                                                    <i class="bi bi-clock"></i> Belum Dikirim
                                                 </span>
-                                            </div>
+                                            @endif
                                             <div class="mt-3 flex items-center justify-between">
                                                 <span class="text-[10px] text-slate-400 font-medium">
-                                                    Dibuat: {{ $assignment->created_at->format('d M Y') }}
+                                                    Tenggat: {{ $assignment->due_date ? \Carbon\Carbon::parse($assignment->due_date)->format('d M Y') : '-' }}
                                                 </span>
-                                                <a href="{{ route('student.assignments.show', $assignment) }}" class="text-xs font-bold text-brand-600 hover:text-brand-800 transition">
+                                                <a href="{{ route('student.assignments.show', $assignment) }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition">
                                                     Buka <i class="bi bi-chevron-right"></i>
                                                 </a>
                                             </div>
@@ -261,122 +264,15 @@
                                 </div>
                             @endforeach
                         </div>
-
-                        {{-- List view --}}
-                        <div id="assignments-list-{{ $date }}" class="assignments-list-container hidden divide-y divide-slate-100 rounded-xl border border-slate-100 bg-white">
-                            @foreach($dateAssignments as $assignment)
-                                @php
-                                    $submission = $assignment->submissions->first();
-                                    $statusBg = 'bg-slate-50';
-                                    $statusBorder = 'border-slate-200';
-                                    $statusText = 'Belum Dikerjakan';
-                                    $statusColor = 'text-slate-600';
-                                    $iconClass = 'bi-exclamation-circle text-slate-400';
-                                    
-                                    if ($submission) {
-                                        if ($submission->grade) {
-                                            $statusBg = 'bg-emerald-50';
-                                            $statusBorder = 'border-emerald-200';
-                                            $statusText = 'Sudah Dinilai (' . (float)$submission->grade->score . ')';
-                                            $statusColor = 'text-emerald-700';
-                                            $iconClass = 'bi-check-circle-fill text-emerald-500';
-                                        } else {
-                                            $statusBg = 'bg-blue-50';
-                                            $statusBorder = 'border-blue-200';
-                                            $statusText = 'Menunggu Penilaian';
-                                            $statusColor = 'text-blue-700';
-                                            $iconClass = 'bi-clock-fill text-blue-500';
-                                        }
-                                    } elseif ($assignment->isPastDue()) {
-                                        $statusBg = 'bg-rose-50';
-                                        $statusBorder = 'border-rose-200';
-                                        $statusText = 'Terlambat / Melewati Tenggat';
-                                        $statusColor = 'text-rose-700';
-                                        $iconClass = 'bi-x-circle-fill text-rose-500';
-                                    }
-                                @endphp
-                                <div class="flex items-center justify-between p-3 hover:bg-slate-50/50 transition">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                                            <i class="bi bi-file-earmark-check"></i>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <h4 class="font-bold text-slate-900 text-sm truncate">{{ $assignment->title }}</h4>
-                                            <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1 py-0.5 text-[8px] font-bold text-slate-600">
-                                                {{ ucfirst($assignment->type) }}
-                                            </span>
-                                            <span class="text-[10px] text-slate-400 font-medium ml-2">Dibuat: {{ $assignment->created_at->format('d M Y') }}</span>
-                                        </div>
-                                    </div>
-                                    <a href="{{ route('student.assignments.show', $assignment) }}" class="btn btn-xs btn-outline-primary">Lihat</a>
-                                </div>
-                            @endforeach
-                        </div>
                     </div>
                 @empty
-                    <div class="p-8 text-center text-slate-500">
-                        <div class="flex justify-center mb-3">
-                            <div class="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 text-2xl">
-                                <i class="bi bi-clipboard-x"></i>
-                            </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-700">Belum ada tugas pelajaran</p>
-                        <p class="text-xs text-slate-400 mt-1">Guru belum mempublikasikan tugas untuk pelajaran ini.</p>
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="bi bi-journal-x text-3xl"></i>
+                        <p class="text-xs mt-2 font-medium">Belum ada tugas pelajaran.</p>
                     </div>
                 @endforelse
             </div>
         </div>
-
     </div>
 </div>
-
-@push('scripts')
-<script>
-    function toggleView(section, view) {
-        localStorage.setItem('student_class_subject_' + section + '_view', view);
-        applyViewPreference(section);
-    }
-    
-    function applyViewPreference(section) {
-        const view = localStorage.getItem('student_class_subject_' + section + '_view') || 'grid';
-        
-        const gridContainers = document.querySelectorAll(`.${section}-grid-container`);
-        const listContainers = document.querySelectorAll(`.${section}-list-container`);
-        
-        const btnGrid = document.getElementById(`btn-${section}-grid`);
-        const btnList = document.getElementById(`btn-${section}-list`);
-        
-        if (view === 'grid') {
-            gridContainers.forEach(el => el.classList.remove('hidden'));
-            listContainers.forEach(el => el.classList.add('hidden'));
-            
-            if (btnGrid) {
-                btnGrid.classList.remove('text-slate-500', 'hover:bg-slate-50');
-                btnGrid.classList.add('bg-brand-600', 'text-white');
-            }
-            if (btnList) {
-                btnList.classList.remove('bg-brand-600', 'text-white');
-                btnList.classList.add('text-slate-500', 'hover:bg-slate-50');
-            }
-        } else {
-            gridContainers.forEach(el => el.classList.add('hidden'));
-            listContainers.forEach(el => el.classList.remove('hidden'));
-            
-            if (btnList) {
-                btnList.classList.remove('text-slate-500', 'hover:bg-slate-50');
-                btnList.classList.add('bg-brand-600', 'text-white');
-            }
-            if (btnGrid) {
-                btnGrid.classList.remove('bg-brand-600', 'text-white');
-                btnGrid.classList.add('text-slate-500', 'hover:bg-slate-50');
-            }
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        applyViewPreference('materials');
-        applyViewPreference('assignments');
-    });
-</script>
-@endpush
 @endsection

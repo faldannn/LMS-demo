@@ -14,6 +14,7 @@ class Attendance extends Model
     protected $fillable = [
         'date',
         'class_id',
+        'class_subject_id',
         'teacher_id',
         'session',
         'notes',
@@ -26,6 +27,12 @@ class Attendance extends Model
     {
         return $this->belongsTo(Classes::class, 'class_id');
     }
+
+    public function classSubject(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ClassSubject::class, 'class_subject_id');
+    }
+
 
     public function teacher(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

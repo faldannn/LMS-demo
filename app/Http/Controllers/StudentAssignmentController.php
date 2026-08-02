@@ -109,6 +109,159 @@ class StudentAssignmentController extends Controller
             }
         ]);
 
-        return view('student-class-subjects.show', compact('classSubject'));
+        $todayAttendance = \App\Models\Attendance::where('class_id', $classSubject->class_id)
+            ->where('class_subject_id', $classSubject->id)
+            ->whereDate('date', today())
+            ->first();
+
+        $studentAttendanceDetail = null;
+        if ($todayAttendance) {
+            $studentAttendanceDetail = \App\Models\AttendanceDetail::where('attendance_id', $todayAttendance->id)
+                ->where('student_id', $student->id)
+                ->first();
+        }
+
+        $attendanceWindow = $this->resolveAttendanceWindow($classSubject);
+
+        return view('student-class-subjects.show', compact('classSubject', 'todayAttendance', 'studentAttendanceDetail', 'attendanceWindow'));
     }
+
+    public function checkInSubject(ClassSubject $classSubject)
+    {
+        $student = auth()->user()->student;
+
+        if (!$student || $student->class_id !== $classSubject->class_id) {
+            return back()->withErrors(['attendance' => 'Anda tidak memiliki akses untuk melakukan absensi pada mata pelajaran ini.']);
+        }
+
+        $attendanceWindow = $this->resolveAttendanceWindow($classSubject);
+        if (!$attendanceWindow['can_check_in']) {
+            return back()->withErrors(['attendance' => $attendanceWindow['message']]);
+        }
+
+        $dayOfWeek = today()->dayOfWeekIso;
+        $daySchedules = \App\Models\Schedule::where('class_id', $classSubject->class_id)
+            ->where('day_of_week', $dayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+
+        $sessionKey = 'mapel_1';
+        if ($daySchedules->isNotEmpty()) {
+            foreach ($daySchedules as $idx => $sched) {
+                if (stripos($sched->subject, $classSubject->subject->name) !== false) {
+                    $slotNum = $idx + 1;
+                    $sessionKey = "mapel_{$slotNum}";
+                    break;
+                }
+            }
+        }
+
+        $attendance = \App\Models\Attendance::firstOrCreate([
+            'date' => today(),
+            'class_id' => $classSubject->class_id,
+            'class_subject_id' => $classSubject->id,
+            'session' => $sessionKey,
+        ], [
+            'teacher_id' => $classSubject->teacher_id,
+            'notes' => 'Absensi Mandiri Siswa - Mapel ' . $classSubject->subject->name,
+        ]);
+
+        $allStudents = \App\Models\Student::where('class_id', $classSubject->class_id)->get();
+        foreach ($allStudents as $s) {
+            \App\Models\AttendanceDetail::firstOrCreate([
+                'attendance_id' => $attendance->id,
+                'student_id' => $s->id,
+            ], [
+                'status' => 'alfa',
+            ]);
+        }
+
+        $detail = \App\Models\AttendanceDetail::where('attendance_id', $attendance->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if ($detail) {
+            $detail->update([
+                'status' => 'hadir',
+                'check_in' => now(),
+            ]);
+        }
+
+        return back()->with('success', 'Berhasil! Kehadiran Anda untuk mata pelajaran ' . $classSubject->subject->name . ' telah dicatat.');
+    }
+
+    private function resolveAttendanceWindow(ClassSubject $classSubject): array
+    {
+        $dayOfWeek = today()->dayOfWeekIso; // 1 (Mon) - 7 (Sun)
+        $todaySchedule = \App\Models\Schedule::where('class_id', $classSubject->class_id)
+            ->where('day_of_week', $dayOfWeek)
+            ->where(function($q) use ($classSubject) {
+                $q->where('subject', $classSubject->subject->name)
+                  ->orWhere('subject', 'like', "%{$classSubject->subject->name}%");
+            })
+            ->first();
+
+        if ($todaySchedule) {
+            $now = now();
+            $startTime = \Carbon\Carbon::parse(today()->toDateString() . ' ' . $todaySchedule->start_time->format('H:i:s'));
+            $endTime = \Carbon\Carbon::parse(today()->toDateString() . ' ' . $todaySchedule->end_time->format('H:i:s'));
+
+            if ($now->lt($startTime)) {
+                return [
+                    'status' => 'not_started',
+                    'can_check_in' => false,
+                    'start_time' => $startTime->format('H:i'),
+                    'end_time' => $endTime->format('H:i'),
+                    'message' => 'Absensi mata pelajaran ini belum dibuka hari ini. Jam presensi: ' . $startTime->format('H:i') . ' - ' . $endTime->format('H:i') . ' WIB.',
+                ];
+            } elseif ($now->gt($endTime)) {
+                return [
+                    'status' => 'ended',
+                    'can_check_in' => false,
+                    'start_time' => $startTime->format('H:i'),
+                    'end_time' => $endTime->format('H:i'),
+                    'message' => 'Sesi presensi untuk mata pelajaran ini telah berakhir pada pukul ' . $endTime->format('H:i') . ' WIB.',
+                ];
+            } else {
+                return [
+                    'status' => 'open',
+                    'can_check_in' => true,
+                    'start_time' => $startTime->format('H:i'),
+                    'end_time' => $endTime->format('H:i'),
+                    'message' => 'Sesi presensi sedang berlangsung hingga pukul ' . $endTime->format('H:i') . ' WIB.',
+                ];
+            }
+        }
+
+        $anySchedule = \App\Models\Schedule::where('class_id', $classSubject->class_id)
+            ->where(function($q) use ($classSubject) {
+                $q->where('subject', $classSubject->subject->name)
+                  ->orWhere('subject', 'like', "%{$classSubject->subject->name}%");
+            })
+            ->orderBy('day_of_week')
+            ->first();
+
+        if ($anySchedule) {
+            $dayName = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$anySchedule->day_of_week] ?? '';
+            $timeStr = $anySchedule->start_time ? $anySchedule->start_time->format('H:i') : '';
+            return [
+                'status' => 'no_schedule_today',
+                'can_check_in' => false,
+                'next_day' => $dayName,
+                'start_time' => $timeStr,
+                'message' => 'Hari ini tidak ada jadwal mata pelajaran ' . $classSubject->subject->name . '. Jadwal berikutnya: Hari ' . $dayName . ($timeStr ? ' pukul ' . $timeStr . ' WIB' : '') . '.',
+            ];
+        }
+
+        return [
+            'status' => 'open',
+            'can_check_in' => true,
+            'start_time' => '07:15',
+            'end_time' => '17:00',
+            'message' => 'Sesi presensi mata pelajaran terbuka.',
+        ];
+    }
+
+
 }
+

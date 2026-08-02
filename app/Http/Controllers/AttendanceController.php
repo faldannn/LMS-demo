@@ -213,6 +213,15 @@ class AttendanceController extends Controller
 
     public function create(Request $request)
     {
+        if ($request->has('ref') || $request->has('token')) {
+            try {
+                $decrypted = \Illuminate\Support\Facades\Crypt::decryptArray($request->get('ref') ?: $request->get('token'));
+                $request->merge($decrypted);
+            } catch (\Throwable $e) {
+                // Abaikan jika token tidak valid
+            }
+        }
+
         $user = auth()->user();
         if ($user->isGuru()) {
             $teacher = $user->teacher;
@@ -226,10 +235,10 @@ class AttendanceController extends Controller
                 if ($allClassIds->isNotEmpty()) {
                     $classes = Classes::whereIn('id', $allClassIds)->orderBy('name')->get(['id', 'name', 'grade']);
                 } else {
-                    $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
+                    $classes = collect();
                 }
             } else {
-                $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
+                $classes = collect();
             }
         } else {
             $classes = Classes::orderBy('name')->get(['id', 'name', 'grade']);
@@ -273,12 +282,16 @@ class AttendanceController extends Controller
         $selectedClass = $classId ? Classes::find($classId) : null;
         $isRangeMode = $startDate !== $endDate;
         $session = $request->get('session');
+        if ($session && preg_match('/day_\d+_(mapel_\d+)/', $session, $matches)) {
+            $session = $matches[1];
+        }
         if (!$session) {
             $session = $isRangeMode ? 'all' : 'mapel_1';
         }
         if (in_array($session, ['pagi', 'siang', 'harian'], true)) {
             $session = 'mapel_1';
         }
+
 
         $isTeacher = $user->isGuru();
         $teacherObj = $user->teacher;
@@ -343,7 +356,7 @@ class AttendanceController extends Controller
                         $dName = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$sched->day_of_week] ?? '';
                         $daySlots = $allSchedules->where('day_of_week', $sched->day_of_week)->values();
                         $slotNum = $daySlots->search(fn($s) => $s->id == $sched->id) !== false ? ($daySlots->search(fn($s) => $s->id == $sched->id) + 1) : 1;
-                        $key = "day_{$sched->day_of_week}_mapel_{$slotNum}";
+                        $key = "sched_{$sched->id}";
                         $subName = $sched->subject;
                         $timeStr = ($sched->start_time && $sched->end_time)
                             ? $sched->start_time->format('H:i') . ' - ' . $sched->end_time->format('H:i')
@@ -366,7 +379,7 @@ class AttendanceController extends Controller
                         $dName = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$sched->day_of_week] ?? '';
                         $daySlots = $allSchedules->where('day_of_week', $sched->day_of_week)->values();
                         $slotNum = $daySlots->search(fn($s) => $s->id == $sched->id) !== false ? ($daySlots->search(fn($s) => $s->id == $sched->id) + 1) : 1;
-                        $key = "day_{$sched->day_of_week}_mapel_{$slotNum}";
+                        $key = "sched_{$sched->id}";
                         $subName = $sched->subject;
                         $tName = $sched->teacher?->name;
                         $timeStr = ($sched->start_time && $sched->end_time)
@@ -387,6 +400,7 @@ class AttendanceController extends Controller
                     }
                 }
             }
+
 
             if (empty($sessionLabels)) {
                 $sessionLabels['mapel_1'] = [
@@ -672,11 +686,20 @@ class AttendanceController extends Controller
                 }
 
                 $sessionNotes = '';
-                $att = Attendance::where([
-                    'date' => $startDate,
-                    'class_id' => $classId,
-                    'session' => $session,
-                ])->first();
+                $subjectModel = $selectedSubjectName ? \App\Models\Subject::where('name', $selectedSubjectName)->first() : null;
+                $targetCs = ($classId && $subjectModel) ? \App\Models\ClassSubject::where('class_id', $classId)->where('subject_id', $subjectModel->id)->first() : null;
+
+                $attQuery = Attendance::where('date', $startDate)->where('class_id', $classId);
+                $att = $attQuery->where(function($q) use ($session, $targetCs, $selectedSubjectName) {
+                    $q->where('session', $session);
+                    if ($targetCs) {
+                        $q->orWhere('class_subject_id', $targetCs->id);
+                    }
+                    if ($selectedSubjectName) {
+                        $q->orWhere('notes', 'like', "%{$selectedSubjectName}%");
+                    }
+                })->first();
+
 
                 if ($att) {
                     $sessionNotes = $att->notes ?? '';

@@ -854,7 +854,27 @@ function onDateChange() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', updateSummaryCounters);
+document.addEventListener('DOMContentLoaded', function() {
+    updateSummaryCounters();
+    
+    const form = document.getElementById('filter-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const period = document.getElementById('input-period')?.value;
+            const startDate = document.getElementById('input-start-date')?.value;
+            const endDate = document.getElementById('input-end-date')?.value;
+            const todayStr = getLocalDateString(new Date());
+
+            // Bersihkan parameter redundan di URL jika memilih hari ini
+            if (period === 'today' && startDate === todayStr && endDate === todayStr) {
+                document.getElementById('input-period').disabled = true;
+                document.getElementById('input-start-date').disabled = true;
+                document.getElementById('input-end-date').disabled = true;
+            }
+        });
+    }
+});
+
 </script>
 <style>
 .spin {
