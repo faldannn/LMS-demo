@@ -237,7 +237,7 @@
         </div>
 
         {{-- Info Sistem --}}
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white fw-bold py-3">
                 <i class="bi bi-cpu me-2 text-primary"></i>Info Sistem
             </div>
@@ -257,9 +257,84 @@
                 </dl>
             </div>
         </div>
-        
-    </div>
-</div>
+
+        {{-- Integrasi Absensi Kartu RFID (Riansa Kartu) --}}
+        <div class="card shadow-sm border-0 mb-4" id="kartu-rfid-section">
+            <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-credit-card-2-front me-2 text-warning"></i>Integrasi Absensi Kartu RFID (Riansa Kartu)</span>
+                <span class="badge {{ $settings['kartu_enabled'] ? 'bg-success' : 'bg-secondary' }}">
+                    {{ $settings['kartu_enabled'] ? 'Aktif' : 'Nonaktif' }}
+                </span>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('settings.kartu') }}">
+                    @csrf
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="kartu_enabled" name="kartu_enabled" value="1" {{ $settings['kartu_enabled'] ? 'checked' : '' }}>
+                        <label class="form-check-label fw-bold" for="kartu_enabled">Aktifkan Integrasi Mesin Tap Kartu</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">API Key Riansa Kartu</label>
+                        <input type="text" name="kartu_api_key" class="form-control"
+                            value="{{ old('kartu_api_key', $settings['kartu_api_key']) }}" placeholder="sk_live_xxxxxxxx...">
+                        <div class="form-text">Dapatkan API Key dari dashboard Riansa Kartu (<a href="https://riansa.top/kartu/app/" target="_blank">riansa.top/kartu/app</a>).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Webhook Secret</label>
+                        <input type="text" name="kartu_webhook_secret" class="form-control"
+                            value="{{ old('kartu_webhook_secret', $settings['kartu_webhook_secret']) }}" placeholder="Isi webhook secret dari Riansa Kartu">
+                        <div class="form-text">Digunakan untuk verifikasi keaslian pengiriman webhook.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alamat Webhook LMS (Masukkan ke Dashboard Riansa Kartu)</label>
+                        <div class="input-group">
+                            <input type="text" id="webhook_url_input" class="form-control bg-light" value="{{ $settings['webhook_url'] }}" readonly>
+                            <button type="button" class="btn btn-outline-secondary" onclick="copyWebhookUrl()">
+                                <i class="bi bi-clipboard me-1"></i>Salin
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-dark">
+                            <i class="bi bi-save me-2"></i>Simpan Konfigurasi Kartu
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="fw-bold mb-2 text-dark"><i class="bi bi-lightning-charge me-1 text-warning"></i> Aksi Sinkronisasi Manual:</div>
+                <div class="d-flex gap-2 flex-wrap mb-4">
+                    <form method="POST" action="{{ route('settings.kartu.sync-members') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Kirim seluruh daftar siswa ke Riansa Kartu?')">
+                            <i class="bi bi-cloud-upload me-1"></i>Sinkronkan Daftar Siswa
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('settings.kartu.pull-attendance') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-cloud-download me-1"></i>Tarik Absensi Sekarang (Pull Sync)
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-light border rounded-3 p-3 small">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-book me-1"></i>Cara Menyambungkan:</h6>
+                    <ol class="mb-0 ps-3">
+                        <li>Salin <strong>API key</strong> dan <strong>Webhook secret</strong> dari menu Pengaturan di <a href="https://riansa.top/kartu/app/" target="_blank">riansa.top/kartu/app/</a>.</li>
+                        <li>Paste ke form di atas lalu klik <strong>Simpan Konfigurasi Kartu</strong>.</li>
+                        <li>Salin <strong>Alamat Webhook LMS</strong> di atas, lalu paste ke kolom <strong>Alamat Webhook</strong> di dashboard Riansa Kartu dan klik <strong>Simpan</strong>.</li>
+                        <li>Klik <strong>Sinkronkan Daftar Siswa</strong> di atas agar mesin tap mengenali NIS dan nama siswa.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
 @endsection
 
 @push('scripts')
@@ -305,5 +380,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function copyWebhookUrl() {
+    const input = document.getElementById('webhook_url_input');
+    if (input) {
+        input.select();
+        navigator.clipboard.writeText(input.value).then(function() {
+            alert('URL Webhook berhasil disalin: ' + input.value);
+        }).catch(function(err) {
+            document.execCommand('copy');
+            alert('URL Webhook disalin!');
+        });
+    }
+}
 </script>
 @endpush

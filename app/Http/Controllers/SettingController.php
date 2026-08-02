@@ -33,6 +33,12 @@ class SettingController extends Controller
             'face_match_min'   => config('attendance.face.match_min_confidence'),
             'academic_year'    => config('school.academic_year', date('Y') . '/' . (date('Y') + 1)),
             'school_operational_days' => Setting::get('school_operational_days', '5_days'),
+            'kartu_enabled'        => (bool) Setting::get('kartu_enabled', false),
+            'kartu_api_key'        => Setting::get('kartu_api_key', ''),
+            'kartu_webhook_secret' => Setting::get('kartu_webhook_secret', ''),
+            'kartu_last_synced_at' => Setting::get('kartu_last_synced_at', '-'),
+            'kartu_last_cursor'    => Setting::get('kartu_last_cursor', '-'),
+            'webhook_url'          => preg_replace('/^http:/i', 'https:', url('/api/v1/kartu/webhook')),
         ];
 
         return view('settings.index', compact('settings'));
@@ -93,4 +99,49 @@ class SettingController extends Controller
         return redirect()->route('settings.index')
             ->with('success', 'Pengaturan absensi berhasil disimpan.');
     }
+
+    public function updateKartu(Request $request)
+    {
+        $data = $request->validate([
+            'kartu_enabled'        => 'nullable|boolean',
+            'kartu_api_key'        => 'nullable|string|max:255',
+            'kartu_webhook_secret' => 'nullable|string|max:255',
+        ]);
+
+        Setting::set('kartu_enabled', $request->has('kartu_enabled') ? '1' : '0', 'kartu');
+        Setting::set('kartu_api_key', trim($data['kartu_api_key'] ?? ''), 'kartu');
+        Setting::set('kartu_webhook_secret', trim($data['kartu_webhook_secret'] ?? ''), 'kartu');
+
+        $this->activityLogService->logSettings('kartu', array_keys($data));
+
+        return redirect()->route('settings.index')
+            ->with('success', 'Pengaturan Integrasi Kartu RFID Riansa berhasil disimpan.');
+    }
+
+    public function syncKartuMembers(\App\Services\RiansaKartuService $kartuService)
+    {
+        $result = $kartuService->syncMembers();
+
+        if ($result['success']) {
+            return redirect()->route('settings.index')
+                ->with('success', $result['message']);
+        }
+
+        return redirect()->route('settings.index')
+            ->with('error', $result['message']);
+    }
+
+    public function pullKartuAttendance(\App\Services\RiansaKartuService $kartuService)
+    {
+        $result = $kartuService->pullAttendance();
+
+        if ($result['success']) {
+            return redirect()->route('settings.index')
+                ->with('success', $result['message']);
+        }
+
+        return redirect()->route('settings.index')
+            ->with('error', $result['message']);
+    }
+
 }

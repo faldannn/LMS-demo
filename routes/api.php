@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-// All API routes for self-attendance are defined in routes/web.php under the 'web' session middleware group to allow cookie-based authentication.
-
+// Riansa Kartu RFID Attendance Webhook Route
+Route::post('/v1/kartu/webhook', [\App\Http\Controllers\Api\RiansaKartuWebhookController::class, 'handle'])->name('api.v1.kartu.webhook');
+Route::post('/kartu/webhook', [\App\Http\Controllers\Api\RiansaKartuWebhookController::class, 'handle'])->name('api.kartu.webhook');
 

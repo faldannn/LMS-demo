@@ -135,6 +135,14 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('settings/update-attendance', [SettingController::class, 'updateAttendance'])
             ->middleware('throttle:' . config('security.rate_limits.settings', '10,1'))
             ->name('settings.attendance');
+        Route::post('settings/update-kartu', [SettingController::class, 'updateKartu'])
+            ->middleware('throttle:' . config('security.rate_limits.settings', '10,1'))
+            ->name('settings.kartu');
+        Route::post('settings/kartu-sync-members', [SettingController::class, 'syncKartuMembers'])
+            ->name('settings.kartu.sync-members');
+        Route::post('settings/kartu-pull-attendance', [SettingController::class, 'pullKartuAttendance'])
+            ->name('settings.kartu.pull-attendance');
+
 
         Route::prefix('security')->name('security.')->group(function () {
             Route::get('/', [SecurityController::class, 'index'])->name('index');
