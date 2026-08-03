@@ -28,14 +28,30 @@ class TeacherService extends BaseMasterDataService
                 $data['photo'] = $data['photo']->store('teachers/photos', 'public');
             }
 
-            $username = $data['nip'] ?? $data['email'] ?? Str::slug($data['name'], '.');
+            $nip = !empty($data['nip']) ? trim($data['nip']) : null;
+            $email = !empty($data['email']) ? trim($data['email']) : null;
+
+            if ($nip) {
+                $username = $nip;
+            } elseif ($email) {
+                $username = $email;
+            } else {
+                $base = Str::slug($data['name'], '.');
+                $username = $base ?: 'guru';
+                $counter = 1;
+                while (User::where('username', $username)->exists()) {
+                    $username = ($base ?: 'guru') . $counter;
+                    $counter++;
+                }
+            }
+
             $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : self::DEFAULT_PASSWORD;
 
             $user = User::create([
                 'username' => $username,
                 'password' => Hash::make($password),
                 'name' => $data['name'],
-                'email' => $data['email'] ?? null,
+                'email' => $email,
                 'role' => UserRole::Guru,
                 'status' => true,
             ]);

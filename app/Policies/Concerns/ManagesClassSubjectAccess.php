@@ -10,12 +10,20 @@ trait ManagesClassSubjectAccess
 {
     protected function canManageClassSubject(User $user, ClassSubject $classSubject): bool
     {
-        if ($user->isKepalaSekolah()) {
+        if ($user->isKepalaSekolah() || $user->isAdmin() || $user->isSuperAdmin()) {
             return true;
         }
 
         if ($user->isGuru()) {
-            return (int) $classSubject->teacher_id === (int) $user->teacher?->id;
+            $teacher = $user->teacher;
+            if (!$teacher) {
+                return false;
+            }
+            if ((int) $classSubject->teacher_id === (int) $teacher->id) {
+                return true;
+            }
+            return $teacher->schedules()->where('class_id', $classSubject->class_id)->exists()
+                || $teacher->homeroomClasses()->where('id', $classSubject->class_id)->exists();
         }
 
         return false;

@@ -31,6 +31,27 @@ class DashboardController extends Controller
         // Cleanup any orphaned ClassSubjects (where class_id is null or deleted)
         \App\Models\ClassSubject::whereNull('class_id')->orWhereDoesntHave('class')->delete();
 
+        // Automatically purge ClassSubjects where the Schedule was deleted (unless materials/assignments/discussions exist)
+        \App\Models\ClassSubject::whereDoesntHave('materials')
+            ->whereDoesntHave('assignments')
+            ->whereDoesntHave('discussionThreads')
+            ->get()
+            ->each(function ($cs) {
+                $subjectName = $cs->subject?->name;
+                $hasSchedule = false;
+                if ($subjectName) {
+                    $hasSchedule = \App\Models\Schedule::where('class_id', $cs->class_id)
+                        ->where(function ($q) use ($subjectName) {
+                            $q->where('subject', $subjectName)
+                              ->orWhere('subject', 'like', "%{$subjectName}%");
+                        })
+                        ->exists();
+                }
+                if (!$hasSchedule) {
+                    $cs->delete();
+                }
+            });
+
         if ($user->isGuru()) {
             $teacher = $user->teacher;
             if ($teacher) {

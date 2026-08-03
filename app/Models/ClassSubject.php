@@ -49,4 +49,9 @@ class ClassSubject extends Model
     {
         return $this->hasMany(Assignment::class);
     }
+
+    public function discussionThreads(): HasMany
+    {
+        return $this->hasMany(DiscussionThread::class);
+    }
 }
