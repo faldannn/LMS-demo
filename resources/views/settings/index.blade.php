@@ -6,829 +6,566 @@
 
 @push('styles')
     <style>
-        .settings-shell {
-            display: grid;
-            gap: 1.5rem;
+        .settings-pane {
+            display: none;
         }
-
-        .settings-hero {
-            border: 0;
-            border-radius: 1.5rem;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--color-brand-700), var(--color-brand-500));
-            box-shadow: 0 20px 45px rgba(15, 23, 42, .12);
-        }
-
-        .settings-hero__inner {
-            padding: 1.5rem;
-        }
-
-        @media (min-width: 992px) {
-            .settings-hero__inner {
-                padding: 2rem 2.25rem;
-            }
-        }
-
-        .settings-hero__tag {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            padding: .35rem .8rem;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, .12);
-            border: 1px solid rgba(255, 255, 255, .12);
-            color: rgba(255, 255, 255, .9);
-            font-size: .76rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-
-        .settings-hero__title {
-            margin: .85rem 0 .5rem;
-            color: #fff;
-            font-size: clamp(1.5rem, 2.2vw, 2.15rem);
-            font-weight: 800;
-            line-height: 1.2;
-        }
-
-        .settings-hero__text {
-            max-width: 58rem;
-            margin: 0;
-            color: rgba(255, 255, 255, .84);
-            line-height: 1.7;
-        }
-
-        .settings-hero__chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .75rem;
-            margin-top: 1.25rem;
-        }
-
-        .settings-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            padding: .7rem .9rem;
-            border-radius: .95rem;
-            background: rgba(255, 255, 255, .12);
-            border: 1px solid rgba(255, 255, 255, .14);
-            color: #fff;
-            font-size: .82rem;
-            font-weight: 600;
-        }
-
-        .settings-card {
-            border: 0;
-            border-radius: 1.25rem;
-            overflow: hidden;
-            background: #fff;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, .08);
-        }
-
-        .settings-card .card-header {
-            padding: 1rem 1.25rem;
-            background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .settings-card .card-body {
-            padding: 1.25rem;
-        }
-
-        .settings-card__head {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: .5rem .75rem;
-        }
-
-        .settings-card__title {
-            display: inline-flex;
-            align-items: center;
-            gap: .55rem;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .settings-card__subtitle {
-            color: #64748b;
-            font-size: .8rem;
-        }
-
-        .settings-label {
-            display: inline-flex;
-            align-items: center;
-            gap: .35rem;
-            margin-bottom: .45rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .settings-control,
-        .settings-control.form-control,
-        .settings-control.form-select,
-        .settings-control textarea {
-            border-radius: .9rem;
-            border-color: #dbe4f0;
-            box-shadow: none;
-            padding: .78rem .95rem;
-        }
-
-        .settings-control:focus {
-            border-color: var(--color-brand-500);
-            box-shadow: 0 0 0 .2rem rgba(59, 130, 246, .12);
-        }
-
-        .settings-help {
-            margin-top: .4rem;
-            color: #64748b;
-            font-size: .8rem;
-            line-height: 1.5;
-        }
-
-        .settings-action {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 1.25rem;
-        }
-
-        .settings-action .btn {
-            min-width: 220px;
-            border-radius: .95rem;
-            padding: .8rem 1.15rem;
-            font-weight: 700;
-        }
-
-        .settings-summary {
-            margin-top: 1.25rem;
-            padding: 1rem 1.1rem;
-            border-radius: 1rem;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-
-        .settings-summary h6 {
-            color: #0f172a;
-        }
-
-        .settings-summary ul {
-            margin-bottom: 0;
-            padding-left: 1.1rem;
-            color: #475569;
-        }
-
-        .settings-system-list dt {
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        .settings-system-list dd {
-            color: #0f172a;
-        }
-
-        .settings-location {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: .75rem;
-        }
-
-        .settings-location .btn {
-            border-radius: .85rem;
-        }
-
-        @media (max-width: 767.98px) {
-            .settings-action {
-                justify-content: stretch;
-            }
-
-            .settings-action .btn {
-                width: 100%;
-                min-width: 0;
-            }
-        }
-
-        /* =========================================================
-           MOBILE-ONLY ADDITIONS BELOW.
-           Nothing above this line was changed — desktop (≥992px)
-           renders exactly as before. Everything in this block is
-           scoped to max-width: 991.98px, so desktop is untouched.
-           ========================================================= */
-        @media (max-width: 991.98px) {
-
-            /* Stop any horizontal overflow at the root of the page,
-               which is what actually causes fields like No. Telepon /
-               Email to look "cut off" at the edge of the screen. */
-            html, body {
-                overflow-x: hidden;
-            }
-
-            .settings-shell {
-                max-width: 100vw;
-                overflow-x: hidden;
-                box-sizing: border-box;
-                padding-left: .75rem;
-                padding-right: .75rem;
-            }
-
-            /* Neutralize Bootstrap's .row negative margins, which is
-               the usual real cause of mobile overflow/cut-off when a
-               row isn't wrapped by a matching .container. */
-            .settings-shell .row {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-            }
-
-            /* Force every grid column inside the settings page to a
-               single full-width stacked column on mobile — this
-               covers Nama/Alamat/No. Telepon/Email, the attendance
-               fields, and the Latitude/Longitude/Radius trio. */
-            .settings-shell .row > [class*="col-"] {
-                width: 100% !important;
-                max-width: 100% !important;
-                flex: 0 0 100% !important;
-                padding-left: .5rem !important;
-                padding-right: .5rem !important;
-                box-sizing: border-box !important;
-            }
-
-            /* The right-hand stack (Pengaturan Absensi + Info Sistem)
-               keeps its natural source order — Info Sistem stays
-               below Pengaturan Absensi automatically. */
-            .row.g-4.align-items-start > .col-xl-6 {
-                width: 100% !important;
-                max-width: 100% !important;
-                flex: 0 0 100% !important;
-            }
-            .row.g-4.align-items-start > .col-xl-6.d-flex {
-                display: flex !important;
-                flex-direction: column !important;
-            }
-
-            .settings-hero__inner {
-                padding: 1.25rem;
-            }
-
-            .settings-card {
-                margin-bottom: 0;
-            }
-
-            .settings-card .card-body {
-                padding: 1rem;
-            }
-
-            .settings-card .card-header {
-                padding: .9rem 1rem;
-            }
-
-            .settings-action {
-                justify-content: stretch;
-            }
-
-            .settings-action .btn {
-                width: 100%;
-                min-width: 0;
-            }
-
-            /* h-100 + overflow:hidden (from the original desktop CSS)
-               can clip a card's content once the layout is forced to
-               stack on mobile. Neutralize just the height constraint
-               on small screens so every field inside the card
-               (including Email Sekolah, Tahun Ajaran, and the submit
-               button) is always fully visible. */
-            .settings-card.h-100 {
-                height: auto !important;
-            }
-            .settings-card {
-                overflow: visible !important;
-            }
-            .settings-card .card-header {
-                border-radius: 1.25rem 1.25rem 0 0;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .settings-hero__title {
-                font-size: 1.4rem;
-            }
-
-            .settings-hero__text {
-                font-size: .92rem;
-            }
-
-            .settings-chip {
-                font-size: .78rem;
-                padding: .55rem .75rem;
-            }
-
-            .settings-card__title {
-                font-size: .98rem;
-            }
-        }
-
-        /* Prevent any input/select/textarea inside the settings page
-           from ever exceeding its container width on small screens
-           (fixes fields getting visually cut off on mobile). */
-        @media (max-width: 991.98px) {
-            .settings-shell input,
-            .settings-shell select,
-            .settings-shell textarea {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-            }
-
-            .settings-shell .input-group {
-                width: 100%;
-                flex-wrap: nowrap;
-            }
-
-            .settings-shell .input-group > .form-control {
-                min-width: 0;
-            }
+        .settings-pane.active {
+            display: block;
         }
     </style>
 @endpush
 
 @section('content')
-<div class="settings-shell">
-    <div class="settings-hero">
-        <div class="settings-hero__inner row g-4 align-items-center">
-            <div class="col-xl-8">
-                <span class="settings-hero__tag"><i class="bi bi-gear-fill"></i> Admin Panel</span>
-                <h1 class="settings-hero__title">Pengaturan Sistem</h1>
-                <p class="settings-hero__text">
-                    Atur informasi sekolah, parameter absensi, dan detail sistem pada satu tempat dengan tampilan yang lebih terstruktur, mudah dibaca, dan nyaman digunakan.
-                </p>
-                <div class="settings-hero__chips">
-                    <div class="settings-chip"><i class="bi bi-building"></i> Informasi Sekolah</div>
-                    <div class="settings-chip"><i class="bi bi-clock-history"></i> Pengaturan Absensi</div>
-                    <div class="settings-chip"><i class="bi bi-cpu"></i> Info Sistem</div>
-                </div>
+<div class="space-y-6">
+
+    {{-- Header Section --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Pengaturan Sistem</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Kelola informasi sekolah, parameter absensi presensi, integrasi RFID kartu, dan informasi server.
+            </p>
+        </div>
+        <div class="shrink-0">
+            <span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200">
+                <i class="bi bi-calendar-event text-brand-600"></i> {{ now()->translatedFormat('d F Y') }}
+            </span>
+        </div>
+    </div>
+
+    {{-- Tabs Navigation Bar --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm">
+        <div class="flex items-center gap-1 overflow-x-auto">
+            <button type="button" id="tab-btn-school" onclick="selectTab('school-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-bold transition whitespace-nowrap bg-brand-600 text-white shadow-sm">
+                <i class="bi bi-building"></i> Informasi Sekolah
+            </button>
+            <button type="button" id="tab-btn-attendance" onclick="selectTab('attendance-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
+                <i class="bi bi-clock-history"></i> Pengaturan Absensi
+            </button>
+            <button type="button" id="tab-btn-kartu" onclick="selectTab('kartu-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
+                <i class="bi bi-credit-card-2-front"></i> Integrasi RFID Kartu
+            </button>
+            <button type="button" id="tab-btn-system" onclick="selectTab('system-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
+                <i class="bi bi-cpu"></i> Info Sistem
+            </button>
+        </div>
+    </div>
+
+    {{-- ========================================== --}}
+    {{-- TAB 1: INFORMASI SEKOLAH --}}
+    {{-- ========================================== --}}
+    <div id="school-pane" class="settings-pane active">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="bi bi-building text-brand-600"></i> Identitas Utama Sekolah
+                </h2>
+                <p class="text-xs text-slate-500">Data resmi sekolah yang digunakan pada dokumen & laporan</p>
             </div>
-            <div class="col-xl-4 d-none d-xl-block">
-                <div class="rounded-4 bg-white bg-opacity-10 border border-white border-opacity-10 p-4 text-white shadow-sm">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center justify-content-center rounded-4 bg-white bg-opacity-15" style="width:56px;height:56px;">
-                            <i class="bi bi-sliders2-vertical fs-3"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold">Panel pengelolaan</div>
-                            <div class="small" style="opacity:.82">Semua pengaturan inti ada di sini</div>
+
+            <div class="p-5 sm:p-6">
+                <form method="POST" action="{{ route('settings.school') }}" class="space-y-5">
+                    @csrf
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <div class="md:col-span-8">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Nama Sekolah <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="school_name" value="{{ old('school_name', $settings['school_name']) }}"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('school_name') border-red-500 @enderror"
+                                placeholder="Contoh: SMA Islam As-Syafi'iyah" required>
+                            @error('school_name')
+                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">
-                                <i class="bi bi-calendar-week me-1 text-primary"></i>
-                                Hari Operasional Sekolah
+                        <div class="md:col-span-4">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Tahun Ajaran
+                            </label>
+                            <input type="text" name="academic_year" value="{{ old('academic_year', $settings['academic_year']) }}"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                placeholder="Contoh: 2025/2026">
+                        </div>
+
+                        {{-- Operational Days --}}
+                        <div class="md:col-span-12">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                <i class="bi bi-calendar-week text-brand-600 me-1"></i> Hari Operasional Sekolah
                             </label>
                             @php $opDays = old('school_operational_days', $settings['school_operational_days'] ?? '5_days'); @endphp
-                            <div class="d-flex gap-3 flex-wrap mt-1">
-                                <div class="form-check form-check-inline border rounded-3 px-3 py-2 flex-fill {{ $opDays === '5_days' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary-subtle' }}" style="cursor:pointer" onclick="document.getElementById('op5').click()">
-                                    <input class="form-check-input" type="radio" name="school_operational_days" id="op5" value="5_days" {{ $opDays === '5_days' ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-semibold" for="op5" style="cursor:pointer">
-                                        <i class="bi bi-calendar5 me-1 text-primary"></i>
-                                        5 Hari Sekolah
-                                        <small class="d-block text-muted fw-normal">Senin — Jumat &nbsp;|&nbsp; Libur: Sabtu &amp; Minggu</small>
-                                    </label>
-                                </div>
-                                <div class="form-check form-check-inline border rounded-3 px-3 py-2 flex-fill {{ $opDays === '6_days' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary-subtle' }}" style="cursor:pointer" onclick="document.getElementById('op6').click()">
-                                    <input class="form-check-input" type="radio" name="school_operational_days" id="op6" value="6_days" {{ $opDays === '6_days' ? 'checked' : '' }}>
-                                    <label class="form-check-label fw-semibold" for="op6" style="cursor:pointer">
-                                        <i class="bi bi-calendar6 me-1 text-success"></i>
-                                        6 Hari Sekolah
-                                        <small class="d-block text-muted fw-normal">Senin — Sabtu &nbsp;|&nbsp; Libur: Hanya Minggu</small>
-                                    </label>
-                                </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label id="label-op5" onclick="selectOpDays('5_days')"
+                                    class="flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition {{ $opDays === '5_days' ? 'border-brand-600 bg-brand-50/40' : 'border-slate-200 bg-white hover:border-slate-300' }}">
+                                    <input type="radio" name="school_operational_days" id="op5" value="5_days" {{ $opDays === '5_days' ? 'checked' : '' }} class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                                    <div>
+                                        <span class="block text-sm font-bold text-slate-900">
+                                            <i class="bi bi-calendar5 text-brand-600 me-1"></i> 5 Hari Sekolah
+                                        </span>
+                                        <span class="block text-xs text-slate-500 mt-0.5">Senin — Jumat &nbsp;|&nbsp; Libur: Sabtu &amp; Minggu</span>
+                                    </div>
+                                </label>
+
+                                <label id="label-op6" onclick="selectOpDays('6_days')"
+                                    class="flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition {{ $opDays === '6_days' ? 'border-brand-600 bg-brand-50/40' : 'border-slate-200 bg-white hover:border-slate-300' }}">
+                                    <input type="radio" name="school_operational_days" id="op6" value="6_days" {{ $opDays === '6_days' ? 'checked' : '' }} class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                                    <div>
+                                        <span class="block text-sm font-bold text-slate-900">
+                                            <i class="bi bi-calendar6 text-emerald-600 me-1"></i> 6 Hari Sekolah
+                                        </span>
+                                        <span class="block text-xs text-slate-500 mt-0.5">Senin — Sabtu &nbsp;|&nbsp; Libur: Hanya Minggu</span>
+                                    </div>
+                                </label>
                             </div>
-                            <div class="form-text mt-1">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Pengaturan ini menentukan hari pembuatan jadwal dan validasi presensi sistem.
-                            </div>
+                            <p class="text-xs text-slate-500 mt-1.5">
+                                <i class="bi bi-info-circle text-brand-500 me-1"></i> Digunakan oleh generator jadwal dan validasi hari efektif sekolah.
+                            </p>
+                        </div>
+
+                        <div class="md:col-span-12">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Alamat Lengkap Sekolah</label>
+                            <textarea name="school_address" rows="2"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                placeholder="Alamat lengkap sekolah...">{{ old('school_address', $settings['school_address']) }}</textarea>
+                        </div>
+
+                        <div class="md:col-span-6">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">No. Telepon / Fax</label>
+                            <input type="text" name="school_phone" value="{{ old('school_phone', $settings['school_phone']) }}"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                placeholder="(021) xxxxxxx">
+                        </div>
+
+                        <div class="md:col-span-6">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Resmi Sekolah</label>
+                            <input type="email" name="school_email" value="{{ old('school_email', $settings['school_email']) }}"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                placeholder="info@sekolah.sch.id">
                         </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end pt-4 border-t border-slate-200">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-700 transition">
+                            <i class="bi bi-save"></i> Simpan Informasi Sekolah
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-<<<<<<< HEAD
-    {{-- Pengaturan Absensi & Info Sistem --}}
-    <div class="col-lg-6">
-        
-        {{-- Pengaturan Absensi --}}
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white fw-bold py-3">
-                <i class="bi bi-clock me-2 text-primary"></i>Pengaturan Absensi
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('settings.attendance') }}">
-                    @csrf
-
-                    {{-- 1. Pengaturan Absensi Siswa --}}
-                    <div class="rounded-3 p-3 bg-light border mb-4">
-                        <h6 class="fw-bold text-primary mb-3">
-                            <i class="bi bi-people me-2"></i>Pengaturan Absensi Siswa
-                        </h6>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Batas Jam Terlambat (Pagi)</label>
-                                <input type="time" name="late_limit" class="form-control @error('late_limit') is-invalid @enderror"
-                                    value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}">
+    {{-- ========================================== --}}
+    {{-- TAB 2: PENGATURAN ABSENSI --}}
+    {{-- ========================================== --}}
+    <div id="attendance-pane" class="settings-pane">
+        <form method="POST" action="{{ route('settings.attendance') }}" class="space-y-6">
+            @csrf
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {{-- LEFT: SISWA & GURU --}}
+                <div class="space-y-6">
+                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2 text-sm font-bold text-brand-600 border-b border-slate-100 pb-3">
+                            <i class="bi bi-people-fill text-base"></i> 1. Presensi Siswa
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat (Pagi)</label>
+                                <input type="time" name="late_limit" value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit') border-red-500 @enderror">
                                 @error('late_limit')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
-                                <div class="form-text">Siswa pagi masuk setelah waktu ini dianggap terlambat.</div>
+                                <p class="text-xs text-slate-400 mt-1">Siswa pagi terlambat jika absen lewat jam ini.</p>
                             </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Batas Jam Terlambat (Siang)</label>
-                                <input type="time" name="late_limit_siang" class="form-control @error('late_limit_siang') is-invalid @enderror"
-                                    value="{{ old('late_limit_siang', substr($settings['late_limit_siang'], 0, 5)) }}">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat (Siang)</label>
+                                <input type="time" name="late_limit_siang" value="{{ old('late_limit_siang', substr($settings['late_limit_siang'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit_siang') border-red-500 @enderror">
                                 @error('late_limit_siang')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
-                                <div class="form-text">Siswa siang masuk setelah waktu ini dianggap terlambat.</div>
+                                <p class="text-xs text-slate-400 mt-1">Siswa siang terlambat jika absen lewat jam ini.</p>
                             </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Min. Kehadiran Siswa (%)</label>
-                                <div class="input-group">
-                                    <input type="number" name="min_attendance" class="form-control @error('min_attendance') is-invalid @enderror"
-                                        value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100">
-                                </div>
-                                @error('min_attendance')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">Batas persentase peringatan kehadiran siswa.</div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Minimal Kehadiran Siswa (%)</label>
+                            <div class="flex">
+                                <input type="number" name="min_attendance" value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100"
+                                    class="w-full rounded-l-lg border border-r-0 border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('min_attendance') border-red-500 @enderror">
+                                <span class="inline-flex items-center px-3.5 rounded-r-lg border border-slate-300 bg-slate-100 text-slate-600 font-bold text-sm">%</span>
                             </div>
+                            @error('min_attendance')
+                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                            @enderror
+                            <p class="text-xs text-slate-400 mt-1">Batas minimal persentase kehadiran.</p>
                         </div>
                     </div>
 
-                    {{-- 2. Pengaturan Absensi Guru --}}
-                    <div class="rounded-3 p-3 bg-light border mb-4">
-                        <h6 class="fw-bold text-success mb-3">
-                            <i class="bi bi-person-badge me-2"></i>Pengaturan Absensi Guru (Masuk & Pulang)
-                        </h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Batas Jam Terlambat Guru</label>
-                                <input type="time" name="teacher_late_limit" class="form-control @error('teacher_late_limit') is-invalid @enderror"
-                                    value="{{ old('teacher_late_limit', substr($settings['teacher_late_limit'], 0, 5)) }}">
+                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2 text-sm font-bold text-emerald-600 border-b border-slate-100 pb-3">
+                            <i class="bi bi-person-badge-fill text-base"></i> 2. Presensi Guru
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat Guru</label>
+                                <input type="time" name="teacher_late_limit" value="{{ old('teacher_late_limit', substr($settings['teacher_late_limit'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_late_limit') border-red-500 @enderror">
                                 @error('teacher_late_limit')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
-                                <div class="form-text">Guru masuk setelah waktu ini dianggap terlambat.</div>
+                                <p class="text-xs text-slate-400 mt-1">Guru terlambat jika absen masuk lewat jam ini.</p>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Jam Mulai Absen Pulang Guru</label>
-                                <input type="time" name="teacher_checkout_start" class="form-control @error('teacher_checkout_start') is-invalid @enderror"
-                                    value="{{ old('teacher_checkout_start', substr($settings['teacher_checkout_start'], 0, 5)) }}">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Jam Mulai Absen Pulang</label>
+                                <input type="time" name="teacher_checkout_start" value="{{ old('teacher_checkout_start', substr($settings['teacher_checkout_start'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_checkout_start') border-red-500 @enderror">
                                 @error('teacher_checkout_start')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                 @enderror
-                                <div class="form-text">Guru dapat melakukan absen pulang mulai jam ini.</div>
+                                <p class="text-xs text-slate-400 mt-1">Absen pulang guru diizinkan mulai jam ini.</p>
                             </div>
                         </div>
-                    </div>
-
-                    {{-- 3. Pengaturan Geofence GPS & Deteksi Wajah --}}
-                    <div class="rounded-3 p-3 bg-light border mb-3">
-                        <h6 class="fw-bold text-dark mb-3">
-                            <i class="bi bi-geo-alt me-2"></i>Pengaturan Geofence GPS & Deteksi Wajah
-                        </h6>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Latitude</label>
-                                <input type="number" step="any" id="geofence_lat" name="geofence_lat" class="form-control" 
-                                    value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Longitude</label>
-                                <input type="number" step="any" id="geofence_lng" name="geofence_lng" class="form-control" 
-                                    value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Radius Sekolah (Meter)</label>
-                                <input type="number" name="geofence_radius" class="form-control" 
-                                    value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000" required>
-                            </div>
-                            
-                            <div class="col-12 mt-2">
-                                <button type="button" id="btnGetLocation" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-geo-alt"></i> Ambil Lokasi Saat Ini
-                                </button>
-                                <span id="locationStatus" class="ms-2 small text-muted"></span>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Min. Deteksi Wajah</label>
-                                <input type="number" step="0.01" name="face_detection_min" class="form-control" 
-                                    value="{{ old('face_detection_min', $settings['face_detection_min']) }}" required>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Min. Face Match</label>
-                                <input type="number" step="0.01" name="face_match_min" class="form-control" 
-                                    value="{{ old('face_match_min', $settings['face_match_min']) }}" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info mt-4 mb-0">
-                        <h6 class="alert-heading fw-bold mb-1">
-                            <i class="bi bi-info-circle me-1"></i> Pengaturan Aktif:
-                        </h6>
-                        <ul class="mb-0 small ps-3">
-                            <li>Status terlambat siswa: Pagi > <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong> | Siang > <strong>{{ substr($settings['late_limit_siang'], 0, 5) }}</strong></li>
-                            <li>Batas kehadiran minimal: <strong>{{ $settings['min_attendance'] }}%</strong></li>
-                            <li>Geofence: <strong>{{ $settings['geofence_lat'] }}, {{ $settings['geofence_lng'] }}</strong> (Radius: <strong>{{ $settings['geofence_radius'] }}m</strong>)</li>
-                        </ul>
-                    </div>
-
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>Simpan Pengaturan Absensi
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- Info Sistem --}}
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white fw-bold py-3">
-                <i class="bi bi-cpu me-2 text-primary"></i>Info Sistem
-=======
-    <div class="row g-4 align-items-start">
-        <div class="col-xl-6">
-            <div class="card settings-card h-100">
-                <div class="card-header">
-                    <div class="settings-card__head">
-                        <div class="settings-card__title"><i class="bi bi-building text-primary"></i>Informasi Sekolah</div>
-                        <div class="settings-card__subtitle">Data dasar sekolah yang tampil di sistem</div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ route('settings.school') }}">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="settings-label">Nama Sekolah <span class="text-danger">*</span></label>
-                                <input type="text" name="school_name" class="form-control settings-control @error('school_name') is-invalid @enderror"
-                                    value="{{ old('school_name', $settings['school_name']) }}" required>
-                                @error('school_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
 
-                            <div class="col-12">
-                                <label class="settings-label">Alamat Sekolah</label>
-                                <textarea name="school_address" class="form-control settings-control" rows="2"
-                                    placeholder="Alamat lengkap sekolah">{{ old('school_address', $settings['school_address']) }}</textarea>
+                {{-- RIGHT: GEOFENCE & FACE DETECTION --}}
+                <div class="space-y-6">
+                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2 text-sm font-bold text-rose-600 border-b border-slate-100 pb-3">
+                            <i class="bi bi-geo-alt-fill text-base"></i> 3. Validasi Geofence GPS
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Latitude</label>
+                                <input type="number" step="any" id="geofence_lat" name="geofence_lat" value="{{ old('geofence_lat', $settings['geofence_lat']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" required>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="settings-label">No. Telepon</label>
-                                <input type="text" name="school_phone" class="form-control settings-control"
-                                    value="{{ old('school_phone', $settings['school_phone']) }}" placeholder="(021) xxxxxxx">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Longitude</label>
+                                <input type="number" step="any" id="geofence_lng" name="geofence_lng" value="{{ old('geofence_lng', $settings['geofence_lng']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" required>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="settings-label">Email Sekolah</label>
-                                <input type="email" name="school_email" class="form-control settings-control"
-                                    value="{{ old('school_email', $settings['school_email']) }}" placeholder="info@sekolah.sch.id">
-                            </div>
-
-                            <div class="col-12">
-                                <label class="settings-label">Tahun Ajaran</label>
-                                <input type="text" name="academic_year" class="form-control settings-control"
-                                    value="{{ old('academic_year', $settings['academic_year']) }}" placeholder="2025/2026">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Radius (Meter)</label>
+                                <input type="number" name="geofence_radius" value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" required>
                             </div>
                         </div>
-
-                        <div class="settings-action">
-                            <button type="submit" class="btn btn-primary shadow-sm">
-                                <i class="bi bi-save me-2"></i>Simpan Informasi Sekolah
+                        <div>
+                            <button type="button" id="btnGetLocation" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
+                                <i class="bi bi-crosshair text-brand-600"></i> Ambil Lokasi GPS Saat Ini
                             </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6 d-flex flex-column gap-4">
-            <div class="card settings-card">
-                <div class="card-header">
-                    <div class="settings-card__head">
-                        <div class="settings-card__title"><i class="bi bi-clock text-primary"></i>Pengaturan Absensi</div>
-                        <div class="settings-card__subtitle">Parameter presensi dan deteksi wajah</div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ route('settings.attendance') }}">
-                        @csrf
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="settings-label">Batas Jam Terlambat</label>
-                                <input type="time" name="late_limit" class="form-control settings-control @error('late_limit') is-invalid @enderror"
-                                    value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}">
-                                @error('late_limit')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="settings-help">Siswa masuk setelah waktu ini dianggap terlambat.</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="settings-label">Min. Kehadiran (%)</label>
-                                <div class="input-group">
-                                    <input type="number" name="min_attendance" class="form-control settings-control @error('min_attendance') is-invalid @enderror"
-                                        value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                @error('min_attendance')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="settings-help">Batas persentase peringatan kehadiran.</div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="settings-label">Latitude</label>
-                                <input type="number" step="any" id="geofence_lat" name="geofence_lat" class="form-control settings-control"
-                                    value="{{ old('geofence_lat', $settings['geofence_lat']) }}" required>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="settings-label">Longitude</label>
-                                <input type="number" step="any" id="geofence_lng" name="geofence_lng" class="form-control settings-control"
-                                    value="{{ old('geofence_lng', $settings['geofence_lng']) }}" required>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="settings-label">Radius (m)</label>
-                                <input type="number" name="geofence_radius" class="form-control settings-control"
-                                    value="{{ old('geofence_radius', $settings['geofence_radius']) }}" min="10" max="5000" required>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="settings-location">
-                                    <button type="button" id="btnGetLocation" class="btn btn-outline-secondary btn-sm">
-                                        <i class="bi bi-geo-alt"></i> Ambil Lokasi Saat Ini
-                                    </button>
-                                    <span id="locationStatus" class="small text-muted"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="settings-label">Min. Deteksi Wajah</label>
-                                <input type="number" step="0.01" name="face_detection_min" class="form-control settings-control"
-                                    value="{{ old('face_detection_min', $settings['face_detection_min']) }}" required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="settings-label">Min. Face Match</label>
-                                <input type="number" step="0.01" name="face_match_min" class="form-control settings-control"
-                                    value="{{ old('face_match_min', $settings['face_match_min']) }}" required>
-                            </div>
-                        </div>
-
-                        <div class="settings-summary">
-                            <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-1"></i> Pengaturan Aktif:</h6>
-                            <ul class="small ps-3">
-                                <li>Status terlambat: setelah jam <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong></li>
-                                <li>Batas kehadiran minimal: <strong>{{ $settings['min_attendance'] }}%</strong></li>
-                                <li>Geofence: <strong>{{ $settings['geofence_lat'] }}, {{ $settings['geofence_lng'] }}</strong> (Radius: <strong>{{ $settings['geofence_radius'] }}m</strong>)</li>
-                            </ul>
-                        </div>
-
-                        <div class="settings-action">
-                            <button type="submit" class="btn btn-primary shadow-sm">
-                                <i class="bi bi-save me-2"></i>Simpan Pengaturan Absensi
-                            </button>
-                        </div>
-                    </form>
-                </div>
->>>>>>> 8c58f5595232a93d2bee448ed64d597f8318962d
-            </div>
-
-            <div class="card settings-card">
-                <div class="card-header">
-                    <div class="settings-card__head">
-                        <div class="settings-card__title"><i class="bi bi-cpu text-primary"></i>Info Sistem</div>
-                        <div class="settings-card__subtitle">Ringkasan lingkungan aplikasi</div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0 settings-system-list">
-                        <dt class="col-sm-5 small">Versi Laravel</dt>
-                        <dd class="col-sm-7 fw-semibold mb-2">{{ app()->version() }}</dd>
-
-                        <dt class="col-sm-5 small">Versi PHP</dt>
-                        <dd class="col-sm-7 fw-semibold mb-2">{{ PHP_VERSION }}</dd>
-
-                        <dt class="col-sm-5 small">Waktu Server</dt>
-                        <dd class="col-sm-7 fw-semibold mb-2">{{ now()->translatedFormat('d F Y H:i') }}</dd>
-
-                        <dt class="col-sm-5 small">Zona Waktu</dt>
-                        <dd class="col-sm-7 fw-semibold mb-0">{{ config('app.timezone') }}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-<<<<<<< HEAD
-
-        {{-- Integrasi Absensi Kartu RFID (Riansa Kartu) --}}
-        <div class="card shadow-sm border-0 mb-4" id="kartu-rfid-section">
-            <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-credit-card-2-front me-2 text-warning"></i>Integrasi Absensi Kartu RFID (Riansa Kartu)</span>
-                <span class="badge {{ $settings['kartu_enabled'] ? 'bg-success' : 'bg-secondary' }}">
-                    {{ $settings['kartu_enabled'] ? 'Aktif' : 'Nonaktif' }}
-                </span>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('settings.kartu') }}">
-                    @csrf
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" role="switch" id="kartu_enabled" name="kartu_enabled" value="1" {{ $settings['kartu_enabled'] ? 'checked' : '' }}>
-                        <label class="form-check-label fw-bold" for="kartu_enabled">Aktifkan Integrasi Mesin Tap Kartu</label>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">API Key Riansa Kartu</label>
-                        <input type="text" name="kartu_api_key" class="form-control"
-                            value="{{ old('kartu_api_key', $settings['kartu_api_key']) }}" placeholder="sk_live_xxxxxxxx...">
-                        <div class="form-text">Dapatkan API Key dari dashboard Riansa Kartu (<a href="https://riansa.top/kartu/app/" target="_blank">riansa.top/kartu/app</a>).</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Webhook Secret</label>
-                        <input type="text" name="kartu_webhook_secret" class="form-control"
-                            value="{{ old('kartu_webhook_secret', $settings['kartu_webhook_secret']) }}" placeholder="Isi webhook secret dari Riansa Kartu">
-                        <div class="form-text">Digunakan untuk verifikasi keaslian pengiriman webhook.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Alamat Webhook LMS (Masukkan ke Dashboard Riansa Kartu)</label>
-                        <div class="input-group">
-                            <input type="text" id="webhook_url_input" class="form-control bg-light" value="{{ $settings['webhook_url'] }}" readonly>
-                            <button type="button" class="btn btn-outline-secondary" onclick="copyWebhookUrl()">
-                                <i class="bi bi-clipboard me-1"></i>Salin
-                            </button>
+                            <span id="locationStatus" class="ml-2 text-xs text-slate-500 font-medium"></span>
                         </div>
                     </div>
 
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-dark">
-                            <i class="bi bi-save me-2"></i>Simpan Konfigurasi Kartu
-                        </button>
+                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2 text-sm font-bold text-indigo-600 border-b border-slate-100 pb-3">
+                            <i class="bi bi-person-bounding-box text-base"></i> 4. Deteksi Wajah AI
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Min. Deteksi Wajah</label>
+                                <input type="number" step="0.01" name="face_detection_min" value="{{ old('face_detection_min', $settings['face_detection_min']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" required>
+                                <p class="text-xs text-slate-400 mt-1">Deteksi wajah (0.1 - 1.0).</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Min. Face Match</label>
+                                <input type="number" step="0.01" name="face_match_min" value="{{ old('face_match_min', $settings['face_match_min']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition" required>
+                                <p class="text-xs text-slate-400 mt-1">Matching kemiripan wajah.</p>
+                            </div>
+                        </div>
                     </div>
-                </form>
-
-                <hr class="my-4">
-
-                <div class="fw-bold mb-2 text-dark"><i class="bi bi-lightning-charge me-1 text-warning"></i> Aksi Sinkronisasi Manual:</div>
-                <div class="d-flex gap-2 flex-wrap mb-4">
-                    <form method="POST" action="{{ route('settings.kartu.sync-members') }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Kirim seluruh daftar siswa ke Riansa Kartu?')">
-                            <i class="bi bi-cloud-upload me-1"></i>Sinkronkan Daftar Siswa
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('settings.kartu.pull-attendance') }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-success btn-sm">
-                            <i class="bi bi-cloud-download me-1"></i>Tarik Absensi Sekarang (Pull Sync)
-                        </button>
-                    </form>
                 </div>
 
-                <div class="bg-light border rounded-3 p-3 small">
-                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-book me-1"></i>Cara Menyambungkan:</h6>
-                    <ol class="mb-0 ps-3">
-                        <li>Salin <strong>API key</strong> dan <strong>Webhook secret</strong> dari menu Pengaturan di <a href="https://riansa.top/kartu/app/" target="_blank">riansa.top/kartu/app/</a>.</li>
-                        <li>Paste ke form di atas lalu klik <strong>Simpan Konfigurasi Kartu</strong>.</li>
-                        <li>Salin <strong>Alamat Webhook LMS</strong> di atas, lalu paste ke kolom <strong>Alamat Webhook</strong> di dashboard Riansa Kartu dan klik <strong>Simpan</strong>.</li>
-                        <li>Klik <strong>Sinkronkan Daftar Siswa</strong> di atas agar mesin tap mengenali NIS dan nama siswa.</li>
-                    </ol>
+                {{-- SUMMARY --}}
+                <div class="lg:col-span-2 rounded-xl border border-brand-200 bg-brand-50/50 p-4">
+                    <div class="flex items-center gap-2 text-brand-800 text-xs font-bold mb-1">
+                        <i class="bi bi-info-circle-fill"></i> Ringkasan Parameter Absensi Aktif:
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-700 mt-1.5">
+                        <div>• Terlambat Siswa Pagi: <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong> | Siang: <strong>{{ substr($settings['late_limit_siang'], 0, 5) }}</strong></div>
+                        <div>• Terlambat Guru: <strong>{{ substr($settings['teacher_late_limit'], 0, 5) }}</strong> | Pulang: <strong>{{ substr($settings['teacher_checkout_start'], 0, 5) }}</strong></div>
+                        <div>• Geofence Radius: <strong>{{ $settings['geofence_radius'] }} Meter</strong> (Lat: {{ $settings['geofence_lat'] }}, Lng: {{ $settings['geofence_lng'] }})</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-=======
+            <div class="flex justify-end pt-4 border-t border-slate-200">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-700 transition">
+                    <i class="bi bi-save"></i> Simpan Pengaturan Absensi
+                </button>
+            </div>
+        </form>
     </div>
+
+    {{-- ========================================== --}}
+    {{-- TAB 3: INTEGRASI RFID KARTU --}}
+    {{-- ========================================== --}}
+    <div id="kartu-pane" class="settings-pane">
+        <div class="space-y-6">
+            
+            {{-- Main Form Card --}}
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i class="bi bi-credit-card-2-front text-amber-500"></i> Integrasi Mesin Tap Kartu RFID (Riansa Kartu)
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Menghubungkan mesin presensi tap kartu fisik Riansa ke LMS</p>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0 {{ $settings['kartu_enabled'] ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
+                        {{ $settings['kartu_enabled'] ? '● Integrasi Aktif' : '○ Nonaktif' }}
+                    </span>
+                </div>
+
+                <div class="p-5 sm:p-6">
+                    <form method="POST" action="{{ route('settings.kartu') }}" class="space-y-5">
+                        @csrf
+                        
+                        {{-- Toggle --}}
+                        <div class="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <div>
+                                <span class="block text-sm font-bold text-slate-900">Aktifkan Integrasi Mesin Tap Kartu</span>
+                                <span class="text-xs text-slate-500">Terima presensi otomatis dari mesin tap RFID secara real-time</span>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" name="kartu_enabled" id="kartu_enabled_checkbox" value="1" {{ $settings['kartu_enabled'] ? 'checked' : '' }}
+                                    class="h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer">
+                            </div>
+                        </div>
+
+                        {{-- API Key & Webhook Secret --}}
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">API Key Riansa Kartu</label>
+                                <input type="text" name="kartu_api_key" value="{{ old('kartu_api_key', $settings['kartu_api_key']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                    placeholder="sk_live_xxxxxxxx...">
+                                <p class="text-xs text-slate-400 mt-1">Dapatkan API Key dari dashboard Riansa Kartu (<a href="https://riansa.top/kartu/app/" target="_blank" class="text-brand-600 underline">riansa.top/kartu/app</a>).</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Webhook Secret Key</label>
+                                <input type="text" name="kartu_webhook_secret" value="{{ old('kartu_webhook_secret', $settings['kartu_webhook_secret']) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition"
+                                    placeholder="Isi webhook secret dari Riansa Kartu">
+                                <p class="text-xs text-slate-400 mt-1">Digunakan untuk memverifikasi keaslian pengiriman webhook.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Alamat Webhook LMS (Masukkan ke Dashboard Riansa Kartu)</label>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input type="text" id="webhook_url_input" value="{{ $settings['webhook_url'] }}" readonly
+                                        class="w-full rounded-lg border border-slate-300 bg-slate-100 px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-700">
+                                    <button type="button" onclick="copyWebhookUrl()"
+                                        class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-slate-200 hover:bg-slate-300 px-4 py-2 text-xs font-bold text-slate-800 transition shrink-0">
+                                        <i class="bi bi-clipboard"></i> Salin
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4 border-t border-slate-200">
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-800 transition">
+                                <i class="bi bi-save"></i> Simpan Konfigurasi Kartu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Manual Sync Actions Card --}}
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2.5 flex items-center gap-2">
+                    <i class="bi bi-arrow-repeat text-brand-600"></i> Aksi Sinkronisasi Manual
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <form method="POST" action="{{ route('settings.kartu.sync-members') }}">
+                        @csrf
+                        <button type="submit" onclick="return confirm('Kirim seluruh daftar siswa ke Riansa Kartu?')"
+                            class="w-full text-left p-3 rounded-lg border border-brand-200 bg-brand-50/60 hover:bg-brand-100/60 text-brand-700 font-bold text-xs flex items-center justify-between transition">
+                            <span><i class="bi bi-cloud-upload me-1.5"></i> Sinkronkan Daftar Siswa ke Cloud</span>
+                            <i class="bi bi-chevron-right text-xs"></i>
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('settings.kartu.pull-attendance') }}">
+                        @csrf
+                        <button type="submit"
+                            class="w-full text-left p-3 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/60 text-emerald-700 font-bold text-xs flex items-center justify-between transition">
+                            <span><i class="bi bi-cloud-download me-1.5"></i> Tarik Data Absensi (Pull Sync)</span>
+                            <i class="bi bi-chevron-right text-xs"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Instructions Card --}}
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-2">
+                <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <i class="bi bi-book-half text-brand-600"></i> Petunjuk Integrasi:
+                </h4>
+                <ol class="text-xs text-slate-600 space-y-1.5 list-decimal ps-4 leading-relaxed">
+                    <li>Buka dashboard Riansa Kartu di <a href="https://riansa.top/kartu/app/" target="_blank" class="text-brand-600 underline font-semibold">riansa.top/kartu/app</a>.</li>
+                    <li>Salin <strong>API Key</strong> & <strong>Webhook Secret</strong> lalu tempel pada form di atas.</li>
+                    <li>Salin <strong>Alamat Webhook LMS</strong> dan masukkan ke menu Webhook Riansa Kartu.</li>
+                    <li>Klik <strong>Sinkronkan Daftar Siswa</strong> agar ID/NIS siswa dikenal oleh mesin tap.</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ========================================== --}}
+    {{-- TAB 4: INFO SISTEM --}}
+    {{-- ========================================== --}}
+    <div id="system-pane" class="settings-pane">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Server Info --}}
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5">
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="bi bi-cpu text-brand-600"></i> Server & Framework Environment
+                    </h2>
+                </div>
+                <div class="divide-y divide-slate-100 text-xs">
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Framework</span>
+                        <span class="font-bold text-slate-800">Laravel {{ app()->version() }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">PHP Version</span>
+                        <span class="font-bold text-slate-800">{{ PHP_VERSION }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Waktu Server</span>
+                        <span class="font-bold text-slate-800">{{ now()->translatedFormat('d F Y H:i:s') }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Zona Waktu</span>
+                        <span class="font-bold text-slate-800">{{ config('app.timezone') }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">App Environment</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[11px]">{{ app()->environment() }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- DB Info --}}
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5">
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="bi bi-database text-indigo-600"></i> Database & Service Drivers
+                    </h2>
+                </div>
+                <div class="divide-y divide-slate-100 text-xs">
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Database Driver</span>
+                        <span class="font-bold text-slate-800">{{ strtoupper(config('database.default')) }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">DB Host</span>
+                        <span class="font-bold text-slate-800">{{ config('database.connections.' . config('database.default') . '.host', '127.0.0.1') }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">DB Name</span>
+                        <span class="font-bold text-slate-800">{{ config('database.connections.' . config('database.default') . '.database') }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Broadcast Driver</span>
+                        <span class="font-bold text-slate-800">{{ config('broadcasting.default') }}</span>
+                    </div>
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Cache Driver</span>
+                        <span class="font-bold text-slate-800">{{ config('cache.default') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
->>>>>>> 8c58f5595232a93d2bee448ed64d597f8318962d
 @endsection
 
 @push('scripts')
 <script>
+function selectTab(targetPaneId, clickedBtn) {
+    // 1. Hide all tab panes
+    document.querySelectorAll('.settings-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+
+    // 2. Deactivate all buttons
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-600', 'text-white', 'shadow-sm', 'font-bold');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900', 'font-semibold');
+    });
+
+    // 3. Show target pane
+    const targetPane = document.getElementById(targetPaneId);
+    if (targetPane) {
+        targetPane.classList.add('active');
+    }
+
+    // 4. Activate clicked button
+    if (clickedBtn) {
+        clickedBtn.classList.remove('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900', 'font-semibold');
+        clickedBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm', 'font-bold');
+    }
+
+    // 5. Save Hash
+    if (history.pushState) {
+        history.pushState(null, null, '#' + targetPaneId);
+    } else {
+        location.hash = '#' + targetPaneId;
+    }
+}
+
+function selectOpDays(val) {
+    const is5 = val === '5_days';
+    document.getElementById('op5').checked = is5;
+    document.getElementById('op6').checked = !is5;
+
+    const label5 = document.getElementById('label-op5');
+    const label6 = document.getElementById('label-op6');
+
+    if (is5) {
+        label5.className = "flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition border-brand-600 bg-brand-50/40";
+        label6.className = "flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition border-slate-200 bg-white hover:border-slate-300";
+    } else {
+        label6.className = "flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition border-brand-600 bg-brand-50/40";
+        label5.className = "flex items-start gap-3 rounded-lg border-2 p-3.5 cursor-pointer transition border-slate-200 bg-white hover:border-slate-300";
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Hash router
+    const hash = window.location.hash.replace('#', '');
+    const paneMap = {
+        'school-pane': 'tab-btn-school',
+        'attendance-pane': 'tab-btn-attendance',
+        'kartu-pane': 'tab-btn-kartu',
+        'system-pane': 'tab-btn-system'
+    };
+
+    if (hash && paneMap[hash]) {
+        selectTab(hash, document.getElementById(paneMap[hash]));
+    } else {
+        selectTab('school-pane', document.getElementById('tab-btn-school'));
+    }
+
+    // GPS Geolocation Handler
     const btn = document.getElementById('btnGetLocation');
     const status = document.getElementById('locationStatus');
     const latInput = document.getElementById('geofence_lat');
@@ -837,34 +574,30 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btn) {
         btn.addEventListener('click', function() {
             if (!navigator.geolocation) {
-                status.textContent = 'Geolocation tidak didukung oleh browser Anda.';
-                status.className = 'ms-2 small text-danger';
+                status.textContent = 'Geolocation tidak didukung oleh browser.';
+                status.className = 'ml-2 text-xs text-red-500 font-bold';
                 return;
             }
 
             btn.disabled = true;
-            status.textContent = 'Mendapatkan lokasi...';
-            status.className = 'ms-2 small text-muted';
+            status.textContent = 'Mendapatkan lokasi GPS...';
+            status.className = 'ml-2 text-xs text-slate-500 font-medium';
 
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     latInput.value = position.coords.latitude.toFixed(6);
                     lngInput.value = position.coords.longitude.toFixed(6);
                     status.textContent = 'Lokasi berhasil diambil!';
-                    status.className = 'ms-2 small text-success';
+                    status.className = 'ml-2 text-xs text-emerald-600 font-bold';
                     btn.disabled = false;
                 },
                 function(error) {
                     console.error(error);
-                    status.textContent = 'Gagal mendapatkan lokasi: ' + error.message;
-                    status.className = 'ms-2 small text-danger';
+                    status.textContent = 'Gagal mengambil lokasi: ' + error.message;
+                    status.className = 'ml-2 text-xs text-red-500 font-bold';
                     btn.disabled = false;
                 },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         });
     }
@@ -878,7 +611,7 @@ function copyWebhookUrl() {
             alert('URL Webhook berhasil disalin: ' + input.value);
         }).catch(function(err) {
             document.execCommand('copy');
-            alert('URL Webhook disalin!');
+            alert('URL Webhook berhasil disalin!');
         });
     }
 }
