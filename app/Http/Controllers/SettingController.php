@@ -39,9 +39,24 @@ class SettingController extends Controller
             'kartu_last_synced_at' => Setting::get('kartu_last_synced_at', '-'),
             'kartu_last_cursor'    => Setting::get('kartu_last_cursor', '-'),
             'webhook_url'          => preg_replace('/^http:/i', 'https:', url('/api/v1/kartu/webhook')),
+            'feature_subject_attendance' => Setting::isFeatureEnabled('subject_attendance', true),
         ];
 
         return view('settings.index', compact('settings'));
+    }
+
+    public function updateFeatures(Request $request)
+    {
+        $data = $request->validate([
+            'feature_subject_attendance' => 'nullable|boolean',
+        ]);
+
+        Setting::set('feature_subject_attendance', $request->has('feature_subject_attendance') ? '1' : '0', 'features');
+
+        $this->activityLogService->logSettings('features', array_keys($data));
+
+        return redirect()->route('settings.index', ['#features-pane'])
+            ->with('success', 'Pengaturan Fitur Sistem LMS berhasil diperbarui.');
     }
 
     public function updateSchool(Request $request)

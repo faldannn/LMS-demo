@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\StudentAttendanceExport;
 use App\Exports\TeacherAttendanceExport;
 use App\Http\Requests\StoreAttendanceRequest;
-use App\Models\{Attendance, AttendanceDetail, Classes, Student, Teacher, TeacherAttendance, SelfAttendanceLog, Schedule, ClassSubject};
+use App\Models\{Attendance, AttendanceDetail, Classes, Student, Teacher, TeacherAttendance, SelfAttendanceLog, Schedule, ClassSubject, Setting};
 use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -219,6 +219,10 @@ class AttendanceController extends Controller
 
     public function create(Request $request)
     {
+        if (!Setting::isFeatureEnabled('subject_attendance')) {
+            return redirect()->route('dashboard')->with('error', 'Fitur Presensi Mata Pelajaran sedang dinonaktifkan oleh Superadmin.');
+        }
+
         if ($request->has('ref') || $request->has('token')) {
             try {
                 $decrypted = \Illuminate\Support\Facades\Crypt::decryptArray($request->get('ref') ?: $request->get('token'));
@@ -750,6 +754,10 @@ class AttendanceController extends Controller
 
     public function quickSave(Request $request)
     {
+        if (!Setting::isFeatureEnabled('subject_attendance')) {
+            return response()->json(['success' => false, 'message' => 'Fitur Presensi Mata Pelajaran sedang dinonaktifkan oleh Superadmin.'], 403);
+        }
+
         $request->validate([
             'date' => 'required|date',
             'class_id' => 'required|exists:classes,id',
@@ -810,6 +818,10 @@ class AttendanceController extends Controller
 
     public function saveSessionNotes(Request $request)
     {
+        if (!Setting::isFeatureEnabled('subject_attendance')) {
+            return response()->json(['success' => false, 'message' => 'Fitur Presensi Mata Pelajaran sedang dinonaktifkan oleh Superadmin.'], 403);
+        }
+
         $request->validate([
             'date' => 'required|date',
             'class_id' => 'required|exists:classes,id',

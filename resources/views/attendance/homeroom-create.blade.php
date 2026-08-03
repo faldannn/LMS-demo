@@ -65,7 +65,7 @@
                 <div>
                     <h5 class="mb-0 text-slate-800 fw-bold d-flex align-items-center">
                         <i class="bi bi-clipboard-check text-primary me-2" style="font-size: 1.25rem"></i>
-                        Absensi Harian Kelas <span class="text-primary ms-2">{{ $classes->find($classId)?->name }}</span>
+                        Absensi Harian Kelas <span class="text-primary ms-2">{{ $classes->firstWhere('id', $classId)?->name }}</span>
                     </h5>
                     <p class="text-muted small mb-0 mt-0.5">Pilih status presensi siswa. Opsi yang terpilih akan berwarna tebal terang.</p>
                 </div>

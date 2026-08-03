@@ -22,7 +22,7 @@
             </div>
 
             <h4 class="text-xl sm:text-2xl font-black text-slate-900 mb-1 flex flex-wrap items-center gap-2">
-                <span>{{ $classes->find($classId)?->name ?? 'Pilih Kelas' }}</span>
+                <span>{{ $classes->firstWhere('id', $classId)?->name ?? 'Pilih Kelas' }}</span>
                 @if(!empty($selectedSubjectInfo) && !empty($selectedSubjectInfo['subject']))
                     <span class="text-base font-bold text-brand-700 bg-brand-50 px-3 py-0.5 rounded-full border border-brand-200">
                         📚 {{ $selectedSubjectInfo['subject'] }}
@@ -179,7 +179,7 @@
                 <i class="bi bi-calendar-range text-brand-600"></i>
                 Rekapitulasi Presensi Periode: {{ \Carbon\Carbon::parse($startDate)->translatedFormat('l, d M Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->translatedFormat('l, d M Y') }}
             </h6>
-            <p class="text-xs text-brand-700 mb-0 mt-0.5">Menampilkan total akumulasi kehadiran seluruh siswa kelas {{ $classes->find($classId)?->name }} pada periode ini.</p>
+            <p class="text-xs text-brand-700 mb-0 mt-0.5">Menampilkan total akumulasi kehadiran seluruh siswa kelas {{ $classes->firstWhere('id', $classId)?->name }}.</p>
         </div>
         <span class="badge bg-brand-600 text-white px-3 py-1.5 rounded-full text-xs font-bold self-start sm:self-auto">{{ $students->count() }} Siswa</span>
     </div>

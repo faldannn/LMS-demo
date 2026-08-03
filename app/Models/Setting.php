@@ -32,4 +32,17 @@ class Setting extends Model
             ->pluck('value', 'key')
             ->toArray();
     }
+
+    public static function isFeatureEnabled(string $featureKey, bool $default = true): bool
+    {
+        $val = static::get("feature_{$featureKey}", null);
+        if ($val === null) {
+            $val = static::get($featureKey, null);
+        }
+        if ($val === null) {
+            return $default;
+        }
+
+        return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+    }
 }

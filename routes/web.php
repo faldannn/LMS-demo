@@ -138,6 +138,9 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('settings/update-kartu', [SettingController::class, 'updateKartu'])
             ->middleware('throttle:' . config('security.rate_limits.settings', '10,1'))
             ->name('settings.kartu');
+        Route::post('settings/update-features', [SettingController::class, 'updateFeatures'])
+            ->middleware('throttle:' . config('security.rate_limits.settings', '10,1'))
+            ->name('settings.features');
         Route::post('settings/kartu-sync-members', [SettingController::class, 'syncKartuMembers'])
             ->name('settings.kartu.sync-members');
         Route::post('settings/kartu-pull-attendance', [SettingController::class, 'pullKartuAttendance'])

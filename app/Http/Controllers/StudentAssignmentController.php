@@ -109,14 +109,16 @@ class StudentAssignmentController extends Controller
             }
         ]);
 
-        $todayAttendance = \App\Models\Attendance::where('class_id', $classSubject->class_id)
+        $todayAttendance = \App\Models\Attendance::query()
+            ->where('class_id', $classSubject->class_id)
             ->where('class_subject_id', $classSubject->id)
             ->whereDate('date', today())
             ->first();
 
         $studentAttendanceDetail = null;
         if ($todayAttendance) {
-            $studentAttendanceDetail = \App\Models\AttendanceDetail::where('attendance_id', $todayAttendance->id)
+            $studentAttendanceDetail = \App\Models\AttendanceDetail::query()
+                ->where('attendance_id', $todayAttendance->id)
                 ->where('student_id', $student->id)
                 ->first();
         }
@@ -128,6 +130,10 @@ class StudentAssignmentController extends Controller
 
     public function checkInSubject(ClassSubject $classSubject)
     {
+        if (!\App\Models\Setting::isFeatureEnabled('subject_attendance')) {
+            return back()->withErrors(['attendance' => 'Fitur Presensi Mata Pelajaran sedang dinonaktifkan oleh Superadmin.']);
+        }
+
         $student = auth()->user()->student;
 
         if (!$student || $student->class_id !== $classSubject->class_id) {

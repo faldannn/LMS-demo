@@ -39,9 +39,11 @@
     <a href="{{ route('attendance.teacher-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.teacher-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-person-bounding-box @active('attendance.teacher-checkin', 'text-emerald-400')"></i> Presensi Saya (Guru)
     </a>
+    @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Input / Presensi Mapel
     </a>
+    @endif
     @php
         $teacherModel = auth()->user()->teacher;
         $homeroomClasses = $teacherModel ? $teacherModel->homeroomClasses()->get() : collect();
@@ -75,9 +77,11 @@
     <a href="{{ route('attendance.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.index', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('attendance.show', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi(Guru dan Kelas)
     </a>
+    @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Detail Presensi Mapel
     </a>
+    @endif
     <a href="{{ route('elearning.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('elearning.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-laptop @active('elearning.*', 'text-emerald-400')"></i> Portal E-Learning
     </a>

@@ -48,6 +48,10 @@
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-credit-card-2-front"></i> Integrasi RFID Kartu
             </button>
+            <button type="button" id="tab-btn-features" onclick="selectTab('features-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
+                <i class="bi bi-toggle-on text-brand-600"></i> Fitur LMS
+            </button>
             <button type="button" id="tab-btn-system" onclick="selectTab('system-pane', this)"
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-cpu"></i> Info Sistem
@@ -495,6 +499,75 @@
         </div>
     </div>
 
+    {{-- ========================================== --}}
+    {{-- TAB 5: FITUR & MODUL LMS (SUPERADMIN) --}}
+    {{-- ========================================== --}}
+    <div id="features-pane" class="settings-pane">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="bi bi-toggle-on text-brand-600 text-base"></i> Sakelar Fitur & Modul LMS
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Kontrol sakelar On/Off fitur sistem. Fitur yang dinonaktifkan akan disembunyikan untuk semua role (Admin, Guru, Siswa).</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 border border-amber-200 shrink-0">
+                    <i class="bi bi-shield-lock-fill"></i> Khusus Superadmin
+                </span>
+            </div>
+
+            <div class="p-5 sm:p-6">
+                <form method="POST" action="{{ route('settings.features') }}" class="space-y-6">
+                    @csrf
+
+                    {{-- Feature 1: Subject Attendance --}}
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 transition-all hover:border-brand-300 hover:bg-white shadow-2xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-100 text-brand-700 text-sm font-bold">
+                                        <i class="bi bi-journal-check"></i>
+                                    </span>
+                                    <h4 class="text-sm font-extrabold text-slate-900">Fitur Presensi Mata Pelajaran (Subject Attendance)</h4>
+                                    @if($settings['feature_subject_attendance'])
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700">
+                                            <i class="bi bi-check-circle-fill"></i> AKTIF (ON)
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-extrabold text-rose-700">
+                                            <i class="bi bi-x-circle-fill"></i> NONAKTIF (OFF)
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-slate-600 leading-relaxed sm:pl-10">
+                                    Mengaktifkan atau menonaktifkan fitur Presensi Mata Pelajaran di seluruh LMS.
+                                    <br>
+                                    <span class="text-slate-500 font-medium">Jika <strong>OFF</strong>: Seluruh menu, tombol, halaman, dan link presensi mapel di sidebar/dashboard/e-learning akan disembunyikan untuk <strong>Admin, Guru, dan Siswa</strong>.</span>
+                                </p>
+                            </div>
+
+                            <div class="shrink-0 sm:pl-0">
+                                <label class="relative inline-flex cursor-pointer items-center">
+                                    <input type="checkbox" name="feature_subject_attendance" value="1" 
+                                        {{ old('feature_subject_attendance', $settings['feature_subject_attendance']) ? 'checked' : '' }}
+                                        class="peer sr-only" onchange="this.form.submit()">
+                                    <div class="h-6 w-11 rounded-full bg-slate-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-brand-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none shadow-inner"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Save Button --}}
+                    <div class="flex justify-end pt-3 border-t border-slate-100">
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-brand-700">
+                            <i class="bi bi-check-lg"></i> Simpan Pengaturan Fitur
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -556,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'school-pane': 'tab-btn-school',
         'attendance-pane': 'tab-btn-attendance',
         'kartu-pane': 'tab-btn-kartu',
+        'features-pane': 'tab-btn-features',
         'system-pane': 'tab-btn-system'
     };
 
