@@ -6,7 +6,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-primary px-3 py-2 text-xs font-bold rounded-xl shadow-2xs">{{ ucfirst($attendance->session) }}</span>
+                @if(!in_array($attendance->session, ['mapel_1', 'harian'], true))
+                    <span class="badge bg-primary px-3 py-2 text-xs font-bold rounded-xl shadow-2xs">{{ str_replace('_', ' ', ucfirst($attendance->session)) }}</span>
+                @endif
                 <span class="fw-bold text-slate-800" style="font-size:16px">{{ $attendance->date->translatedFormat('l, d F Y') }}</span>
             </div>
             <span class="text-muted" style="font-size:13px">{{ $attendance->class?->name ?? '-' }} · {{ $attendance->teacher?->name ?? '-' }}</span>
@@ -94,19 +96,6 @@
                                 <input type="date" name="end_date" id="endDateInput" class="form-control text-xs font-semibold text-slate-700 rounded-xl" value="{{ $periodEnd->toDateString() }}" onchange="onDateChange()">
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Filter Sesi / Mapel</label>
-                            <select name="filter_session" class="form-select text-xs font-semibold text-slate-700 rounded-xl">
-                                <option value="all" {{ $filterSession === 'all' ? 'selected' : '' }}>Semua Absensi Wali Kelas</option>
-                                <option value="all_mapel" {{ $filterSession === 'all_mapel' ? 'selected' : '' }}>Semua Absensi Mapel</option>
-                                @foreach($allSessionsInPeriod as $sess)
-                                    <option value="{{ $sess }}" {{ $filterSession === $sess ? 'selected' : '' }}>
-                                        {{ str_replace('_', ' ', ucwords(str_replace('mapel_', 'Mapel ', $sess))) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
                         <div class="d-grid gap-2 pt-1">
                             <button type="submit" class="btn btn-primary btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm border-0 d-inline-flex align-items-center justify-content-center gap-1.5">
                                 <i class="bi bi-funnel"></i> Tampilkan Filter
@@ -123,7 +112,7 @@
             <div class="card shadow-sm border-slate-200/60 rounded-2xl overflow-hidden bg-white w-full">
                 <div class="card-header bg-slate-50/80 border-bottom border-slate-100 px-4 py-3 fw-bold text-slate-800 flex items-center h-[52px]">
                     <span class="flex items-center gap-2 text-sm">
-                        <i class="bi bi-info-circle-fill text-brand-600"></i> Info Sesi
+                        <i class="bi bi-info-circle-fill text-brand-600"></i> Info Sesi Kelas
                     </span>
                 </div>
                 <div class="card-body p-4">
@@ -133,12 +122,12 @@
                             <dd class="fw-bold text-slate-800 mb-0">{{ $attendance->class?->name ?? '-' }}</dd>
                         </div>
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <dt class="text-slate-500 font-semibold mb-0">Guru Pengisi</dt>
-                            <dd class="fw-bold text-slate-800 mb-0">{{ $attendance->teacher?->name ?? '-' }}</dd>
+                            <dt class="text-slate-500 font-semibold mb-0">Sesi Kelas</dt>
+                            <dd class="fw-bold text-slate-800 mb-0">Sesi {{ ucfirst($attendance->class?->session ?? $attendance->session ?? 'pagi') }}</dd>
                         </div>
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <dt class="text-slate-500 font-semibold mb-0">Sesi</dt>
-                            <dd class="fw-bold text-slate-800 mb-0">{{ ucfirst($attendance->session) }}</dd>
+                            <dt class="text-slate-500 font-semibold mb-0">Guru Pengisi</dt>
+                            <dd class="fw-bold text-slate-800 mb-0">{{ $attendance->teacher?->name ?? '-' }}</dd>
                         </div>
                         <div class="d-flex justify-content-between mb-0">
                             <dt class="text-slate-500 font-semibold mb-0">Tanggal</dt>
