@@ -305,13 +305,17 @@ class AttendanceService
     private function notifyAlfaStudents(array $details, string $date): void
     {
         $alfaIds = collect($details)
-            ->filter(fn($d) => $d['status'] === 'alfa')
+            ->filter(fn($d) => isset($d['status']) && $d['status'] === 'alfa')
             ->keys();
 
         foreach ($alfaIds as $studentId) {
-            SendAbsenceNotification::dispatch($studentId, $date)
-                ->onQueue('notifications')
-                ->delay(now()->addSeconds(10));
+            try {
+                SendAbsenceNotification::dispatch($studentId, $date)
+                    ->onQueue('notifications')
+                    ->delay(now()->addSeconds(10));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to queue WA absence notification: " . $e->getMessage());
+            }
         }
     }
 }

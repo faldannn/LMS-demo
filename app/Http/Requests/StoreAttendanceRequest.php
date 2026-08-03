@@ -9,15 +9,11 @@ class StoreAttendanceRequest extends FormRequest
     public function authorize(): bool
     {
         $user = auth()->user();
-        if (!$user?->isStaff()) {
+        if (!$user) {
             return false;
         }
 
-        if ($user->isGuru() && !$user->teacher) {
-            return false;
-        }
-
-        return true;
+        return $user->isStaff() || $user->isAdmin() || $user->isSuperAdmin();
     }
 
     public function rules(): array
@@ -25,7 +21,7 @@ class StoreAttendanceRequest extends FormRequest
         return [
             'date' => 'required|date|before_or_equal:today',
             'class_id' => 'required|exists:classes,id',
-            'session' => 'in:pagi,siang',
+            'session' => 'nullable|string|max:50',
             'details' => 'required|array|min:1',
             'details.*.status' => 'required|in:hadir,sakit,izin,alfa,terlambat',
             'details.*.check_in' => 'nullable',

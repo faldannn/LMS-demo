@@ -69,7 +69,7 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            @foreach($mySchedules as $mSched)
+            @foreach($mySchedules->filter(fn($s) => $s->class != null) as $mSched)
             @php
                 $dayNames = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                 $dName = $dayNames[$mSched->day_of_week] ?? '';

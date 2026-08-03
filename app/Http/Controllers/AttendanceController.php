@@ -32,9 +32,15 @@ class AttendanceController extends Controller
             $classes = collect([$user->student->class]);
         } elseif ($user->isGuru()) {
             $teacher = $user->teacher;
-            $classes = $teacher 
-                ? $teacher->homeroomClasses()->orderBy('name')->get() 
-                : collect();
+            if ($teacher) {
+                $taughtClassIds = $teacher->classSubjects()->pluck('class_id');
+                $scheduledClassIds = $teacher->schedules()->pluck('class_id');
+                $homeroomClassIds = $teacher->homeroomClasses()->pluck('id');
+                $allClassIds = $taughtClassIds->merge($scheduledClassIds)->merge($homeroomClassIds)->unique()->filter();
+                $classes = Classes::whereIn('id', $allClassIds)->orderBy('name')->get();
+            } else {
+                $classes = collect();
+            }
             
             if ($classes->isEmpty()) {
                 return redirect()->route('attendance.create');
@@ -54,7 +60,7 @@ class AttendanceController extends Controller
                         'session' => 'pagi',
                     ],
                     [
-                        'teacher_id' => $teacher->id,
+                        'teacher_id' => $teacher?->id ?? Teacher::active()->first()?->id,
                     ]
                 );
             }
@@ -718,15 +724,20 @@ class AttendanceController extends Controller
         $dayName = Carbon::parse($startDate)->translatedFormat('l');
         $fullDateFormatted = Carbon::parse($startDate)->translatedFormat('l, d F Y');
 
+        // Clean up orphaned Schedules (where class_id is null or class has been deleted)
+        Schedule::whereNull('class_id')->orWhereDoesntHave('class')->delete();
+
         $mySchedules = collect();
         if ($isGuruOnly && $teacherObj) {
-            $mySchedules = Schedule::with('class')
+            $mySchedules = Schedule::whereHas('class')
+                ->with('class')
                 ->where('teacher_id', $teacherObj->id)
                 ->orderBy('day_of_week')
                 ->orderBy('start_time')
                 ->get();
         } else {
-            $mySchedules = Schedule::with(['class', 'teacher'])
+            $mySchedules = Schedule::whereHas('class')
+                ->with(['class', 'teacher'])
                 ->when($classId, fn($q) => $q->where('class_id', $classId))
                 ->orderBy('day_of_week')
                 ->orderBy('start_time')
@@ -744,7 +755,7 @@ class AttendanceController extends Controller
             'class_id' => 'required|exists:classes,id',
             'session' => 'required|string|max:50',
             'student_id' => 'required|exists:students,id',
-            'status' => 'required|in:hadir,alfa',
+            'status' => 'required|in:hadir,alfa,sakit,izin,terlambat',
             'notes' => 'nullable|string|max:255',
         ]);
 
@@ -773,6 +784,10 @@ class AttendanceController extends Controller
         }
 
         $teacher = auth()->user()->teacher;
+        if (!$teacher) {
+            $classObj = Classes::with('homeroomTeacher')->find($classId);
+            $teacher = $classObj?->homeroomTeacher ?? Teacher::active()->first();
+        }
 
         $this->service->storeAttendance([
             'date' => $date,
@@ -905,9 +920,14 @@ class AttendanceController extends Controller
         $user = auth()->user();
         if ($user->isGuru()) {
             $teacher = $user->teacher;
-            $isHomeroom = $teacher && $teacher->homeroomClasses()->where('id', $attendance->class_id)->exists();
-            if (!$isHomeroom) {
-                abort(403, 'Unauthorized action.');
+            $canView = $teacher && (
+                $teacher->homeroomClasses()->where('id', $attendance->class_id)->exists() ||
+                $teacher->classSubjects()->where('class_id', $attendance->class_id)->exists() ||
+                $teacher->schedules()->where('class_id', $attendance->class_id)->exists() ||
+                $attendance->teacher_id == $teacher->id
+            );
+            if (!$canView) {
+                abort(403, 'Anda tidak memiliki akses ke presensi kelas ini.');
             }
         }
 
