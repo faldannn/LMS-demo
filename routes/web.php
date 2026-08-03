@@ -215,6 +215,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
                 Route::get('schedules/batch', [ScheduleController::class, 'batchCreate'])->name('schedules.batch');
                 Route::post('schedules/batch', [ScheduleController::class, 'batchStore'])->name('schedules.batch-store');
                 Route::post('schedules/copy', [ScheduleController::class, 'copySchedule'])->name('schedules.copy');
+                Route::post('schedules/bulk-delete', [ScheduleController::class, 'bulkDelete'])->name('schedules.bulk-delete');
                 Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
                 Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
                 Route::get('schedules/{schedule}/edit', [ScheduleController::class, 'edit'])->name('schedules.edit');

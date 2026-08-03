@@ -27,6 +27,79 @@ class ScheduleController extends Controller
     {
         return Setting::get('school_operational_days', '5_days') === '6_days' ? 6 : 5;
     }
+
+    /**
+     * Synchronize ClassSubject (E-Learning Portal mappings) with active Schedule items for a class.
+     * Ensures adding, editing, or deleting schedules automatically syncs the E-Learning Portal!
+     */
+    private function syncClassSubjects(?int $classId): void
+    {
+        if (!$classId) {
+            return;
+        }
+
+        $activeYear = AcademicYear::active();
+        if (!$activeYear) {
+            return;
+        }
+
+        $schedules = Schedule::where('class_id', $classId)->get();
+        $validSubjectIds = [];
+
+        foreach ($schedules as $sched) {
+            if (empty($sched->subject)) {
+                continue;
+            }
+
+            $subjectModel = \App\Models\Subject::where('name', $sched->subject)->first();
+            if (!$subjectModel) {
+                $subjectModel = \App\Models\Subject::where('name', 'like', "%{$sched->subject}%")->first();
+            }
+
+            if (!$subjectModel) {
+                $code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $sched->subject), 0, 8));
+                if (empty($code)) {
+                    $code = 'MAPEL' . rand(100, 999);
+                }
+                $subjectModel = \App\Models\Subject::create([
+                    'code'   => $code,
+                    'name'   => trim($sched->subject),
+                    'status' => true,
+                ]);
+            }
+
+            if ($subjectModel) {
+                $validSubjectIds[] = $subjectModel->id;
+
+                ClassSubject::updateOrCreate([
+                    'class_id'         => $classId,
+                    'subject_id'       => $subjectModel->id,
+                    'academic_year_id' => $activeYear->id,
+                ], [
+                    'teacher_id'       => $sched->teacher_id,
+                ]);
+
+                if ($sched->teacher_id) {
+                    $teacher = Teacher::find($sched->teacher_id);
+                    if ($teacher) {
+                        $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
+                    }
+                }
+            }
+        }
+
+        $validSubjectIds = array_unique($validSubjectIds);
+
+        // Remove any ClassSubject records for this class that no longer have ANY schedules
+        if (empty($validSubjectIds)) {
+            ClassSubject::where('class_id', $classId)->delete();
+        } else {
+            ClassSubject::where('class_id', $classId)
+                ->whereNotIn('subject_id', $validSubjectIds)
+                ->delete();
+        }
+    }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -56,7 +129,12 @@ class ScheduleController extends Controller
         }
 
         $class = Classes::find($classId);
-        // Days 1=Senin … 6=Sabtu — full list for display; filter by setting
+
+        // Ensure E-Learning portal ClassSubject mappings are synced for this class
+        if ($classId) {
+            $this->syncClassSubjects((int) $classId);
+        }
+
         $operationalDays = $this->getOperationalDays();
         $days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         $maxDay = $this->getMaxDayOfWeek();
@@ -79,22 +157,6 @@ class ScheduleController extends Controller
                 $matchedCs = $classSubjects->first(function ($cs) use ($sched) {
                     return stripos($cs->subject->name, $sched->subject) !== false;
                 });
-            }
-
-            // Auto-create missing ClassSubject links so schedules immediately become clickable/functional
-            if (!$matchedCs && $classId) {
-                $subjectModel = \App\Models\Subject::where('name', 'like', "%{$sched->subject}%")->first();
-                $activeYear = AcademicYear::active();
-                if ($subjectModel && $activeYear) {
-                    $matchedCs = ClassSubject::firstOrCreate([
-                        'class_id' => $classId,
-                        'subject_id' => $subjectModel->id,
-                        'academic_year_id' => $activeYear->id,
-                    ], [
-                        'teacher_id' => $sched->teacher_id,
-                    ]);
-                    $classSubjects->push($matchedCs);
-                }
             }
 
             $sched->class_subject_id = $matchedCs ? $matchedCs->id : null;
@@ -138,10 +200,10 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'class_id' => 'required|exists:classes,id',
-            'items' => 'nullable|array',
+            'items'    => 'nullable|array',
         ]);
 
-        $classId = $request->class_id;
+        $classId = (int) $request->class_id;
         $activeYear = AcademicYear::active();
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($request, $classId, $activeYear) {
@@ -154,37 +216,24 @@ class ScheduleController extends Controller
                 }
 
                 Schedule::create([
-                    'class_id' => $classId,
-                    'teacher_id' => $item['teacher_id'],
-                    'subject' => $item['subject'],
-                    'day_of_week' => (int) $item['day_of_week'],
-                    'start_time' => $item['start_time'],
-                    'end_time' => $item['end_time'],
-                    'room' => $item['room'] ?? null,
+                    'class_id'         => $classId,
+                    'teacher_id'       => $item['teacher_id'],
+                    'subject'          => $item['subject'],
+                    'day_of_week'      => (int) $item['day_of_week'],
+                    'start_time'      => $item['start_time'],
+                    'end_time'        => $item['end_time'],
+                    'room'            => $item['room'] ?? null,
                     'academic_year_id' => $activeYear?->id,
                 ]);
-
-                $subjectModel = \App\Models\Subject::where('name', $item['subject'])->first();
-                if ($subjectModel && $activeYear) {
-                    ClassSubject::updateOrCreate([
-                        'class_id' => $classId,
-                        'subject_id' => $subjectModel->id,
-                        'academic_year_id' => $activeYear->id,
-                    ], [
-                        'teacher_id' => $item['teacher_id'],
-                    ]);
-
-                    $teacher = Teacher::find($item['teacher_id']);
-                    if ($teacher) {
-                        $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
-                    }
-                }
             }
         });
 
+        // Sync E-Learning portal ClassSubject mappings
+        $this->syncClassSubjects($classId);
+
         $class = Classes::find($classId);
         return redirect()->route('schedules.index', ['class_id' => $classId])
-            ->with('success', "Jadwal mingguan untuk Kelas {$class?->name} berhasil disimpan sekaligus!");
+            ->with('success', "Jadwal mingguan untuk Kelas {$class?->name} berhasil disimpan & disinkronkan ke Portal E-Learning!");
     }
 
     public function copySchedule(Request $request)
@@ -194,44 +243,38 @@ class ScheduleController extends Controller
             'target_class_id' => 'required|exists:classes,id|different:source_class_id',
         ]);
 
-        $sourceSchedules = Schedule::where('class_id', $request->source_class_id)->get();
-        $targetClass = Classes::find($request->target_class_id);
+        $sourceClassId = (int) $request->source_class_id;
+        $targetClassId = (int) $request->target_class_id;
+        $sourceSchedules = Schedule::where('class_id', $sourceClassId)->get();
+        $targetClass = Classes::find($targetClassId);
         $activeYear = AcademicYear::active();
 
         if ($sourceSchedules->isEmpty()) {
             return back()->withErrors(['source_class_id' => 'Kelas asal tidak memiliki jadwal untuk disalin.']);
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($sourceSchedules, $request, $activeYear) {
-            Schedule::where('class_id', $request->target_class_id)->delete();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($sourceSchedules, $targetClassId, $activeYear) {
+            Schedule::where('class_id', $targetClassId)->delete();
 
             foreach ($sourceSchedules as $sched) {
                 Schedule::create([
-                    'class_id' => $request->target_class_id,
-                    'teacher_id' => $sched->teacher_id,
-                    'subject' => $sched->subject,
-                    'day_of_week' => $sched->day_of_week,
-                    'start_time' => $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '07:15',
-                    'end_time' => $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '08:00',
-                    'room' => $sched->room,
+                    'class_id'         => $targetClassId,
+                    'teacher_id'       => $sched->teacher_id,
+                    'subject'          => $sched->subject,
+                    'day_of_week'      => $sched->day_of_week,
+                    'start_time'      => $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '07:15',
+                    'end_time'        => $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '08:00',
+                    'room'            => $sched->room,
                     'academic_year_id' => $activeYear?->id,
                 ]);
-
-                $subjectModel = \App\Models\Subject::where('name', $sched->subject)->first();
-                if ($subjectModel && $activeYear) {
-                    ClassSubject::updateOrCreate([
-                        'class_id' => $request->target_class_id,
-                        'subject_id' => $subjectModel->id,
-                        'academic_year_id' => $activeYear->id,
-                    ], [
-                        'teacher_id' => $sched->teacher_id,
-                    ]);
-                }
             }
         });
 
-        return redirect()->route('schedules.index', ['class_id' => $request->target_class_id])
-            ->with('success', "Jadwal berhasil disalin ke Kelas {$targetClass?->name}!");
+        // Sync E-Learning portal ClassSubject mappings for target class
+        $this->syncClassSubjects($targetClassId);
+
+        return redirect()->route('schedules.index', ['class_id' => $targetClassId])
+            ->with('success', "Jadwal berhasil disalin ke Kelas {$targetClass?->name} & disinkronkan ke Portal E-Learning!");
     }
 
     public function create()
@@ -243,7 +286,6 @@ class ScheduleController extends Controller
         $maxDay   = $this->getMaxDayOfWeek();
         return view('schedules.create', compact('classes', 'teachers', 'subjects', 'days', 'maxDay'));
     }
-
 
     public function store(Request $request)
     {
@@ -263,25 +305,11 @@ class ScheduleController extends Controller
         
         $schedule = Schedule::create($data);
 
-        // Auto-create/update ClassSubject mapping
-        $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
-        if ($subjectModel && $activeYear) {
-            ClassSubject::updateOrCreate([
-                'class_id' => $data['class_id'],
-                'subject_id' => $subjectModel->id,
-                'academic_year_id' => $activeYear->id,
-            ], [
-                'teacher_id' => $data['teacher_id'],
-            ]);
-
-            $teacher = Teacher::find($data['teacher_id']);
-            if ($teacher) {
-                $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
-            }
-        }
+        // Sync E-Learning portal ClassSubject mappings
+        $this->syncClassSubjects((int) $data['class_id']);
 
         return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
-            ->with('success', 'Jadwal berhasil ditambahkan.');
+            ->with('success', 'Jadwal berhasil ditambahkan & disinkronkan ke Portal E-Learning.');
     }
 
     public function edit(Schedule $schedule)
@@ -292,7 +320,6 @@ class ScheduleController extends Controller
         $days     = $this->getOperationalDays();
         $maxDay   = $this->getMaxDayOfWeek();
         
-        // Format time to H:i format for easier comparison in select options
         if ($schedule->start_time) {
             $schedule->start_time_formatted = \Carbon\Carbon::parse($schedule->start_time)->format('H:i');
         }
@@ -305,6 +332,7 @@ class ScheduleController extends Controller
 
     public function update(Request $request, Schedule $schedule)
     {
+        $oldClassId = (int) $schedule->class_id;
         $maxDay = $this->getMaxDayOfWeek();
         $data = $request->validate([
             'class_id'   => 'required|exists:classes,id',
@@ -318,33 +346,59 @@ class ScheduleController extends Controller
         
         $schedule->update($data);
 
-        // Auto-create/update ClassSubject mapping
-        $activeYear = AcademicYear::active();
-        $subjectModel = \App\Models\Subject::where('name', $data['subject'])->first();
-        if ($subjectModel && $activeYear) {
-            ClassSubject::updateOrCreate([
-                'class_id' => $data['class_id'],
-                'subject_id' => $subjectModel->id,
-                'academic_year_id' => $activeYear->id,
-            ], [
-                'teacher_id' => $data['teacher_id'],
-            ]);
-
-            $teacher = Teacher::find($data['teacher_id']);
-            if ($teacher) {
-                $teacher->subjects()->syncWithoutDetaching([$subjectModel->id]);
-            }
+        // Sync E-Learning portal ClassSubject mappings for current and old class if changed
+        $newClassId = (int) $data['class_id'];
+        $this->syncClassSubjects($newClassId);
+        if ($oldClassId !== $newClassId) {
+            $this->syncClassSubjects($oldClassId);
         }
 
-        return redirect()->route('schedules.index', ['class_id' => $data['class_id']])
-            ->with('success', 'Jadwal berhasil diperbarui.');
+        return redirect()->route('schedules.index', ['class_id' => $newClassId])
+            ->with('success', 'Jadwal berhasil diperbarui & disinkronkan ke Portal E-Learning.');
     }
 
     public function destroy(Schedule $schedule)
     {
-        $classId = $schedule->class_id;
+        $classId = (int) $schedule->class_id;
         $schedule->delete();
+
+        // Sync E-Learning portal ClassSubject mappings
+        $this->syncClassSubjects($classId);
+
         return redirect()->route('schedules.index', ['class_id' => $classId])
-            ->with('success', 'Jadwal berhasil dihapus.');
+            ->with('success', 'Jadwal berhasil dihapus & disinkronkan ke Portal E-Learning.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'class_id'  => 'required|exists:classes,id',
+            'ids'       => 'nullable|array',
+            'ids.*'     => 'exists:schedules,id',
+            'clear_all' => 'nullable|boolean',
+        ]);
+
+        $classId = (int) $request->class_id;
+        $class = Classes::find($classId);
+
+        if ($request->boolean('clear_all')) {
+            $deletedCount = Schedule::where('class_id', $classId)->delete();
+            $this->syncClassSubjects($classId);
+
+            return redirect()->route('schedules.index', ['class_id' => $classId])
+                ->with('success', "Seluruh jadwal ({$deletedCount} data) untuk Kelas {$class?->name} berhasil dihapus & Portal E-Learning disinkronkan.");
+        }
+
+        $ids = $request->input('ids', []);
+        if (!empty($ids)) {
+            $deletedCount = Schedule::whereIn('id', $ids)->delete();
+            $this->syncClassSubjects($classId);
+
+            return redirect()->route('schedules.index', ['class_id' => $classId])
+                ->with('success', "Sebanyak {$deletedCount} jadwal terpilih berhasil dihapus & Portal E-Learning disinkronkan.");
+        }
+
+        return redirect()->route('schedules.index', ['class_id' => $classId])
+            ->with('error', 'Tidak ada jadwal yang dipilih untuk dihapus.');
     }
 }
