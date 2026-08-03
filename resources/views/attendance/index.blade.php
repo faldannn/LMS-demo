@@ -22,12 +22,12 @@
             @if($isStaff)
                 {{-- Export Buttons --}}
                 <div class="inline-flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <a href="{{ route('attendance.export.students.excel', request()->all()) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 border-r border-slate-200" title="Export Rekap Siswa Sesuai Filter">
+                    <button type="button" onclick="exportExcelSiswa()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 border-r border-slate-200" title="Export Rekap Siswa Sesuai Filter">
                         <i class="bi bi-file-earmark-excel text-base"></i> Export Excel Siswa
-                    </a>
-                    <a href="{{ route('attendance.export.teachers.excel', request()->all()) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-50" title="Export Rekap Guru Sesuai Filter">
+                    </button>
+                    <button type="button" onclick="exportExcelGuru()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-50" title="Export Rekap Guru Sesuai Filter">
                         <i class="bi bi-file-earmark-excel text-base"></i> Export Excel Guru
-                    </a>
+                    </button>
                 </div>
             @endif
 
@@ -61,7 +61,7 @@
 
     {{-- Filter Form --}}
     <div class="mb-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/60">
-        <form method="GET" class="grid grid-cols-1 gap-4 sm:grid-cols-12 items-end">
+        <form method="GET" id="attendanceFilterForm" class="grid grid-cols-1 gap-4 sm:grid-cols-12 items-end">
             <input type="hidden" name="tab" value="{{ $activeTab }}">
 
             @if($activeTab === 'students')
@@ -569,6 +569,19 @@
             document.getElementById('photoViewerModal').classList.remove('hidden');
         }
 
+        function exportExcelSiswa() {
+            const form = document.getElementById('attendanceFilterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData).toString();
+            window.open('{{ route("attendance.export.students.excel") }}' + '?' + params, '_blank');
+        }
+
+        function exportExcelGuru() {
+            const form = document.getElementById('attendanceFilterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData).toString();
+            window.open('{{ route("attendance.export.teachers.excel") }}' + '?' + params, '_blank');
+        }
     </script>
     @endpush
 @endsection

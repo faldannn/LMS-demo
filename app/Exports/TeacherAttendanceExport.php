@@ -56,33 +56,35 @@ class TeacherAttendanceSummarySheet implements
 
     public function title(): string
     {
-        return 'Ringkasan Seluruh Guru';
+        return 'Rekapitulasi Guru';
     }
 
     public function collection()
     {
-        $teachers = Teacher::active()->orderBy('name')->get();
+        $teachers = Teacher::query()->active()->orderBy('name')->get();
         [$sDate, $eDate] = $this->resolveDateRange();
 
-        $attendances = TeacherAttendance::whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])->get();
+        $attendances = TeacherAttendance::query()->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])->get();
+        $periodeLabel = $sDate->format('d/m/Y') . ' - ' . $eDate->format('d/m/Y');
 
-        return $teachers->map(function (Teacher $teacher) use ($attendances) {
+        return $teachers->map(function (Teacher $teacher) use ($attendances, $periodeLabel) {
             $tLogs = $attendances->where('teacher_id', $teacher->id);
             $hadir = $tLogs->where('status', 'hadir')->count();
             $terlambat = $tLogs->where('status', 'terlambat')->count();
-            $sakit = $tLogs->where('status', 'sakit')->count();
             $izin = $tLogs->where('status', 'izin')->count();
+            $sakit = $tLogs->where('status', 'sakit')->count();
             $alfa = $tLogs->where('status', 'alfa')->count();
             $total = $tLogs->count();
 
             return [
+                'periode' => $periodeLabel,
                 'nip' => $teacher->nip ?? '-',
                 'name' => $teacher->name,
                 'subject' => $teacher->subject ?? '-',
                 'hadir' => $hadir,
                 'terlambat' => $terlambat,
-                'sakit' => $sakit,
                 'izin' => $izin,
+                'sakit' => $sakit,
                 'alfa' => $alfa,
                 'total' => $total,
             ];
@@ -93,14 +95,15 @@ class TeacherAttendanceSummarySheet implements
     {
         return [
             '#',
+            'Periode Tanggal',
             'NIP',
             'Nama Guru',
             'Mata Pelajaran',
             'Hadir',
             'Terlambat',
-            'Sakit',
             'Izin',
-            'Alfa',
+            'Sakit',
+            'Alfa (Tanpa Keterangan)',
             'Total Presensi',
         ];
     }
@@ -112,13 +115,14 @@ class TeacherAttendanceSummarySheet implements
 
         return [
             $i,
+            $row['periode'],
             $row['nip'],
             $row['name'],
             $row['subject'],
             $row['hadir'],
             $row['terlambat'],
-            $row['sakit'],
             $row['izin'],
+            $row['sakit'],
             $row['alfa'],
             $row['total'],
         ];
