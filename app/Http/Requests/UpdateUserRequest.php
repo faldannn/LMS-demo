@@ -47,4 +47,20 @@ class UpdateUserRequest extends FormRequest
 
         return $rules;
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $user = $this->route('user');
+            $currentUser = auth()->user();
+
+            if ($user && $user->isSuperAdmin() && (!$currentUser || !$currentUser->isSuperAdmin())) {
+                $validator->errors()->add('role', 'Admin tidak diizinkan mengubah data akun Superadmin.');
+            }
+
+            if ($this->input('role') === 'superadmin' && (!$currentUser || !$currentUser->isSuperAdmin())) {
+                $validator->errors()->add('role', 'Hanya Superadmin yang dapat memberikan role Superadmin.');
+            }
+        });
+    }
 }

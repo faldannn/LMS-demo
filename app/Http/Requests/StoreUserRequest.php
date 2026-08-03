@@ -48,4 +48,13 @@ class StoreUserRequest extends FormRequest
 
         return $rules;
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('role') === 'superadmin' && (!auth()->check() || !auth()->user()->isSuperAdmin())) {
+                $validator->errors()->add('role', 'Hanya Superadmin yang dapat membuat user dengan role Superadmin.');
+            }
+        });
+    }
 }

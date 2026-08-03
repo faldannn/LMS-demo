@@ -152,12 +152,17 @@
                             $avatarBg = $avatarGradients[$roleKey] ?? 'linear-gradient(135deg, #64748b, #475569)';
                             [$roleBg, $roleFg] = $roleColors[$roleKey] ?? ['#f1f5f9', '#64748b'];
                         @endphp
+                        @php
+                            $isSuperAdminTarget = $user->isSuperAdmin();
+                            $isCurrentSuperAdmin = auth()->user()->isSuperAdmin();
+                            $isProtectedSuperAdmin = $isSuperAdminTarget && !$isCurrentSuperAdmin;
+                        @endphp
                         <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                             <td class="px-3 py-3 text-center">
-                                @if($user->id !== auth()->id())
+                                @if($user->id !== auth()->id() && !$isProtectedSuperAdmin)
                                     <input type="checkbox" class="user-checkbox h-4 w-4 rounded border-slate-300 text-brand-600 transition focus:ring-brand-500" value="{{ $user->id }}">
                                 @else
-                                    <span class="text-slate-300">&mdash;</span>
+                                    <span class="text-slate-300" title="{{ $isProtectedSuperAdmin ? 'Superadmin tidak dapat dihapus oleh Admin' : 'Akun Sendiri' }}">&mdash;</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 font-semibold text-slate-400">
@@ -204,39 +209,52 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <form method="POST" action="{{ route('users.toggle-status', $user) }}" class="inline">
-                                    @csrf @method('PUT')
-                                    <button type="submit" title="Klik untuk ubah status"
-                                        class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition hover:opacity-80 {{ $user->status ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                        <i class="bi {{ $user->status ? 'bi-check-circle-fill' : 'bi-x-circle-fill' }}"></i>
-                                        <span>{{ $user->status ? 'Aktif' : 'Non-Aktif' }}</span>
-                                    </button>
-                                </form>
+                                @if(!$isProtectedSuperAdmin)
+                                    <form method="POST" action="{{ route('users.toggle-status', $user) }}" class="inline">
+                                        @csrf @method('PUT')
+                                        <button type="submit" title="Klik untuk ubah status"
+                                            class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition hover:opacity-80 {{ $user->status ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                            <i class="bi {{ $user->status ? 'bi-check-circle-fill' : 'bi-x-circle-fill' }}"></i>
+                                            <span>{{ $user->status ? 'Aktif' : 'Non-Aktif' }}</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold bg-emerald-100 text-emerald-700 cursor-not-allowed" title="Status Superadmin dilindungi">
+                                        <i class="bi bi-shield-check"></i>
+                                        <span>Aktif</span>
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-1">
-                                    <a href="{{ route('users.edit', $user) }}" title="Edit User"
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100">
-                                        <i class="bi bi-pencil text-sm"></i>
-                                    </a>
-                                    <form method="POST" action="{{ route('users.reset-password', $user) }}" class="inline">
-                                        @csrf @method('PUT')
-                                        <button type="submit" title="Reset Password"
-                                            onclick="return confirm('Reset password {{ addslashes($user->name) }}?')"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 transition hover:bg-amber-100">
-                                            <i class="bi bi-key text-sm"></i>
-                                        </button>
-                                    </form>
-                                    @if($user->id !== auth()->id())
-                                        <form id="del-u{{ $user->id }}" method="POST" action="{{ route('users.destroy', $user) }}" class="hidden">
-                                            @csrf @method('DELETE')
+                                    @if(!$isProtectedSuperAdmin)
+                                        <a href="{{ route('users.edit', $user) }}" title="Edit User"
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100">
+                                            <i class="bi bi-pencil text-sm"></i>
+                                        </a>
+                                        <form method="POST" action="{{ route('users.reset-password', $user) }}" class="inline">
+                                            @csrf @method('PUT')
+                                            <button type="submit" title="Reset Password"
+                                                onclick="return confirm('Reset password {{ addslashes($user->name) }}?')"
+                                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 transition hover:bg-amber-100">
+                                                <i class="bi bi-key text-sm"></i>
+                                            </button>
                                         </form>
-                                        <button title="Hapus User"
-                                            data-confirm="Hapus user {{ $user->name }}?"
-                                            data-form="del-u{{ $user->id }}"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100">
-                                            <i class="bi bi-trash text-sm"></i>
-                                        </button>
+                                        @if($user->id !== auth()->id())
+                                            <form id="del-u{{ $user->id }}" method="POST" action="{{ route('users.destroy', $user) }}" class="hidden">
+                                                @csrf @method('DELETE')
+                                            </form>
+                                            <button title="Hapus User"
+                                                data-confirm="Hapus user {{ $user->name }}?"
+                                                data-form="del-u{{ $user->id }}"
+                                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100">
+                                                <i class="bi bi-trash text-sm"></i>
+                                            </button>
+                                        @endif
+                                    @else
+                                        <span title="Superadmin dilindungi & tidak dapat diubah/dihapus oleh Admin" class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed">
+                                            <i class="bi bi-shield-lock text-sm"></i>
+                                        </span>
                                     @endif
                                 </div>
                             </td>

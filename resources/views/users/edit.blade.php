@@ -42,7 +42,9 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                                <option value="superadmin" {{ old('role', $user->role->value ?? $user->role)==='superadmin' ? 'selected':'' }}>Super Admin</option>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <option value="superadmin" {{ old('role', $user->role->value ?? $user->role)==='superadmin' ? 'selected':'' }}>Super Admin</option>
+                                @endif
                                 <option value="admin" {{ old('role', $user->role->value ?? $user->role)==='admin' ? 'selected':'' }}>Admin</option>
                                 <option value="guru" {{ old('role', $user->role->value ?? $user->role)==='guru' ? 'selected':'' }}>Guru</option>
                                 <option value="siswa" {{ old('role', $user->role->value ?? $user->role)==='siswa' ? 'selected':'' }}>Siswa</option>

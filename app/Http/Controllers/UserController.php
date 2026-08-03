@@ -98,6 +98,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        if ($user->isSuperAdmin() && (!Auth::check() || !Auth::user()->isSuperAdmin())) {
+            return back()->withErrors(['error' => 'Admin tidak diizinkan mengedit akun dengan role Superadmin.']);
+        }
+
         $user->load(['student', 'teacher.subjects']);
         $classes = \App\Models\Classes::orderBy('name')->get();
         $subjects = \App\Models\Subject::orderBy('name')->get();
@@ -106,6 +110,10 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
+        if ($user->isSuperAdmin() && (!Auth::check() || !Auth::user()->isSuperAdmin())) {
+            return back()->withErrors(['error' => 'Admin tidak diizinkan memperbarui akun dengan role Superadmin.']);
+        }
+
         $data = $request->validated();
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $user, $request) {
@@ -195,6 +203,10 @@ class UserController extends Controller
             return back()->withErrors(['error' => 'Tidak bisa menghapus akun sendiri.']);
         }
 
+        if ($user->isSuperAdmin() && (!Auth::check() || !Auth::user()->isSuperAdmin())) {
+            return back()->withErrors(['error' => 'Admin tidak diizinkan menghapus user dengan role Superadmin.']);
+        }
+
         $this->activityLogService->log('user_delete', auth()->user(), $user, "User {$user->username} dihapus");
 
         if ($user->student) {
@@ -224,6 +236,19 @@ class UserController extends Controller
         }
 
         $users = User::with(['student', 'teacher'])->whereIn('id', $ids)->get();
+
+        // Protect Superadmin users from being deleted by non-superadmin users
+        $currentUser = Auth::user();
+        $hasSuperAdmin = false;
+        if (!$currentUser || !$currentUser->isSuperAdmin()) {
+            $hasSuperAdmin = $users->contains(fn($u) => $u->isSuperAdmin());
+            $users = $users->reject(fn($u) => $u->isSuperAdmin());
+
+            if ($users->isEmpty()) {
+                return back()->withErrors(['error' => 'Admin tidak diizinkan menghapus user dengan role Superadmin.']);
+            }
+        }
+
         $count = 0;
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($users, &$count) {
@@ -241,11 +266,20 @@ class UserController extends Controller
 
         $this->activityLogService->log('user_bulk_delete', auth()->user(), null, "Menghapus {$count} user secara massal");
 
-        return back()->with('success', "{$count} user berhasil dihapus.");
+        $msg = "{$count} user berhasil dihapus.";
+        if ($hasSuperAdmin) {
+            $msg .= " (User Superadmin diabaikan karena Admin tidak diizinkan menghapus Superadmin).";
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function toggleStatus(User $user)
     {
+        if ($user->isSuperAdmin() && (!Auth::check() || !Auth::user()->isSuperAdmin())) {
+            return back()->withErrors(['error' => 'Admin tidak diizinkan mengubah status akun Superadmin.']);
+        }
+
         $user->update(['status' => !$user->status]);
         $label = $user->status ? 'diaktifkan' : 'dinonaktifkan';
 
@@ -260,6 +294,10 @@ class UserController extends Controller
 
     public function resetPassword(User $user)
     {
+        if ($user->isSuperAdmin() && (!Auth::check() || !Auth::user()->isSuperAdmin())) {
+            return back()->withErrors(['error' => 'Admin tidak diizinkan mereset password akun Superadmin.']);
+        }
+
         $user->loadMissing(['student', 'teacher']);
         
         $newPass = null;
