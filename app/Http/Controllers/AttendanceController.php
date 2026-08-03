@@ -702,7 +702,7 @@ class AttendanceController extends Controller
                 $attQuery = Attendance::where('date', $startDate)->where('class_id', $classId);
                 $att = $attQuery->where(function($q) use ($session, $targetCs, $selectedSubjectName) {
                     $q->where('session', $session);
-                    if ($targetCs) {
+                    if ($targetCs && \Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id')) {
                         $q->orWhere('class_subject_id', $targetCs->id);
                     }
                     if ($selectedSubjectName) {
