@@ -6,66 +6,172 @@
 
 @section('content')
 
-{{-- ── FILTER FORM (DATE RANGE & MAPEL) ── --}}
-<div class="mb-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
-    <form method="GET" action="{{ route('attendance.create') }}" id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-        <div class="sm:col-span-1 lg:col-span-2">
-            <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Periode</label>
-            <select name="period" id="input-period" class="form-select text-xs font-semibold text-slate-700 rounded-xl" onchange="onPeriodChange(this.value)">
-                <option value="today" {{ ($period ?? 'today') == 'today' ? 'selected' : '' }}>Hari Ini</option>
-                <option value="week" {{ ($period ?? '') == 'week' ? 'selected' : '' }}>Minggu Ini ({{ !empty($hasSaturday) ? 'Sen-Sab' : 'Sen-Jum' }})</option>
-                <option value="30_days" {{ ($period ?? '') == '30_days' ? 'selected' : '' }}>30 Hari Terakhir</option>
-                <option value="month" {{ ($period ?? '') == 'month' ? 'selected' : '' }}>Bulan Ini</option>
-                <option value="custom" {{ ($period ?? '') == 'custom' ? 'selected' : '' }}>Atur Manual...</option>
-            </select>
+{{-- ── 1. ACTIVE CLASS BANNER & SCHEDULE TOGGLE ── --}}
+<div class="mb-4 rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-slate-200">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+                    <i class="bi bi-journal-check me-1"></i> Presensi Kelas
+                </span>
+                @if(!empty($fullDateFormatted))
+                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                        <i class="bi bi-calendar3 me-1"></i> {{ $fullDateFormatted }}
+                    </span>
+                @endif
+            </div>
+
+            <h4 class="text-xl sm:text-2xl font-black text-slate-900 mb-1 flex flex-wrap items-center gap-2">
+                <span>{{ $classes->find($classId)?->name ?? 'Pilih Kelas' }}</span>
+                @if(!empty($selectedSubjectInfo) && !empty($selectedSubjectInfo['subject']))
+                    <span class="text-base font-bold text-brand-700 bg-brand-50 px-3 py-0.5 rounded-full border border-brand-200">
+                        📚 {{ $selectedSubjectInfo['subject'] }}
+                    </span>
+                    @if(!empty($selectedSubjectInfo['slot_num']))
+                    <span class="text-xs font-extrabold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                        ⏰ Jam ke-{{ $selectedSubjectInfo['slot_num'] }} @if(!empty($selectedSubjectInfo['time_str']))({{ $selectedSubjectInfo['time_str'] }})@endif
+                    </span>
+                    @endif
+                @elseif(!empty($selectedSubjectName))
+                    <span class="text-base font-bold text-brand-700 bg-brand-50 px-3 py-0.5 rounded-full border border-brand-200">
+                        📚 {{ $selectedSubjectName }}
+                    </span>
+                @endif
+            </h4>
+            <p class="text-xs text-slate-500 font-medium mb-0">Klik tombol 🟢 <strong>HADIR</strong> atau 🔴 <strong>ABSEN</strong>. Perubahan tersimpan **secara instan**.</p>
         </div>
 
-        <div class="sm:col-span-1 lg:col-span-2">
-            <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Tanggal Mulai</label>
-            <input type="date" name="start_date" id="input-start-date" class="form-control text-xs font-semibold text-slate-700 rounded-xl" value="{{ $startDate }}" max="{{ today()->toDateString() }}" onchange="onDateChange()">
+        <button type="button" 
+                onclick="toggleScheduleBlock()" 
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 border border-slate-300 transition-all shrink-0">
+            <i class="bi bi-calendar-week text-brand-600 text-sm"></i>
+            <span>⚡ Ganti Jadwal / Filter Kelas</span>
+            <i class="bi bi-chevron-down text-xs transition-transform" id="sched-toggle-icon"></i>
+        </button>
+    </div>
+</div>
+
+{{-- ── 2. COLLAPSIBLE SCHEDULE SELECTOR & MANUAL FILTER ── --}}
+<div id="schedule-selector-block" class="hidden mb-5 space-y-4">
+    {{-- JADWAL MENGAJAR GURU QUICK CARDS --}}
+    @if(!empty($mySchedules) && $mySchedules->isNotEmpty())
+    <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600 font-extrabold text-sm border border-brand-200">
+                    ⚡
+                </div>
+                <h6 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-800 mb-0">
+                    Jadwal Mengajar {{ auth()->user()->isGuru() ? 'Saya' : 'Sekolah' }} (Klik 1x Langsung Buka Presensi)
+                </h6>
+            </div>
+            <span class="text-[11px] font-bold text-slate-400">Pilih jadwal di bawah tanpa pilih dropdown</span>
         </div>
 
-        <div class="sm:col-span-1 lg:col-span-2">
-            <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Tanggal Selesai</label>
-            <input type="date" name="end_date" id="input-end-date" class="form-control text-xs font-semibold text-slate-700 rounded-xl" value="{{ $endDate }}" max="{{ today()->toDateString() }}" onchange="onDateChange()">
-        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            @foreach($mySchedules as $mSched)
+            @php
+                $dayNames = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+                $dName = $dayNames[$mSched->day_of_week] ?? '';
+                $timeStr = ($mSched->start_time && $mSched->end_time) ? $mSched->start_time->format('H:i') . ' - ' . $mSched->end_time->format('H:i') : '';
+                $isCurrentActive = ($classId == $mSched->class_id && ($session == "sched_{$mSched->id}" || $selectedSubjectName == $mSched->subject));
+            @endphp
+            <a href="{{ route('attendance.create', ['class_id' => $mSched->class_id, 'session' => 'sched_' . $mSched->id, 'period' => 'today']) }}" 
+               class="group relative flex flex-col justify-between rounded-xl p-3.5 text-left transition-all border {{ $isCurrentActive ? 'bg-brand-600 border-brand-700 text-white shadow-md ring-2 ring-brand-500' : 'bg-slate-50 hover:bg-brand-50/60 border-slate-200 hover:border-brand-300 text-slate-800 shadow-2xs' }}">
+                <div>
+                    <div class="flex items-center justify-between gap-1 mb-1.5">
+                        <span class="inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider {{ $isCurrentActive ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700' }}">
+                            📅 {{ $dName }}
+                        </span>
+                        <span class="text-[11px] font-mono font-bold {{ $isCurrentActive ? 'text-brand-100' : 'text-slate-500' }}">
+                            {{ $timeStr }}
+                        </span>
+                    </div>
+                    <h6 class="text-base font-black truncate mb-1 leading-snug {{ $isCurrentActive ? 'text-white' : 'text-slate-900 group-hover:text-brand-700' }}">
+                        {{ $mSched->subject }}
+                    </h6>
+                    <div class="text-xs font-bold truncate flex items-center gap-1.5 {{ $isCurrentActive ? 'text-brand-100' : 'text-slate-600' }}">
+                        <i class="bi bi-building text-xs"></i> Kelas: {{ $mSched->class?->name ?? 'Kelas' }}
+                        @if(!auth()->user()->isGuru() && $mSched->teacher)
+                            <span class="text-slate-400 font-normal">({{ $mSched->teacher->name }})</span>
+                        @endif
+                    </div>
+                </div>
 
-        <div class="sm:col-span-2 lg:col-span-3">
-            <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Kelas / Mata Pelajaran</label>
-            <select name="class_id" id="input-class-id" class="form-select text-xs font-semibold text-slate-700 rounded-xl">
-                <option value="">-- Pilih Kelas --</option>
-                @foreach($classes as $c)
-                <option value="{{ $c->id }}" {{ $classId == $c->id ? 'selected' : '' }}>
-                    {{ $c->name }} ({{ $c->grade_label }})
-                </option>
-                @endforeach
-            </select>
+                <div class="mt-3 flex items-center justify-between text-[11px] font-extrabold border-t pt-2 transition-colors {{ $isCurrentActive ? 'border-white/20 text-white' : 'border-slate-200 text-brand-600 group-hover:text-brand-700' }}">
+                    <span>{{ $isCurrentActive ? '🟢 Sedang Dibuka' : '🖐️ Buka Presensi Ini' }}</span>
+                    <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+            @endforeach
         </div>
+    </div>
+    @endif
 
-        <div class="sm:col-span-1 lg:col-span-2">
-            <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Sesi Jam Mapel @if(empty($isRangeMode) && !empty($dayName))<span class="text-brand-600 font-extrabold">({{ $dayName }})</span>@endif</label>
-            <select name="session" id="input-session" class="form-select text-xs font-semibold text-slate-700 rounded-xl">
-                @foreach($sessionLabels as $sKey => $sInfo)
-                <option value="{{ $sKey }}" {{ ($session ?? 'all') == $sKey ? 'selected' : '' }}>
-                    {{ is_array($sInfo) ? ($sInfo['label'] ?? $sKey) : $sInfo }}
-                </option>
-                @endforeach
-            </select>
+    {{-- FILTER FORM DROPDOWN MANUAL --}}
+    <div class="rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-1.5">
+            <i class="bi bi-funnel-fill text-brand-600"></i> Filter Custom Kelas, Tanggal & Periode
         </div>
+        <form method="GET" action="{{ route('attendance.create') }}" id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-1 lg:col-span-2">
+                <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">Periode</label>
+                <select name="period" id="input-period" class="form-select text-xs font-semibold text-slate-700 rounded-xl" onchange="onPeriodChange(this.value)">
+                    <option value="today" {{ ($period ?? 'today') == 'today' ? 'selected' : '' }}>Hari Ini</option>
+                    <option value="week" {{ ($period ?? '') == 'week' ? 'selected' : '' }}>Minggu Ini ({{ !empty($hasSaturday) ? 'Sen-Sab' : 'Sen-Jum' }})</option>
+                    <option value="30_days" {{ ($period ?? '') == '30_days' ? 'selected' : '' }}>30 Hari Terakhir</option>
+                    <option value="month" {{ ($period ?? '') == 'month' ? 'selected' : '' }}>Bulan Ini</option>
+                    <option value="custom" {{ ($period ?? '') == 'custom' ? 'selected' : '' }}>Atur Manual...</option>
+                </select>
+            </div>
 
-        <div class="sm:col-span-1 lg:col-span-1">
-            <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-700 transition-all border-0 h-[38px]">
-                <i class="bi bi-search"></i>
-                <span class="lg:hidden xl:inline">Cari</span>
-            </button>
-        </div>
-    </form>
+            <div class="sm:col-span-1 lg:col-span-2">
+                <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">Tanggal Mulai</label>
+                <input type="date" name="start_date" id="input-start-date" class="form-control text-xs font-semibold text-slate-700 rounded-xl" value="{{ $startDate }}" max="{{ today()->toDateString() }}" onchange="onDateChange()">
+            </div>
+
+            <div class="sm:col-span-1 lg:col-span-2">
+                <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">Tanggal Selesai</label>
+                <input type="date" name="end_date" id="input-end-date" class="form-control text-xs font-semibold text-slate-700 rounded-xl" value="{{ $endDate }}" max="{{ today()->toDateString() }}" onchange="onDateChange()">
+            </div>
+
+            <div class="sm:col-span-2 lg:col-span-3">
+                <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">Kelas</label>
+                <select name="class_id" id="input-class-id" class="form-select text-xs font-semibold text-slate-700 rounded-xl">
+                    <option value="">-- Pilih Kelas --</option>
+                    @foreach($classes as $c)
+                    <option value="{{ $c->id }}" {{ $classId == $c->id ? 'selected' : '' }}>
+                        {{ $c->name }} ({{ $c->grade_label }})
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="sm:col-span-1 lg:col-span-2">
+                <label class="block mb-1 text-xs font-bold uppercase tracking-wider text-slate-600">Sesi Jam Mapel @if(empty($isRangeMode) && !empty($dayName))<span class="text-brand-600 font-extrabold">({{ $dayName }})</span>@endif</label>
+                <select name="session" id="input-session" class="form-select text-xs font-semibold text-slate-700 rounded-xl">
+                    @foreach($sessionLabels as $sKey => $sInfo)
+                    <option value="{{ $sKey }}" {{ ($session ?? 'all') == $sKey ? 'selected' : '' }}>
+                        {{ is_array($sInfo) ? ($sInfo['label'] ?? $sKey) : $sInfo }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="sm:col-span-1 lg:col-span-1">
+                <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-700 transition-all border-0 h-[38px]">
+                    <i class="bi bi-search"></i>
+                    <span class="lg:hidden xl:inline">Cari</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 @if($students->isNotEmpty())
 
 @if($isRangeMode || ($session ?? 'all') === 'all')
-{{-- ── MODE REKAPITULASI PRESENSI GABUNGAN / RENTANG TANGGAL ── --}}
+{{-- ── 3. MODE REKAPITULASI PRESENSI GABUNGAN / RENTANG TANGGAL ── --}}
 <div class="space-y-4">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-brand-50/60 p-3.5 rounded-2xl border border-brand-200">
         <div>
@@ -78,7 +184,7 @@
         <span class="badge bg-brand-600 text-white px-3 py-1.5 rounded-full text-xs font-bold self-start sm:self-auto">{{ $students->count() }} Siswa</span>
     </div>
 
-    <div class="card shadow-sm border border-slate-200 overflow-hidden rounded-2xl">
+    <div class="card shadow-sm border border-slate-200 overflow-hidden rounded-2xl bg-white">
         <div class="table-responsive overflow-x-auto">
             <table class="table table-hover align-middle mb-0 text-sm min-w-[700px]">
                 <thead class="bg-slate-50/80">
@@ -101,28 +207,18 @@
                         ];
                     @endphp
                     <tr>
-                        <td class="text-center font-semibold text-slate-400">{{ $i + 1 }}</td>
-                        <td>
-                            <div class="fw-bold text-slate-800 text-sm sm:text-base">{{ $student->name }}</div>
-                            <div class="text-xs text-slate-500 font-mono">NIS: {{ $student->nis }}</div>
+                        <td class="text-center align-middle font-semibold text-slate-400">{{ $i + 1 }}</td>
+                        <td class="align-middle">
+                            <div class="font-bold text-slate-800">{{ $student->name }}</div>
+                            <div class="text-xs font-mono text-slate-500">NISN: {{ $student->nis }}</div>
                         </td>
-                        <td class="text-center">
-                            <span class="badge bg-emerald-100 text-emerald-800 rounded-pill px-2.5 py-1 font-bold">{{ $recap['hadir'] }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-rose-100 text-rose-800 rounded-pill px-2.5 py-1 font-bold">{{ $recap['alfa'] }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-amber-100 text-amber-800 rounded-pill px-2.5 py-1 font-bold">{{ $recap['sakit_izin'] }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-purple-100 text-purple-800 rounded-pill px-2.5 py-1 font-bold">{{ $recap['terlambat'] }}</span>
-                        </td>
-                        <td class="text-center font-bold text-slate-700">{{ $recap['total'] }} Pertemuan</td>
-                        <td class="text-center">
-                            <button type="button" 
-                                    onclick="openRangeStudentModal('{{ addslashes($student->name) }}', {{ json_encode($recap['logs']) }}, {{ json_encode($recap['logs_by_date'] ?? []) }})" 
-                                    class="inline-flex items-center gap-1 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-xl transition shadow-2xs">
+                        <td class="text-center align-middle font-extrabold text-emerald-600 text-base">{{ $recap['hadir'] }}</td>
+                        <td class="text-center align-middle font-extrabold text-rose-600 text-base">{{ $recap['alfa'] }}</td>
+                        <td class="text-center align-middle font-bold text-amber-600">{{ $recap['sakit_izin'] }}</td>
+                        <td class="text-center align-middle font-bold text-amber-500">{{ $recap['terlambat'] }}</td>
+                        <td class="text-center align-middle font-bold text-slate-700">{{ $recap['total'] }}</td>
+                        <td class="text-center align-middle">
+                            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition font-bold text-xs border border-slate-200" onclick="openRangeStudentModal('{{ addslashes($student->name) }}', {{ json_encode($recap['logs']) }})">
                                 <i class="bi bi-eye"></i> Detail Log
                             </button>
                         </td>
@@ -135,198 +231,248 @@
 </div>
 
 @else
-{{-- ── MODE SATU TANGGAL (INSTANT AUTO-SAVE ABSENSI MAPEL) ── --}}
-
-{{-- COMPACT SUMMARY COUNTER STRIP --}}
-<div class="mb-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-sm whitespace-nowrap">
-    <div class="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 border border-emerald-200 text-xs sm:text-sm whitespace-nowrap">
-        <span>🟢</span>
-        <span class="font-bold text-emerald-800 uppercase tracking-wide">Hadir:</span>
-        <span class="font-extrabold text-emerald-700 font-mono" id="sum-hadir">0</span>
-    </div>
-
-    <div class="inline-flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-1.5 border border-rose-200 text-xs sm:text-sm whitespace-nowrap">
-        <span>🔴</span>
-        <span class="font-bold text-rose-800 uppercase tracking-wide">Tidak Hadir:</span>
-        <span class="font-extrabold text-rose-700 font-mono" id="sum-alfa">0</span>
-    </div>
-
-    <div class="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 border border-amber-200 text-xs sm:text-sm whitespace-nowrap">
-        <span>🤒</span>
-        <span class="font-bold text-amber-800 uppercase tracking-wide">Sakit/Izin:</span>
-        <span class="font-extrabold text-amber-700 font-mono" id="sum-sakit-izin">0</span>
-    </div>
-
-    <div class="inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-1.5 border border-slate-200 text-xs sm:text-sm whitespace-nowrap">
-        <span class="font-bold text-slate-500 uppercase tracking-wide">Total:</span>
-        <span class="font-extrabold text-slate-800 font-mono">{{ $students->count() }} Siswa</span>
-    </div>
-</div>
-
-{{-- ABSENSI MAPEL TABLE (AUTO-SAVE) --}}
-<div class="card shadow-sm border border-slate-200 overflow-hidden rounded-2xl">
-    <div class="card-header bg-white border-bottom py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-            <h5 class="mb-0 text-slate-800 fw-bold d-flex flex-wrap align-items-center text-base sm:text-lg gap-2">
-                <span><i class="bi bi-journal-check text-brand-600 me-1"></i>Absensi Mapel Kelas:</span>
-                <span class="text-brand-600 font-extrabold">{{ $classes->find($classId)?->name }}</span>
-                @if(!empty($fullDateFormatted))
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                        <i class="bi bi-calendar3"></i> {{ $fullDateFormatted }}
-                    </span>
-                @endif
-                @if(!empty($selectedSubjectInfo) && !empty($selectedSubjectInfo['subject']))
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 shadow-2xs">
-                        <i class="bi bi-book-half"></i> {{ $selectedSubjectInfo['subject'] }}
-                    </span>
-                    @if(!empty($selectedSubjectInfo['slot_num']))
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs">
-                        <i class="bi bi-clock-history"></i> Jam ke-{{ $selectedSubjectInfo['slot_num'] }} @if(!empty($selectedSubjectInfo['time_str']))({{ $selectedSubjectInfo['time_str'] }})@endif
-                    </span>
-                    @endif
-                @elseif(!empty($selectedSubjectName))
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 shadow-2xs">
-                        <i class="bi bi-book-half"></i> {{ $selectedSubjectName }}
-                    </span>
-                @endif
-            </h5>
-            <p class="text-muted small mb-0 mt-0.5">Klik <strong>Hadir</strong> atau <strong>Tidak Hadir</strong>. Status <strong>langsung tersimpan otomatis</strong>.</p>
-        </div>
-        @if(($session ?? 'all') !== 'all')
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button type="button" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs text-xs sm:text-sm font-bold flex-1 sm:flex-none hover:bg-emerald-100 active:scale-95 transition-all" onclick="setAllQuick('hadir')">
-                <i class="bi bi-check-all text-base"></i>Semua Hadir
-            </button>
-            <button type="button" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-rose-50 text-rose-800 border border-rose-200 shadow-xs text-xs sm:text-sm font-bold flex-1 sm:flex-none hover:bg-rose-100 active:scale-95 transition-all" onclick="setAllQuick('alfa')">
-                <i class="bi bi-x-circle text-base"></i>Semua Tidak Hadir
-            </button>
-        </div>
-        @endif
-    </div>
-
-    @if(($session ?? 'all') === 'all')
-    <div class="p-3.5 bg-sky-50 border-b border-sky-100 flex items-center justify-between gap-3 text-sky-900">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
-                <i class="bi bi-eye-fill text-sm"></i>
+{{-- ── 4. MODE SATU TANGGAL: CLEAN SEPARATED CONTROL BARS & ATTENDANCE ── --}}
+<div class="space-y-4 mb-5">
+    {{-- CONTROL BAR A: SUMMARY COUNTERS & BULK ACTIONS --}}
+    <div class="rounded-2xl bg-white p-3.5 sm:p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {{-- SUMMARY COUNTERS --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 border border-emerald-200 text-xs">
+                <span>🟢</span>
+                <span class="font-bold text-emerald-900 uppercase">Hadir:</span>
+                <span class="font-black text-emerald-700 font-mono text-sm" id="sum-hadir">0</span>
             </div>
-            <div>
-                <div class="font-extrabold text-xs sm:text-sm text-sky-950">Mode Lihat Rekapitulasi Gabungan (Read-Only)</div>
-                <div class="text-[11px] sm:text-xs text-sky-800 font-medium mt-0.5">Untuk menginput presensi siswa, silakan pilih salah satu <strong>Mata Pelajaran</strong> pada filter dropdown di atas.</div>
+
+            <div class="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 border border-rose-200 text-xs">
+                <span>🔴</span>
+                <span class="font-bold text-rose-900 uppercase">Tidak Hadir:</span>
+                <span class="font-black text-rose-700 font-mono text-sm" id="sum-alfa">0</span>
+            </div>
+
+            <div class="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1.5 border border-amber-200 text-xs">
+                <span>🤒</span>
+                <span class="font-bold text-amber-900 uppercase">Sakit/Izin:</span>
+                <span class="font-black text-amber-700 font-mono text-sm" id="sum-sakit-izin">0</span>
+            </div>
+
+            <div class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 border border-slate-200 text-xs">
+                <span class="font-bold text-slate-600 uppercase">Total:</span>
+                <span class="font-black text-slate-900 font-mono text-sm">{{ $students->count() }} Siswa</span>
             </div>
         </div>
-    </div>
-    @endif
 
-    <div class="card-body p-0">
-        <div class="table-responsive overflow-x-auto">
-            <table class="table mb-0 align-middle w-full" style="min-width: 700px">
-                <thead>
-                    <tr class="text-xs uppercase tracking-wider bg-slate-50">
-                        <th class="text-center" style="width: 45px">No</th>
-                        <th style="width: 180px">Siswa</th>
-                        <th class="text-center" style="width: 220px">Presensi Mapel</th>
-                        <th style="width: 240px">Catatan Siswa</th>
-                        <th class="text-center" style="width: 110px">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($students as $i => $student)
-                    @php
-                        $studentExisting = $existing[$student->id] ?? null;
-                        $savedStatus = $studentExisting['status'] ?? null;
-                        $isHomeroomLock = !empty($studentExisting['from_homeroom']) || in_array($savedStatus, ['sakit', 'izin'], true);
-                    @endphp
-                    <tr class="att-row" data-student-id="{{ $student->id }}">
-                        <td class="text-center align-middle font-semibold text-slate-400" style="font-size: 13px">{{ $i + 1 }}</td>
-                        <td class="align-middle">
-                            <div class="fw-semibold text-slate-800" style="font-size: 14px">{{ $student->name }}</div>
-                            <div style="font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace" class="mt-0.5">
-                                NIS: {{ $student->nis }}
-                            </div>
-                        </td>
-                        <td class="align-middle text-center">
-                            @if(($session ?? 'all') === 'all')
-                                <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-bold border border-slate-200 text-xs">
-                                    <i class="bi bi-funnel text-slate-400"></i> Pilih Mapel
-                                </span>
-                            @elseif($isHomeroomLock)
-                                @if($savedStatus === 'sakit')
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-bold border border-amber-300 shadow-sm text-xs">
-                                        🤒 Sakit (Catatan Wali Kelas)
-                                    </span>
-                                @elseif($savedStatus === 'izin')
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-100 text-sky-800 font-bold border border-sky-300 shadow-sm text-xs">
-                                        📄 Izin (Catatan Wali Kelas)
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-bold border border-amber-300 shadow-sm text-xs">
-                                        ℹ️ {{ ucfirst($savedStatus) }} (Wali Kelas)
-                                    </span>
-                                @endif
-                            @else
-                                <div class="btn-group shadow-xs rounded-xl overflow-hidden" role="group" aria-label="Status">
-                                    <button type="button" 
-                                            class="btn btn-quick-save px-3.5 py-2.5 min-h-[44px] text-xs sm:text-sm font-extrabold {{ $savedStatus === 'hadir' ? 'btn-success shadow-sm' : 'btn-outline-success' }}"
-                                            onclick="saveQuick('{{ $student->id }}', 'hadir', this)">
-                                        🟢 Hadir
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-quick-save px-3.5 py-2.5 min-h-[44px] text-xs sm:text-sm font-extrabold {{ $savedStatus === 'alfa' ? 'btn-danger shadow-sm' : 'btn-outline-danger' }}"
-                                            onclick="saveQuick('{{ $student->id }}', 'alfa', this)">
-                                        🔴 Tidak Hadir
-                                    </button>
+        {{-- BULK ACTIONS --}}
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition-all text-xs font-black" onclick="setAllQuick('hadir')">
+                <i class="bi bi-check-all text-base"></i> Semuanya Hadir
+            </button>
+            <button type="button" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white shadow-sm hover:bg-rose-700 active:scale-95 transition-all text-xs font-black" onclick="setAllQuick('alfa')">
+                <i class="bi bi-x-circle text-base"></i> Semuanya Absen
+            </button>
+        </div>
+    </div>
+
+    {{-- CONTROL BAR B: INSTANT SEARCH & VIEW MODE SWITCHER --}}
+    <div class="rounded-2xl bg-white p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {{-- INSTANT SEARCH INPUT --}}
+        <div class="relative w-full sm:w-80">
+            <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="student-search-input" oninput="filterStudents(this.value)" placeholder="Cari nama atau NISN siswa..." class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-xs font-semibold text-slate-800 shadow-2xs focus:bg-white focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all">
+        </div>
+
+        {{-- VIEW MODE SWITCHER --}}
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto justify-center">
+            <button type="button" id="btn-view-grid" onclick="switchViewMode('grid')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all bg-brand-600 text-white shadow-xs">
+                <i class="bi bi-grid-fill"></i> Mode Kartu (Grid)
+            </button>
+            <button type="button" id="btn-view-table" onclick="switchViewMode('table')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all text-slate-600 hover:text-slate-900 hover:bg-white">
+                <i class="bi bi-table"></i> Mode Tabel (List)
+            </button>
+        </div>
+    </div>
+
+    {{-- ATTENDANCE CONTAINER CARD --}}
+    <div class="card shadow-sm border border-slate-200 overflow-hidden rounded-2xl bg-white">
+        {{-- VIEW MODE 1: GRID VIEW (KARTU SISWA EFFISIEN) --}}
+        <div id="attendance-grid-container" class="p-4 bg-slate-50/50">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                @foreach($students as $i => $student)
+                @php
+                    $studentExisting = $existing[$student->id] ?? null;
+                    $savedStatus = $studentExisting['status'] ?? null;
+                    $isHomeroomLock = !empty($studentExisting['from_homeroom']) || in_array($savedStatus, ['sakit', 'izin'], true);
+                @endphp
+                <div class="student-att-card rounded-2xl border-2 p-3.5 transition-all flex flex-col justify-between {{ $savedStatus === 'hadir' ? 'border-emerald-500 bg-emerald-50/40 shadow-sm' : ($savedStatus === 'alfa' ? 'border-rose-500 bg-rose-50/40 shadow-sm' : ($isHomeroomLock ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs')) }}" 
+                     id="card-student-{{ $student->id }}" 
+                     data-student-id="{{ $student->id }}" 
+                     data-student-name="{{ strtolower($student->name) }}" 
+                     data-student-nis="{{ strtolower($student->nis) }}">
+                    
+                    <div>
+                        {{-- CARD HEADER: AVATAR, NAMA & STATUS BADGE --}}
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white font-black text-sm shadow-xs">
+                                    {{ strtoupper(substr($student->name, 0, 1)) }}
                                 </div>
-                            @endif
-                        </td>
-                        <td class="align-middle">
+                                <div class="truncate">
+                                    <h6 class="font-extrabold text-slate-900 text-sm leading-snug truncate mb-0">{{ $student->name }}</h6>
+                                    <span class="text-[11px] font-mono text-slate-500 font-semibold">NISN: {{ $student->nis }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- STATUS INDICATOR --}}
+                        <div class="mb-3 text-center" id="card-status-ind-{{ $student->id }}">
                             @if($isHomeroomLock)
-                                <span class="text-xs text-amber-700 font-medium italic flex items-center gap-1 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200/80">
-                                    <i class="bi bi-lock-fill text-amber-600"></i> Siswa {{ ucfirst($savedStatus) }} (Dicatat Wali Kelas)
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 w-full justify-center">
+                                    🤒 {{ strtoupper($savedStatus) }} (Wali Kelas)
+                                </span>
+                            @elseif($savedStatus === 'hadir')
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs w-full justify-center">
+                                    🟢 HADIR
+                                </span>
+                            @elseif($savedStatus === 'alfa')
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-600 text-white shadow-xs w-full justify-center">
+                                    🔴 TIDAK HADIR
                                 </span>
                             @else
-                                <input type="text" 
-                                       id="notes-{{ $student->id }}" 
-                                       class="form-control form-control-sm text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:bg-white focus:border-brand-500 transition-all" 
-                                       placeholder="Tulis catatan siswa (opsional)..." 
-                                       value="{{ $studentExisting['notes'] ?? '' }}"
-                                       onchange="saveQuickNotes('{{ $student->id }}')">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 w-full justify-center">
+                                    ⚪ Belum Diabsen
+                                </span>
                             @endif
-                        </td>
-                        <td class="align-middle text-center">
-                            <span class="save-status-indicator text-xs font-semibold text-slate-400" id="status-ind-{{ $student->id }}">
-                                @if($isHomeroomLock)
-                                    <span class="text-amber-600 font-medium">Locked</span>
-                                @elseif($savedStatus === 'hadir')
-                                    <span class="text-emerald-600 font-bold"><i class="bi bi-check-circle-fill me-1"></i>Hadir</span>
-                                @elseif($savedStatus === 'alfa')
-                                    <span class="text-rose-600 font-bold"><i class="bi bi-x-circle-fill me-1"></i>Tidak Hadir</span>
-                                @else
-                                    <span class="text-slate-400 font-normal">Belum Diabsen</span>
-                                @endif
-                            </span>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
+                        </div>
 
-    {{-- Form Catatan Sesi Mapel / Jurnal Pembelajaran Guru --}}
-    <div class="card shadow-sm border-slate-200/60 rounded-2xl overflow-hidden bg-white mt-4">
-        <div class="card-header bg-slate-50/80 border-bottom border-slate-100 px-4 py-3 flex items-center justify-between">
-            <span class="fw-bold text-slate-800 text-sm flex items-center gap-2">
-                <i class="bi bi-journal-text text-brand-600 text-base"></i> Catatan Laporan KBM / Sesi Mapel Ini (Untuk Admin & Wali Kelas)
-            </span>
-            <span id="session-notes-status" class="text-xs font-semibold text-slate-400"></span>
+                        {{-- ACTION BUTTONS --}}
+                        @if(!$isHomeroomLock)
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" 
+                                    class="btn-card-save flex items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-xs font-black transition-all active:scale-95 min-h-[44px] {{ $savedStatus === 'hadir' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-600' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' }}"
+                                    onclick="saveQuick('{{ $student->id }}', 'hadir', this)">
+                                🟢 HADIR
+                            </button>
+                            <button type="button" 
+                                    class="btn-card-save flex items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-xs font-black transition-all active:scale-95 min-h-[44px] {{ $savedStatus === 'alfa' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-600' : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100' }}"
+                                    onclick="saveQuick('{{ $student->id }}', 'alfa', this)">
+                                🔴 ABSEN
+                            </button>
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- CATATAN INDIVIDUAL SISWA --}}
+                    @if(!$isHomeroomLock)
+                    <div class="mt-3 pt-2.5 border-t border-slate-200/80">
+                        <input type="text" 
+                               id="card-notes-{{ $student->id }}" 
+                               class="form-control text-[11px] rounded-xl border-slate-200 bg-white focus:border-brand-500 transition-all py-1.5 px-2.5 w-full" 
+                               placeholder="Catatan khusus (opsional)..." 
+                               value="{{ $studentExisting['notes'] ?? '' }}"
+                               onchange="saveQuickNotes('{{ $student->id }}')">
+                    </div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
         </div>
-        <div class="card-body p-4 space-y-3">
-            <textarea id="input-session-notes" rows="3" class="form-control text-sm rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-brand-500 transition-all w-full" placeholder="Tuliskan materi KBM yang dibahas, catatan kejadian kelas, atau laporan untuk Wali Kelas & Admin...">{{ $sessionNotes ?? '' }}</textarea>
-            <div class="flex justify-end">
-                <button type="button" onclick="saveSessionNotesAjax()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-brand-700 transition-all border-0">
-                    <i class="bi bi-save"></i> Simpan Catatan Sesi
-                </button>
+
+        {{-- VIEW MODE 2: TABLE VIEW (TABEL LIST RAPI) --}}
+        <div id="attendance-table-container" class="card-body p-0 hidden">
+            <div class="table-responsive overflow-x-auto">
+                <table class="table mb-0 align-middle w-full" style="min-width: 700px">
+                    <thead>
+                        <tr class="text-xs uppercase tracking-wider bg-slate-50">
+                            <th class="text-center" style="width: 45px">No</th>
+                            <th style="width: 180px">Siswa</th>
+                            <th class="text-center" style="width: 220px">Presensi Mapel</th>
+                            <th style="width: 240px">Catatan Siswa</th>
+                            <th class="text-center" style="width: 110px">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($students as $i => $student)
+                        @php
+                            $studentExisting = $existing[$student->id] ?? null;
+                            $savedStatus = $studentExisting['status'] ?? null;
+                            $isHomeroomLock = !empty($studentExisting['from_homeroom']) || in_array($savedStatus, ['sakit', 'izin'], true);
+                        @endphp
+                        <tr class="att-row" data-student-id="{{ $student->id }}" data-student-name="{{ strtolower($student->name) }}" data-student-nis="{{ strtolower($student->nis) }}">
+                            <td class="text-center align-middle font-semibold text-slate-400" style="font-size: 13px">{{ $i + 1 }}</td>
+                            <td class="align-middle">
+                                <div class="fw-semibold text-slate-800" style="font-size: 14px">{{ $student->name }}</div>
+                                <div style="font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace" class="mt-0.5">
+                                    NISN: {{ $student->nis }}
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                @if($isHomeroomLock)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-bold border border-amber-300 shadow-sm text-xs">
+                                        🤒 {{ strtoupper($savedStatus) }} (Wali Kelas)
+                                    </span>
+                                @else
+                                    <div class="btn-group shadow-xs rounded-xl overflow-hidden" role="group">
+                                        <button type="button" 
+                                                class="btn btn-quick-save px-3.5 py-2.5 min-h-[44px] text-xs font-extrabold {{ $savedStatus === 'hadir' ? 'btn-success shadow-sm' : 'btn-outline-success' }}"
+                                                onclick="saveQuick('{{ $student->id }}', 'hadir', this)">
+                                            🟢 Hadir
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-quick-save px-3.5 py-2.5 min-h-[44px] text-xs font-extrabold {{ $savedStatus === 'alfa' ? 'btn-danger shadow-sm' : 'btn-outline-danger' }}"
+                                                onclick="saveQuick('{{ $student->id }}', 'alfa', this)">
+                                            🔴 Tidak Hadir
+                                        </button>
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="align-middle">
+                                @if($isHomeroomLock)
+                                    <span class="text-xs text-amber-700 font-medium italic flex items-center gap-1 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200/80">
+                                        <i class="bi bi-lock-fill text-amber-600"></i> Siswa {{ ucfirst($savedStatus) }} (Dicatat Wali Kelas)
+                                    </span>
+                                @else
+                                    <input type="text" 
+                                           id="notes-{{ $student->id }}" 
+                                           class="form-control form-control-sm text-xs rounded-xl border-slate-200 bg-slate-50/70 focus:bg-white focus:border-brand-500 transition-all" 
+                                           placeholder="Tulis catatan siswa (opsional)..." 
+                                           value="{{ $studentExisting['notes'] ?? '' }}"
+                                           onchange="saveQuickNotes('{{ $student->id }}')">
+                                @endif
+                            </td>
+                            <td class="align-middle text-center">
+                                <span class="save-status-indicator text-xs font-semibold text-slate-400" id="status-ind-{{ $student->id }}">
+                                    @if($isHomeroomLock)
+                                        <span class="text-amber-600 font-medium">Locked</span>
+                                    @elseif($savedStatus === 'hadir')
+                                        <span class="text-emerald-600 font-bold"><i class="bi bi-check-circle-fill me-1"></i>Hadir</span>
+                                    @elseif($savedStatus === 'alfa')
+                                        <span class="text-rose-600 font-bold"><i class="bi bi-x-circle-fill me-1"></i>Tidak Hadir</span>
+                                    @else
+                                        <span class="text-slate-400 font-normal">Belum Diabsen</span>
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Form Catatan Sesi Mapel / Jurnal Pembelajaran Guru --}}
+        <div class="card shadow-sm border-t border-slate-200/80 rounded-b-2xl overflow-hidden bg-white">
+            <div class="card-header bg-slate-50/80 border-bottom border-slate-100 px-4 py-3 flex items-center justify-between">
+                <span class="fw-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="bi bi-journal-text text-brand-600 text-base"></i> Catatan Laporan KBM / Sesi Mapel Ini (Untuk Admin & Wali Kelas)
+                </span>
+                <span id="session-notes-status" class="text-xs font-semibold text-slate-400"></span>
+            </div>
+            <div class="card-body p-4 space-y-3">
+                <textarea id="input-session-notes" rows="3" class="form-control text-sm rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-brand-500 transition-all w-full" placeholder="Tuliskan materi KBM yang dibahas, catatan kejadian kelas, atau laporan untuk Wali Kelas & Admin...">{{ $sessionNotes ?? '' }}</textarea>
+                <div class="flex justify-end">
+                    <button type="button" onclick="saveSessionNotesAjax()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-brand-700 transition-all border-0">
+                        <i class="bi bi-save"></i> Simpan Catatan Sesi
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -368,6 +514,9 @@
     </div>
 </div>
 
+{{-- FLOATING TOAST NOTIFICATION CONTAINER --}}
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
 @endsection
 
 @push('scripts')
@@ -378,20 +527,105 @@ const DATE_VAL = '{{ $startDate }}';
 const CLASS_ID_VAL = '{{ $classId }}';
 const SESSION_VAL = '{{ $session }}';
 
+function toggleScheduleBlock() {
+    const block = document.getElementById('schedule-selector-block');
+    const icon = document.getElementById('sched-toggle-icon');
+    if (!block) return;
+    
+    if (block.classList.contains('hidden')) {
+        block.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+    } else {
+        block.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-extrabold text-white shadow-xl transition-all duration-300 transform translate-y-4 opacity-0 ${type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`;
+    toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} text-base"></i> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+function switchViewMode(mode) {
+    const gridContainer = document.getElementById('attendance-grid-container');
+    const tableContainer = document.getElementById('attendance-table-container');
+    const btnGrid = document.getElementById('btn-view-grid');
+    const btnTable = document.getElementById('btn-view-table');
+
+    if (!gridContainer || !tableContainer) return;
+
+    if (mode === 'grid') {
+        gridContainer.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+        
+        btnGrid.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all bg-brand-600 text-white shadow-xs';
+        btnTable.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all text-slate-600 hover:text-slate-900 hover:bg-white';
+        localStorage.setItem('att_view_mode', 'grid');
+    } else {
+        gridContainer.classList.add('hidden');
+        tableContainer.classList.remove('hidden');
+
+        btnTable.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all bg-brand-600 text-white shadow-xs';
+        btnGrid.className = 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all text-slate-600 hover:text-slate-900 hover:bg-white';
+        localStorage.setItem('att_view_mode', 'table');
+    }
+}
+
+function filterStudents(query) {
+    const q = query.toLowerCase().trim();
+    
+    // Filter Cards
+    document.querySelectorAll('.student-att-card').forEach(card => {
+        const name = card.dataset.studentName || '';
+        const nis = card.dataset.studentNis || '';
+        if (!q || name.includes(q) || nis.includes(q)) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+
+    // Filter Table Rows
+    document.querySelectorAll('.att-row').forEach(row => {
+        const name = row.dataset.studentName || '';
+        const nis = row.dataset.studentNis || '';
+        if (!q || name.includes(q) || nis.includes(q)) {
+            row.classList.remove('hidden');
+        } else {
+            row.classList.add('hidden');
+        }
+    });
+}
+
 function updateSummaryCounters() {
     let hadir = 0;
     let alfa = 0;
     let sakitIzin = 0;
 
-    document.querySelectorAll('.att-row').forEach(row => {
-        const ind = row.querySelector('.save-status-indicator');
-        const text = ind ? ind.textContent.trim() : '';
-        
-        if (text.includes('Hadir') && !text.includes('Tidak')) {
+    document.querySelectorAll('.student-att-card').forEach(card => {
+        const statusInd = card.querySelector('#card-status-ind-' + card.dataset.studentId);
+        const text = statusInd ? statusInd.textContent.trim() : '';
+
+        if (text.includes('HADIR') || text.includes('Hadir')) {
             hadir++;
-        } else if (text.includes('Tidak Hadir')) {
+        } else if (text.includes('TIDAK HADIR') || text.includes('Alfa') || text.includes('Tidak Hadir')) {
             alfa++;
-        } else if (text.includes('Sakit') || text.includes('Izin') || text.includes('Locked')) {
+        } else if (text.includes('SAKIT') || text.includes('IZIN') || text.includes('Sakit') || text.includes('Izin') || text.includes('Locked')) {
             sakitIzin++;
         }
     });
@@ -406,12 +640,17 @@ function updateSummaryCounters() {
 }
 
 function saveQuick(studentId, status, btnElement) {
-    const indicator = document.getElementById(`status-ind-${studentId}`);
-    const notesVal = document.getElementById(`notes-${studentId}`)?.value || '';
+    const cardEl = document.getElementById(`card-student-${studentId}`);
+    const cardStatusInd = document.getElementById(`card-status-ind-${studentId}`);
+    const cardNotes = document.getElementById(`card-notes-${studentId}`)?.value || '';
+    const tableNotes = document.getElementById(`notes-${studentId}`)?.value || '';
+    const notesVal = cardNotes || tableNotes;
 
-    if (indicator) {
-        indicator.innerHTML = '<span class="text-slate-400 font-normal"><i class="bi bi-arrow-repeat spin me-1"></i>Menyimpan...</span>';
-    }
+    // Sync input notes
+    if (document.getElementById(`card-notes-${studentId}`)) document.getElementById(`card-notes-${studentId}`).value = notesVal;
+    if (document.getElementById(`notes-${studentId}`)) document.getElementById(`notes-${studentId}`).value = notesVal;
+
+    const tableInd = document.getElementById(`status-ind-${studentId}`);
 
     fetch(QUICK_SAVE_URL, {
         method: 'POST',
@@ -432,10 +671,29 @@ function saveQuick(studentId, status, btnElement) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            const btnGroup = btnElement.closest('.btn-group');
-            if (btnGroup) {
-                btnGroup.querySelectorAll('.btn-quick-save').forEach(b => {
-                    b.classList.remove('btn-success', 'btn-danger', 'font-bold', 'shadow-sm');
+            // Update Card Element UI
+            if (cardEl) {
+                if (status === 'hadir') {
+                    cardEl.className = 'student-att-card rounded-2xl border-2 p-3.5 transition-all flex flex-col justify-between border-emerald-500 bg-emerald-50/40 shadow-sm';
+                    if (cardStatusInd) cardStatusInd.innerHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs w-full justify-center">🟢 HADIR</span>';
+                } else {
+                    cardEl.className = 'student-att-card rounded-2xl border-2 p-3.5 transition-all flex flex-col justify-between border-rose-500 bg-rose-50/40 shadow-sm';
+                    if (cardStatusInd) cardStatusInd.innerHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-600 text-white shadow-xs w-full justify-center">🔴 TIDAK HADIR</span>';
+                }
+
+                cardEl.querySelectorAll('.btn-card-save').forEach(b => {
+                    if (b.textContent.includes('HADIR')) {
+                        b.className = 'btn-card-save flex items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-xs font-black transition-all active:scale-95 min-h-[44px] ' + (status === 'hadir' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-600' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100');
+                    } else {
+                        b.className = 'btn-card-save flex items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-xs font-black transition-all active:scale-95 min-h-[44px] ' + (status === 'alfa' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-600' : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100');
+                    }
+                });
+            }
+
+            // Update Table Row UI
+            const rowEl = document.querySelector(`.att-row[data-student-id="${studentId}"]`);
+            if (rowEl) {
+                rowEl.querySelectorAll('.btn-quick-save').forEach(b => {
                     if (b.textContent.includes('Hadir') && !b.textContent.includes('Tidak')) {
                         b.className = 'btn btn-sm btn-quick-save ' + (status === 'hadir' ? 'btn-success font-bold shadow-sm' : 'btn-outline-success');
                     } else {
@@ -444,31 +702,31 @@ function saveQuick(studentId, status, btnElement) {
                 });
             }
 
-            if (indicator) {
+            if (tableInd) {
                 if (status === 'hadir') {
-                    indicator.innerHTML = '<span class="text-emerald-600 font-bold"><i class="bi bi-check-circle-fill me-1"></i>Hadir</span>';
+                    tableInd.innerHTML = '<span class="text-emerald-600 font-bold"><i class="bi bi-check-circle-fill me-1"></i>Hadir</span>';
                 } else {
-                    indicator.innerHTML = '<span class="text-rose-600 font-bold"><i class="bi bi-x-circle-fill me-1"></i>Tidak Hadir</span>';
+                    tableInd.innerHTML = '<span class="text-rose-600 font-bold"><i class="bi bi-x-circle-fill me-1"></i>Tidak Hadir</span>';
                 }
             }
+
             updateSummaryCounters();
+            showToast(status === 'hadir' ? 'Status dicatat HADIR' : 'Status dicatat ABSEN', status === 'hadir' ? 'success' : 'error');
         } else {
-            alert(data.message || 'Gagal menyimpan absensi.');
-            if (indicator) indicator.innerHTML = '<span class="text-rose-500 font-normal">Gagal</span>';
+            showToast(data.message || 'Gagal menyimpan absensi.', 'error');
         }
     })
     .catch(err => {
-        alert('Terjadi kesalahan jaringan.');
-        if (indicator) indicator.innerHTML = '<span class="text-rose-500 font-normal">Error</span>';
+        showToast('Terjadi kesalahan koneksi.', 'error');
     });
 }
 
 function saveQuickNotes(studentId) {
-    const row = document.querySelector(`.att-row[data-student-id="${studentId}"]`);
-    if (!row) return;
-    const btnActive = row.querySelector('.btn-quick-save.btn-success, .btn-quick-save.btn-danger');
+    const cardEl = document.getElementById(`card-student-${studentId}`);
+    if (!cardEl) return;
+    const btnActive = cardEl.querySelector('.btn-card-save.bg-emerald-600, .btn-card-save.bg-rose-600');
     if (btnActive) {
-        const isHadir = btnActive.textContent.includes('Hadir') && !btnActive.textContent.includes('Tidak');
+        const isHadir = btnActive.textContent.includes('HADIR');
         saveQuick(studentId, isHadir ? 'hadir' : 'alfa', btnActive);
     }
 }
@@ -496,9 +754,11 @@ function saveSessionNotesAjax() {
     .then(data => {
         if (data.success) {
             if (statusEl) statusEl.innerHTML = '<span class="text-emerald-600 font-bold"><i class="bi bi-check-circle me-1"></i>Catatan Sesi Tersimpan!</span>';
+            showToast('Catatan jurnal KBM berhasil disimpan!', 'success');
             setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
         } else {
             if (statusEl) statusEl.innerHTML = '<span class="text-rose-600 font-bold">Gagal menyimpan</span>';
+            showToast('Gagal menyimpan catatan sesi', 'error');
         }
     })
     .catch(err => {
@@ -507,9 +767,9 @@ function saveSessionNotesAjax() {
 }
 
 function setAllQuick(status) {
-    document.querySelectorAll('.att-row').forEach(row => {
-        const btn = row.querySelector(`.btn-quick-save[onclick*="'${status}'"]`);
-        const studentId = row.dataset.studentId;
+    document.querySelectorAll('.student-att-card').forEach(card => {
+        const btn = card.querySelector(`.btn-card-save[onclick*="'${status}'"]`);
+        const studentId = card.dataset.studentId;
         if (btn && studentId) {
             saveQuick(studentId, status, btn);
         }
@@ -518,369 +778,102 @@ function setAllQuick(status) {
 
 let currentModalStudentName = '';
 let currentModalLogs = [];
-let currentModalLogsByDate = [];
-let currentSortOrder = 'asc'; // 'asc': Terlama -> Terbaru, 'desc': Terbaru -> Terlama
 
-function toggleModalSortOrder() {
-    currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
-    renderModalLogsTable();
-}
-
-function openRangeStudentModal(studentName, logs, logsByDate) {
+function openRangeStudentModal(studentName, logs) {
     currentModalStudentName = studentName;
     currentModalLogs = logs || [];
-    currentModalLogsByDate = logsByDate || [];
-    currentSortOrder = 'asc';
-    renderModalLogsTable();
-    document.getElementById('rangeStudentLogsModal').classList.remove('hidden');
-}
 
-function renderModalLogsTable() {
-    document.getElementById('rslmTitle').innerHTML = `
-        <div class="flex items-center justify-between w-full pr-4 gap-2 flex-wrap sm:flex-nowrap">
-            <span class="text-slate-800 font-extrabold flex items-center gap-1.5 truncate">
-                <i class="bi bi-person-badge text-brand-600"></i> Detail Presensi Harian & Mapel: 
-                <span class="text-brand-700 font-black ml-1">${currentModalStudentName}</span>
-            </span>
-            <button type="button" onclick="toggleModalSortOrder()" class="inline-flex items-center gap-1.5 text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-300 px-3 py-1 rounded-xl shadow-2xs transition">
-                <i class="bi bi-arrow-down-up text-brand-600"></i>
-                <span>Urutan: ${currentSortOrder === 'asc' ? 'Terlama → Terbaru (Senin-Jumat)' : 'Terbaru → Terlama'}</span>
-            </button>
-        </div>
-    `;
+    const titleEl = document.getElementById('rslmTitle');
+    const bodyEl = document.getElementById('rslmBody');
+    const modalEl = document.getElementById('rangeStudentLogsModal');
 
-    const container = document.getElementById('rslmBody');
-    container.innerHTML = '';
-
-    if (currentModalLogsByDate && currentModalLogsByDate.length > 0) {
-        let sortedLogsByDate = [...currentModalLogsByDate];
-        sortedLogsByDate.sort((a, b) => {
-            return currentSortOrder === 'asc' 
-                ? a.raw_date.localeCompare(b.raw_date) 
-                : b.raw_date.localeCompare(a.raw_date);
-        });
-
-        let tableRows = '';
-        let currentWeek = null;
-        let itemIndex = 0;
-
-        sortedLogsByDate.forEach((dayData) => {
-            if (dayData.week_num !== currentWeek) {
-                currentWeek = dayData.week_num;
-                tableRows += `
-                    <tr class="bg-slate-200/90 border-y-2 border-brand-500">
-                        <td colspan="7" class="py-2.5 px-4 bg-slate-100">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="bg-brand-600 text-white font-extrabold px-3 py-1 rounded-lg text-xs tracking-wider shadow-2xs">
-                                        <i class="bi bi-calendar3-week me-1"></i> MINGGU KE-${currentWeek}
-                                    </span>
-                                    <span class="text-slate-800 font-extrabold text-xs">Rekap Presensi Harian & Mapel (Senin — Jumat)</span>
-                                </div>
-                                <span class="text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-0.5 rounded-md">Pembatas Mingguan</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            itemIndex++;
-            const bgRow = itemIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/60';
-
-            let pagiHtml = '<span class="text-slate-300 text-xs">-</span>';
-            if (dayData.pagi) {
-                let pStyle = 'bg-slate-100 text-slate-700 border-slate-200';
-                if (dayData.pagi.status === 'hadir') pStyle = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-bold';
-                if (dayData.pagi.status === 'terlambat') pStyle = 'bg-purple-50 text-purple-800 border-purple-200 font-bold';
-                if (dayData.pagi.status === 'sakit' || dayData.pagi.status === 'izin') pStyle = 'bg-amber-50 text-amber-800 border-amber-200 font-bold';
-                if (dayData.pagi.status === 'alfa') pStyle = 'bg-rose-50 text-rose-800 border-rose-200 font-bold';
-
-                pagiHtml = `
-                    <div class="inline-flex flex-col gap-0.5 items-center">
-                        <span class="rounded-full ${pStyle} border px-2.5 py-0.5 text-[11px] font-bold">${dayData.pagi.status_label}</span>
-                        ${dayData.pagi.check_in ? `<span class="text-[10px] text-slate-500 font-mono font-bold">${dayData.pagi.check_in}</span>` : ''}
-                    </div>
-                `;
-            }
-
-            let mapelColsHtml = '';
-            for (let m = 1; m <= 4; m++) {
-                const mData = dayData.mapels ? dayData.mapels.find(x => x.session_key === `mapel_${m}`) : null;
-                if (mData) {
-                    let mStyle = 'bg-slate-100 text-slate-700 border-slate-200';
-                    let badgeBg = 'bg-slate-600 text-white';
-                    if (mData.status === 'hadir') { 
-                        mStyle = 'bg-emerald-50/90 border-emerald-200/90 text-emerald-950'; 
-                        badgeBg = 'bg-emerald-600 text-white font-extrabold shadow-2xs'; 
-                    }
-                    if (mData.status === 'terlambat') { 
-                        mStyle = 'bg-amber-100/90 border-amber-300 text-amber-950 font-semibold ring-1 ring-amber-400/50'; 
-                        badgeBg = 'bg-amber-500 text-white font-black shadow-xs'; 
-                    }
-                    if (mData.status === 'sakit') { 
-                        mStyle = 'bg-amber-100/90 border-amber-300 text-amber-950 font-semibold ring-1 ring-amber-400/50'; 
-                        badgeBg = 'bg-amber-600 text-white font-black shadow-xs'; 
-                    }
-                    if (mData.status === 'izin') { 
-                        mStyle = 'bg-sky-100/90 border-sky-300 text-sky-950 font-semibold ring-1 ring-sky-400/50'; 
-                        badgeBg = 'bg-sky-600 text-white font-black shadow-xs'; 
-                    }
-                    if (mData.status === 'alfa') { 
-                        mStyle = 'bg-rose-100/95 border-rose-400 text-rose-950 font-bold ring-2 ring-rose-300/80 shadow-xs'; 
-                        badgeBg = 'bg-rose-600 text-white font-black shadow-xs ring-2 ring-rose-300/60'; 
-                    }
-
-                    let subTitle = mData.session.includes(':') ? mData.session.split(':')[1].trim() : mData.session;
-                    let timeBadgeHtml = mData.time_str ? `<div class="text-[10px] text-purple-800 font-extrabold flex items-center gap-1 bg-purple-50/90 border border-purple-200/80 px-1.5 py-0.5 rounded-md mt-0.5 w-fit"><i class="bi bi-clock-history text-purple-600"></i> ${mData.time_str}</div>` : '';
-
-                    mapelColsHtml += `
-                        <td class="py-2 px-2 align-top">
-                            <div class="rounded-xl border ${mStyle} p-2 space-y-1 shadow-2xs">
-                                <div class="flex items-center justify-between gap-1">
-                                    <span class="text-xs font-black text-slate-800 truncate" title="${subTitle}">${subTitle}</span>
-                                    <span class="badge ${badgeBg} text-white text-[10px] px-1.5 py-0.5 rounded font-extrabold shrink-0">${mData.status_label}</span>
-                                </div>
-                                ${timeBadgeHtml}
-                                <div class="text-[10px] text-slate-600 font-semibold truncate flex items-center gap-1">
-                                    <i class="bi bi-person text-brand-600"></i> ${mData.teacher_name}
-                                </div>
-                                <div class="text-[10px] text-slate-500 font-medium italic border-t border-slate-200/60 pt-0.5 mt-0.5 truncate" title="${mData.notes}">
-                                    💬 ${mData.notes}
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                } else {
-                    mapelColsHtml += `<td class="py-2 px-2 text-center text-slate-300 text-xs align-middle">-</td>`;
-                }
-            }
-
-            tableRows += `
-                <tr class="${bgRow} hover:bg-brand-50/30 transition-colors">
-                    <td class="text-center font-semibold text-slate-400 text-xs py-2 px-2.5 align-middle">${itemIndex}</td>
-                    <td class="whitespace-nowrap text-xs font-extrabold text-slate-800 py-2 px-2.5 align-middle">${dayData.day_date}</td>
-                    <td class="text-center whitespace-nowrap py-2 px-2.5 align-middle">${pagiHtml}</td>
-                    ${mapelColsHtml}
-                </tr>
-            `;
-        });
-
-        container.innerHTML = `
-            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
-                <table class="w-full text-left align-middle mb-0 min-w-[850px]">
-                    <thead class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200 sticky top-0 z-10">
-                        <tr>
-                            <th class="py-2.5 px-2.5 text-center" style="width: 40px">No</th>
-                            <th class="py-2.5 px-2.5">Tanggal & Hari</th>
-                            <th class="py-2.5 px-2.5 text-center">Presensi Pagi</th>
-                            <th class="py-2.5 px-2" style="width: 20%">Jam Mapel 1</th>
-                            <th class="py-2.5 px-2" style="width: 20%">Jam Mapel 2</th>
-                            <th class="py-2.5 px-2" style="width: 20%">Jam Mapel 3</th>
-                            <th class="py-2.5 px-2" style="width: 20%">Jam Mapel 4</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs">
-                        ${tableRows}
-                    </tbody>
-                </table>
-            </div>
-        `;
-        return;
-    }
+    if (titleEl) titleEl.innerHTML = `<i class="bi bi-clock-history text-brand-600"></i> Detail Riwayat Presensi: <strong>${studentName}</strong>`;
 
     if (!currentModalLogs || currentModalLogs.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-slate-400 py-10 space-y-2">
-                <i class="bi bi-inbox text-4xl block text-slate-300"></i>
-                <p class="text-sm font-semibold mb-0">Belum ada data presensi untuk siswa ini dalam periode terpilih.</p>
-            </div>
-        `;
-        return;
-    }
-
-    let sortedLogs = [...currentModalLogs];
-    sortedLogs.sort((a, b) => {
-        const dateA = a.raw_date || a.date || '';
-        const dateB = b.raw_date || b.date || '';
-        const comp = currentSortOrder === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
-        if (comp !== 0) {
-            return comp;
-        }
-        const wA = a.sess_weight ?? 0;
-        const wB = b.sess_weight ?? 0;
-        return wA - wB; // Always Mapel 1 -> Mapel 2 -> Mapel 3 -> Mapel 4 per hari
-    });
-
-    let tableRows = '';
-    let currentWeek = null;
-    let itemIndex = 0;
-
-    sortedLogs.forEach((log) => {
-        if (log.week_num !== currentWeek) {
-            currentWeek = log.week_num;
-            tableRows += `
-                <tr class="bg-slate-200/90 border-y-2 border-brand-500">
-                    <td colspan="6" class="py-2.5 px-4 bg-slate-100">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="bg-brand-600 text-white font-extrabold px-3 py-1 rounded-lg text-xs tracking-wider shadow-2xs">
-                                    <i class="bi bi-calendar3-week me-1"></i> MINGGU KE-${currentWeek}
-                                </span>
-                                <span class="text-slate-800 font-extrabold text-xs">Urutan Presensi Pelajaran (Senin — Jumat)</span>
-                            </div>
-                            <span class="text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-0.5 rounded-md">Pembatas Mingguan</span>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
-
-        itemIndex++;
-        let badgeHtml = '';
-        const st = (log.status || '').toLowerCase();
-
-        if (st === 'hadir') {
-            badgeHtml = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-extrabold text-xs shadow-2xs"><i class="bi bi-check-circle-fill"></i> Hadir</span>';
-        } else if (st === 'terlambat') {
-            badgeHtml = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white font-black text-xs shadow-xs"><i class="bi bi-clock-fill"></i> Terlambat</span>';
-        } else if (st === 'sakit') {
-            badgeHtml = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-600 text-white font-black text-xs shadow-xs"><i class="bi bi-hospital-fill"></i> Sakit</span>';
-        } else if (st === 'izin') {
-            badgeHtml = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-600 text-white font-black text-xs shadow-xs"><i class="bi bi-file-earmark-text-fill"></i> Izin</span>';
-        } else if (st === 'alfa') {
-            badgeHtml = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600 text-white font-black text-xs shadow-xs ring-2 ring-rose-300/60"><i class="bi bi-x-circle-fill"></i> Alfa (Tanpa Keterangan)</span>';
-        } else {
-            badgeHtml = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-600 text-white font-bold text-xs">${log.status_label || log.status || '-'}</span>`;
-        }
-
-        const bgRow = (st === 'alfa') 
-            ? 'bg-rose-50/95 border-l-4 border-l-rose-600 font-bold' 
-            : (st === 'izin')
-                ? 'bg-sky-50/90 border-l-4 border-l-sky-500 font-semibold'
-                : (st === 'sakit')
-                    ? 'bg-amber-50/90 border-l-4 border-l-amber-500 font-semibold'
-                    : (st === 'terlambat')
-                        ? 'bg-amber-50/90 border-l-4 border-l-amber-500 font-semibold'
-                        : (itemIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/60');
-
-        tableRows += `
-            <tr class="${bgRow} hover:bg-brand-50/30 transition-colors border-b border-slate-100">
-                <td class="text-center font-mono text-slate-400 text-xs py-2.5 px-3 font-bold">${itemIndex}</td>
-                <td class="whitespace-nowrap text-xs font-black text-slate-900 py-2.5 px-3">
-                    <i class="bi bi-calendar3 text-brand-600 me-1.5"></i>${log.day_date || log.date}
-                </td>
-                <td class="text-xs text-slate-800 font-bold py-2.5 px-3">
-                    <span class="badge bg-slate-200 text-slate-800 text-[11px] font-black uppercase px-2.5 py-1 rounded-lg">${log.session}</span>
-                </td>
-                <td class="text-center whitespace-nowrap text-xs font-mono font-bold text-slate-800 py-2.5 px-3">${log.check_in || '-'}</td>
-                <td class="text-center whitespace-nowrap py-2.5 px-3">
-                    ${badgeHtml}
-                </td>
-                <td class="text-xs text-slate-700 italic py-2.5 px-3">💬 ${log.notes || 'Tidak ada catatan'}</td>
-            </tr>
-        `;
-    });
-
-    container.innerHTML = `
-        <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
-            <table class="w-full text-left align-middle mb-0 min-w-[750px]">
-                <thead class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200 sticky top-0 z-10">
+        bodyEl.innerHTML = '<div class="p-8 text-center text-slate-400 font-medium">Belum ada riwayat catatan presensi untuk siswa ini pada periode terpilih.</div>';
+    } else {
+        let html = `
+        <div class="overflow-x-auto">
+            <table class="table table-hover align-middle mb-0 text-xs sm:text-sm">
+                <thead class="bg-slate-100/80">
                     <tr>
-                        <th class="py-2.5 px-3 text-center" style="width: 40px">No</th>
-                        <th class="py-2.5 px-3">Tanggal & Hari</th>
-                        <th class="py-2.5 px-3">Sesi / Mata Pelajaran</th>
-                        <th class="py-2.5 px-3 text-center">Jam Masuk</th>
-                        <th class="py-2.5 px-3 text-center">Status</th>
-                        <th class="py-2.5 px-3">Keterangan</th>
+                        <th style="width: 140px">Tanggal</th>
+                        <th>Mata Pelajaran / Sesi</th>
+                        <th>Guru Pengampu</th>
+                        <th class="text-center" style="width: 120px">Status</th>
+                        <th>Catatan</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 text-xs">
-                    ${tableRows}
+                <tbody>`;
+
+        currentModalLogs.forEach(log => {
+            let stBadge = '';
+            if (log.status === 'hadir') {
+                stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">🟢 Hadir</span>';
+            } else if (log.status === 'alfa') {
+                stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800">🔴 Tidak Hadir</span>';
+            } else if (log.status === 'sakit') {
+                stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">🤒 Sakit</span>';
+            } else if (log.status === 'izin') {
+                stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800">📄 Izin</span>';
+            } else {
+                stBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700">${log.status}</span>`;
+            }
+
+            html += `
+                <tr>
+                    <td class="font-bold text-slate-700">${log.date_formatted || log.date}</td>
+                    <td class="font-bold text-brand-700">${log.subject_name || log.session}</td>
+                    <td class="text-slate-600">${log.teacher_name || '-'}</td>
+                    <td class="text-center">${stBadge}</td>
+                    <td class="text-slate-500 italic">${log.notes || '-'}</td>
+                </tr>`;
+        });
+
+        html += `
                 </tbody>
             </table>
-        </div>
-    `;
+        </div>`;
+        bodyEl.innerHTML = html;
+    }
+
+    modalEl.classList.remove('hidden');
 }
 
 function closeRangeStudentModal() {
-    document.getElementById('rangeStudentLogsModal').classList.add('hidden');
+    const modalEl = document.getElementById('rangeStudentLogsModal');
+    if (modalEl) modalEl.classList.add('hidden');
 }
 
-function getLocalDateString(dateObj) {
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    updateSummaryCounters();
+    const savedMode = localStorage.getItem('att_view_mode') || 'grid';
+    switchViewMode(savedMode);
+});
 
-function onPeriodChange(period) {
+function onPeriodChange(val) {
     const startInput = document.getElementById('input-start-date');
     const endInput = document.getElementById('input-end-date');
-    const today = new Date();
+    const todayStr = '{{ today()->toDateString() }}';
 
-    if (!startInput || !endInput) return;
-
-    if (period === 'today') {
-        const t = getLocalDateString(today);
-        startInput.value = t;
-        endInput.value   = t;
-    } else if (period === '30_days') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 30);
-        startInput.value = getLocalDateString(start);
-        endInput.value   = getLocalDateString(today);
-    } else if (period === 'week') {
-        const dayOfWeek = today.getDay();
-        const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-        const mon = new Date(today);
-        mon.setDate(today.getDate() + diffToMon);
-        const endDay = new Date(mon);
-        const daysToAdd = {{ !empty($hasSaturday) ? 5 : 4 }};
-        endDay.setDate(mon.getDate() + daysToAdd);
-        startInput.value = getLocalDateString(mon);
-        endInput.value   = getLocalDateString(endDay);
-    } else if (period === 'month') {
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        const lastDay  = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        startInput.value = getLocalDateString(firstDay);
-        endInput.value   = getLocalDateString(lastDay);
+    if (val === 'today') {
+        startInput.value = todayStr;
+        endInput.value = todayStr;
+    } else if (val === 'week') {
+        startInput.value = '{{ today()->startOfWeek()->toDateString() }}';
+        endInput.value = '{{ today()->endOfWeek()->toDateString() }}';
+    } else if (val === '30_days') {
+        startInput.value = '{{ today()->subDays(30)->toDateString() }}';
+        endInput.value = todayStr;
+    } else if (val === 'month') {
+        startInput.value = '{{ today()->startOfMonth()->toDateString() }}';
+        endInput.value = '{{ today()->endOfMonth()->toDateString() }}';
     }
 }
 
 function onDateChange() {
     const periodSelect = document.getElementById('input-period');
-    if (periodSelect && periodSelect.value !== 'custom') {
-        periodSelect.value = 'custom';
-    }
+    if (periodSelect) periodSelect.value = 'custom';
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    updateSummaryCounters();
-    
-    const form = document.getElementById('filter-form');
-    if (form) {
-        form.addEventListener('submit', function() {
-            const period = document.getElementById('input-period')?.value;
-            const startDate = document.getElementById('input-start-date')?.value;
-            const endDate = document.getElementById('input-end-date')?.value;
-            const todayStr = getLocalDateString(new Date());
-
-            // Bersihkan parameter redundan di URL jika memilih hari ini
-            if (period === 'today' && startDate === todayStr && endDate === todayStr) {
-                document.getElementById('input-period').disabled = true;
-                document.getElementById('input-start-date').disabled = true;
-                document.getElementById('input-end-date').disabled = true;
-            }
-        });
-    }
-});
-
 </script>
-<style>
-.spin {
-    animation: spin 1s linear infinite;
-    display: inline-block;
-}
-@keyframes spin { 100% { transform: rotate(360deg); } }
-</style>
 @endpush

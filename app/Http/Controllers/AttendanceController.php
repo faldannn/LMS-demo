@@ -718,8 +718,24 @@ class AttendanceController extends Controller
         $dayName = Carbon::parse($startDate)->translatedFormat('l');
         $fullDateFormatted = Carbon::parse($startDate)->translatedFormat('l, d F Y');
 
-        return view('attendance.create', compact('classes', 'students', 'date', 'startDate', 'endDate', 'classId', 'session', 'existing', 'isRangeMode', 'rangeRecaps', 'sessionNotes', 'period', 'sessionLabels', 'selectedSubjectName', 'selectedSubjectInfo', 'hasSaturday', 'dayName', 'fullDateFormatted'));
+        $mySchedules = collect();
+        if ($isGuruOnly && $teacherObj) {
+            $mySchedules = Schedule::with('class')
+                ->where('teacher_id', $teacherObj->id)
+                ->orderBy('day_of_week')
+                ->orderBy('start_time')
+                ->get();
+        } else {
+            $mySchedules = Schedule::with(['class', 'teacher'])
+                ->when($classId, fn($q) => $q->where('class_id', $classId))
+                ->orderBy('day_of_week')
+                ->orderBy('start_time')
+                ->get();
+        }
+
+        return view('attendance.create', compact('classes', 'students', 'date', 'startDate', 'endDate', 'classId', 'session', 'existing', 'isRangeMode', 'rangeRecaps', 'sessionNotes', 'period', 'sessionLabels', 'selectedSubjectName', 'selectedSubjectInfo', 'hasSaturday', 'dayName', 'fullDateFormatted', 'mySchedules'));
     }
+
 
     public function quickSave(Request $request)
     {
