@@ -77,6 +77,9 @@
     <a href="{{ route('attendance.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.index', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('attendance.show', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi(Guru dan Kelas)
     </a>
+    <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-person-bounding-box @active('attendance.self-logs', 'text-emerald-400')"></i> Log Selfie & GPS Siswa
+    </a>
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Detail Presensi Mapel

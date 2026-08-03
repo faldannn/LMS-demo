@@ -29,6 +29,9 @@
                         <i class="bi bi-file-earmark-excel text-base"></i> Export Excel Guru
                     </button>
                 </div>
+                <a href="{{ route('attendance.self-logs') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm" title="Lihat Foto Selfie dan Lokasi GPS Siswa">
+                    <i class="bi bi-person-bounding-box text-brand-600 text-sm"></i> Log Selfie & GPS
+                </a>
             @endif
 
             @php
