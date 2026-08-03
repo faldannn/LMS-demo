@@ -23,7 +23,7 @@
         <div>
             <h1 class="text-xl font-bold text-slate-900">Pengaturan Sistem</h1>
             <p class="text-xs text-slate-500 mt-1">
-                Kelola informasi sekolah, parameter absensi presensi, integrasi RFID kartu, dan informasi server.
+                Kelola informasi sekolah, parameter absensi presensi, dan informasi server.
             </p>
         </div>
         <div class="shrink-0">
@@ -44,18 +44,24 @@
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-clock-history"></i> Pengaturan Absensi
             </button>
+            @if(auth()->user()->isSuperAdmin())
             <button type="button" id="tab-btn-kartu" onclick="selectTab('kartu-pane', this)"
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-credit-card-2-front"></i> Integrasi RFID Kartu
             </button>
+            @endif
+            @if(auth()->user()->isSuperAdmin())
             <button type="button" id="tab-btn-features" onclick="selectTab('features-pane', this)"
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-toggle-on text-brand-600"></i> Fitur LMS
             </button>
+            @endif
+            @if(auth()->user()->isSuperAdmin())
             <button type="button" id="tab-btn-system" onclick="selectTab('system-pane', this)"
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-cpu"></i> Info Sistem
             </button>
+            @endif
         </div>
     </div>
 
@@ -312,6 +318,7 @@
         </form>
     </div>
 
+    @if(auth()->user()->isSuperAdmin())
     {{-- ========================================== --}}
     {{-- TAB 3: INTEGRASI RFID KARTU --}}
     {{-- ========================================== --}}
@@ -429,7 +436,9 @@
 
         </div>
     </div>
+    @endif
 
+    @if(auth()->user()->isSuperAdmin())
     {{-- ========================================== --}}
     {{-- TAB 4: INFO SISTEM --}}
     {{-- ========================================== --}}
@@ -498,7 +507,9 @@
             </div>
         </div>
     </div>
+    @endif
 
+    @if(auth()->user()->isSuperAdmin())
     {{-- ========================================== --}}
     {{-- TAB 5: FITUR & MODUL LMS (SUPERADMIN) --}}
     {{-- ========================================== --}}
@@ -567,6 +578,7 @@
             </div>
         </div>
     </div>
+    @endif
 
 </div>
 @endsection

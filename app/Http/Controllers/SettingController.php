@@ -47,6 +47,8 @@ class SettingController extends Controller
 
     public function updateFeatures(Request $request)
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Pengaturan Fitur LMS hanya untuk Super Admin.');
+
         $data = $request->validate([
             'feature_subject_attendance' => 'nullable|boolean',
         ]);
@@ -117,6 +119,8 @@ class SettingController extends Controller
 
     public function updateKartu(Request $request)
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur Integrasi RFID Kartu hanya untuk Super Admin.');
+
         $data = $request->validate([
             'kartu_enabled'        => 'nullable|boolean',
             'kartu_api_key'        => 'nullable|string|max:255',
@@ -135,6 +139,8 @@ class SettingController extends Controller
 
     public function syncKartuMembers(\App\Services\RiansaKartuService $kartuService)
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur Integrasi RFID Kartu hanya untuk Super Admin.');
+
         $result = $kartuService->syncMembers();
 
         if ($result['success']) {
@@ -148,6 +154,8 @@ class SettingController extends Controller
 
     public function pullKartuAttendance(\App\Services\RiansaKartuService $kartuService)
     {
+        abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur Integrasi RFID Kartu hanya untuk Super Admin.');
+
         $result = $kartuService->pullAttendance();
 
         if ($result['success']) {
