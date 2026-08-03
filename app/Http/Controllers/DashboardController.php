@@ -28,10 +28,14 @@ class DashboardController extends Controller
         $user = auth()->user();
         $activeYear = \App\Models\AcademicYear::active();
 
+        // Cleanup any orphaned ClassSubjects (where class_id is null or deleted)
+        \App\Models\ClassSubject::whereNull('class_id')->orWhereDoesntHave('class')->delete();
+
         if ($user->isGuru()) {
             $teacher = $user->teacher;
             if ($teacher) {
-                $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
+                $query = \App\Models\ClassSubject::whereHas('class')
+                    ->with(['class.major', 'subject', 'teacher'])
                     ->withCount(['materials', 'assignments'])
                     ->where('teacher_id', $teacher->id);
                 if ($activeYear) {
@@ -44,7 +48,8 @@ class DashboardController extends Controller
         } elseif ($user->isSiswa()) {
             $student = $user->student;
             if ($student?->class_id) {
-                $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
+                $query = \App\Models\ClassSubject::whereHas('class')
+                    ->with(['class.major', 'subject', 'teacher'])
                     ->withCount(['materials', 'assignments'])
                     ->where('class_id', $student->class_id);
                 if ($activeYear) {
@@ -55,7 +60,8 @@ class DashboardController extends Controller
                 $classSubjects = collect();
             }
         } else {
-            $query = \App\Models\ClassSubject::with(['class.major', 'subject', 'teacher'])
+            $query = \App\Models\ClassSubject::whereHas('class')
+                ->with(['class.major', 'subject', 'teacher'])
                 ->withCount(['materials', 'assignments']);
             if ($activeYear) {
                 $query->where('academic_year_id', $activeYear->id);

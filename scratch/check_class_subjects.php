@@ -1,19 +1,13 @@
 <?php
+require 'vendor/autoload.php';
+$app = require_once 'bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
-require __DIR__ . '/../vendor/autoload.php';
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+echo "Total ClassSubject: " . \App\Models\ClassSubject::count() . "\n";
+echo "Orphaned (class null or deleted): " . \App\Models\ClassSubject::whereNull('class_id')->orWhereDoesntHave('class')->count() . "\n";
 
-use App\Models\Subject;
-use App\Models\Teacher;
-use App\Models\ClassSubject;
-
-echo "=== MATA PELAJARAN (SUBJECTS) ===\n";
-foreach (Subject::all() as $s) {
-    echo "- ID {$s->id}: {$s->name} ({$s->code})\n";
-}
-
-echo "\n=== GURU (TEACHERS) ===\n";
-foreach (Teacher::all() as $t) {
-    echo "- ID {$t->id}: {$t->name}\n";
+$orphans = \App\Models\ClassSubject::whereNull('class_id')->orWhereDoesntHave('class')->get();
+foreach ($orphans as $o) {
+    echo "ID: {$o->id}, class_id: " . var_export($o->class_id, true) . ", subject_id: {$o->subject_id}, teacher_id: {$o->teacher_id}\n";
 }

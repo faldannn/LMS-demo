@@ -13,12 +13,13 @@
 <div class="space-y-5">
     {{-- Group class subjects by class --}}
     @php
-        $grouped = $classSubjects->groupBy(function($cs) {
-            return $cs->class_id ?? 0;
+        $validClassSubjects = $classSubjects->filter(fn($cs) => !empty($cs->class_id) && $cs->class != null);
+        $grouped = $validClassSubjects->groupBy(function($cs) {
+            return $cs->class_id;
         });
-        $uniqueGrades = $classSubjects->pluck('class.grade')->filter()->unique()->sort()->values();
-        $teachers = $classSubjects->pluck('teacher')->filter()->unique('id')->sortBy('name')->values();
-        $uniqueSubjects = $classSubjects->pluck('subject')->filter()->unique('id')->sortBy('name')->values();
+        $uniqueGrades = $validClassSubjects->pluck('class.grade')->filter()->unique()->sort()->values();
+        $teachers = $validClassSubjects->pluck('teacher')->filter()->unique('id')->sortBy('name')->values();
+        $uniqueSubjects = $validClassSubjects->pluck('subject')->filter()->unique('id')->sortBy('name')->values();
     @endphp
 
     @if($grouped->isNotEmpty())
