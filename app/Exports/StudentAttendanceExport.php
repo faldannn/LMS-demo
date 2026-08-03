@@ -60,7 +60,7 @@ class StudentAttendanceSummarySheet implements
 
     public function title(): string
     {
-        return 'Ringkasan Seluruh Siswa';
+        return 'Rekapitulasi Siswa';
     }
 
     public function collection()
@@ -76,29 +76,32 @@ class StudentAttendanceSummarySheet implements
         $attendances = Attendance::with('details')
             ->when($this->classId, fn ($q) => $q->where('class_id', $this->classId))
             ->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])
+            ->whereIn('session', ['pagi', 'siang', 'harian'])
             ->get();
 
         $allDetails = $attendances->flatMap->details;
+        $periodeLabel = $sDate->format('d/m/Y') . ' - ' . $eDate->format('d/m/Y');
 
-        return $students->map(function (Student $student) use ($allDetails) {
+        return $students->map(function (Student $student) use ($allDetails, $periodeLabel) {
             $studentDetails = $allDetails->where('student_id', $student->id);
             $hadir = $studentDetails->where('status', 'hadir')->count();
             $terlambat = $studentDetails->where('status', 'terlambat')->count();
-            $sakit = $studentDetails->where('status', 'sakit')->count();
             $izin = $studentDetails->where('status', 'izin')->count();
+            $sakit = $studentDetails->where('status', 'sakit')->count();
             $alfa = $studentDetails->where('status', 'alfa')->count();
             $total = $studentDetails->count();
             $presentCount = $hadir + $terlambat;
             $percentage = $total > 0 ? round($presentCount / $total * 100, 1) : 0;
 
             return [
+                'periode' => $periodeLabel,
                 'nis' => $student->nis,
                 'name' => $student->name,
                 'class_name' => $student->class?->name ?? '-',
                 'hadir' => $hadir,
                 'terlambat' => $terlambat,
-                'sakit' => $sakit,
                 'izin' => $izin,
+                'sakit' => $sakit,
                 'alfa' => $alfa,
                 'total' => $total,
                 'percentage' => $percentage . '%',
@@ -110,13 +113,14 @@ class StudentAttendanceSummarySheet implements
     {
         return [
             '#',
+            'Periode Tanggal',
             'NIS',
             'Nama Siswa',
             'Kelas',
             'Hadir',
             'Terlambat',
-            'Sakit',
             'Izin',
+            'Sakit',
             'Alfa (Tanpa Keterangan)',
             'Total Pertemuan',
             '% Kehadiran',
@@ -130,13 +134,14 @@ class StudentAttendanceSummarySheet implements
 
         return [
             $i,
+            $row['periode'],
             $row['nis'],
             $row['name'],
             $row['class_name'],
             $row['hadir'],
             $row['terlambat'],
-            $row['sakit'],
             $row['izin'],
+            $row['sakit'],
             $row['alfa'],
             $row['total'],
             $row['percentage'],
@@ -167,7 +172,11 @@ class StudentAttendanceSummarySheet implements
 
         if ($this->period === 'week') {
             $anchor = $this->date ? Carbon::parse($this->date) : today();
-            $hasSaturday = \App\Models\Schedule::when($this->classId, fn($q, $cid) => $q->where('class_id', $cid))->where('day_of_week', 6)->exists();
+            $schedQuery = \App\Models\Schedule::query()->where('day_of_week', 6);
+            if ($this->classId) {
+                $schedQuery->where('class_id', $this->classId);
+            }
+            $hasSaturday = $schedQuery->exists();
             $endDay = $hasSaturday ? Carbon::SATURDAY : Carbon::FRIDAY;
             return [$anchor->copy()->startOfWeek(Carbon::MONDAY), $anchor->copy()->endOfWeek($endDay)];
         }
@@ -222,6 +231,7 @@ class StudentAttendanceLogsSheet implements
                 if ($this->classId) {
                     $q->where('class_id', $this->classId);
                 }
+                $q->whereIn('session', ['pagi', 'siang', 'harian']);
             })
             ->get();
 
@@ -237,7 +247,6 @@ class StudentAttendanceLogsSheet implements
                 'nis' => $student?->nis ?? '-',
                 'name' => $student?->name ?? '-',
                 'class_name' => $attendance?->class?->name ?? '-',
-                'session' => ucfirst($attendance?->session ?? 'pagi'),
                 'status' => $detail->status_label,
                 'check_in' => $detail->check_in ? $detail->check_in->format('H:i') : '-',
                 'notes' => $detail->notes ?: '-',
@@ -253,7 +262,6 @@ class StudentAttendanceLogsSheet implements
             'NIS',
             'Nama Siswa',
             'Kelas',
-            'Sesi',
             'Status Kehadiran',
             'Jam Masuk',
             'Keterangan / Alasan',
@@ -271,7 +279,6 @@ class StudentAttendanceLogsSheet implements
             $row['nis'],
             $row['name'],
             $row['class_name'],
-            $row['session'],
             $row['status'],
             $row['check_in'],
             $row['notes'],
@@ -302,7 +309,11 @@ class StudentAttendanceLogsSheet implements
 
         if ($this->period === 'week') {
             $anchor = $this->date ? Carbon::parse($this->date) : today();
-            $hasSaturday = \App\Models\Schedule::when($this->classId, fn($q, $cid) => $q->where('class_id', $cid))->where('day_of_week', 6)->exists();
+            $schedQuery = \App\Models\Schedule::query()->where('day_of_week', 6);
+            if ($this->classId) {
+                $schedQuery->where('class_id', $this->classId);
+            }
+            $hasSaturday = $schedQuery->exists();
             $endDay = $hasSaturday ? Carbon::SATURDAY : Carbon::FRIDAY;
             return [$anchor->copy()->startOfWeek(Carbon::MONDAY), $anchor->copy()->endOfWeek($endDay)];
         }

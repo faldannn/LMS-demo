@@ -100,9 +100,9 @@
                             <button type="submit" class="btn btn-primary btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm border-0 d-inline-flex align-items-center justify-content-center gap-1.5">
                                 <i class="bi bi-funnel"></i> Tampilkan Filter
                             </button>
-                            <a href="{{ route('attendance.export.students.excel', array_merge(request()->all(), ['class_id' => $attendance->class_id, 'start_date' => $periodStart->toDateString(), 'end_date' => $periodEnd->toDateString()])) }}" target="_blank" class="btn btn-success btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm border-0 text-decoration-none d-inline-flex align-items-center justify-content-center gap-1.5">
+                            <button type="button" onclick="exportExcelWithFilter()" class="btn btn-success btn-sm px-3 py-2 text-xs font-bold rounded-xl shadow-sm border-0 d-inline-flex align-items-center justify-content-center gap-1.5">
                                 <i class="bi bi-file-earmark-excel"></i> Export Excel
-                            </a>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -474,6 +474,17 @@
             if (periodSelect.value !== 'custom') {
                 periodSelect.value = 'custom';
             }
+        }
+
+        function exportExcelWithFilter() {
+            const period = document.getElementById('periodSelect')?.value || '30_days';
+            const startDate = document.getElementById('startDateInput')?.value || '';
+            const endDate = document.getElementById('endDateInput')?.value || '';
+            const classId = '{{ $attendance->class_id }}';
+            
+            const baseUrl = '{{ route("attendance.export.students.excel") }}';
+            const url = `${baseUrl}?class_id=${classId}&period=${period}&start_date=${startDate}&end_date=${endDate}`;
+            window.open(url, '_blank');
         }
     </script>
     @endpush
