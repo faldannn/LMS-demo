@@ -33,7 +33,7 @@ class Setting extends Model
             ->toArray();
     }
 
-    public static function isFeatureEnabled(string $featureKey, bool $default = true): bool
+    public static function isFeatureEnabled(string $featureKey, bool $default = false): bool
     {
         $val = static::get("feature_{$featureKey}", null);
         if ($val === null) {
@@ -41,6 +41,10 @@ class Setting extends Model
         }
         if ($val === null) {
             return $default;
+        }
+
+        if ($val === '0' || $val === 0 || $val === 'false' || $val === false || $val === 'off' || $val === '') {
+            return false;
         }
 
         return filter_var($val, FILTER_VALIDATE_BOOLEAN);

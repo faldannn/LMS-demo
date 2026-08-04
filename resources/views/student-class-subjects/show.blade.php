@@ -71,7 +71,7 @@
     </div>
 
     {{-- Absensi Pelajaran Hari Ini (Student Self Attendance) --}}
-    @if(auth()->user()->isSiswa() && \App\Models\Setting::isFeatureEnabled('subject_attendance'))
+    @if(auth()->user()->isSiswa() && \App\Models\Setting::isFeatureEnabled('subject_attendance', false) && ($studentAttendanceDetail || $attendanceWindow['can_check_in'] || in_array($attendanceWindow['status'] ?? '', ['not_started', 'ended'])))
         <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
             @if($studentAttendanceDetail && $studentAttendanceDetail->status === 'hadir')
                 <div class="rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-emerald-500/20">
