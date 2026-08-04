@@ -188,7 +188,7 @@
                     }
                 });
             }
-        });
+        }, true);
 
         // 3. Intercept legacy inline confirm() for button clicks
         document.addEventListener('click', function (e) {

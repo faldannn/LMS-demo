@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const id = this.getAttribute('data-id');
             const subject = this.getAttribute('data-subject');
             const singleForm = document.getElementById('single-delete-form');
-            singleForm.action = "{{ url('schedules') }}/" + id;
+            singleForm.action = "{{ route('schedules.destroy', '') }}/" + id;
 
             if (window.Swal) {
                 Swal.fire({

@@ -32,40 +32,45 @@ class AttendanceController extends Controller
             $classes = collect([$user->student->class]);
         } elseif ($user->isGuru()) {
             $teacher = $user->teacher;
-            if ($teacher) {
-                $taughtClassIds = $teacher->classSubjects()->pluck('class_id');
-                $scheduledClassIds = $teacher->schedules()->pluck('class_id');
-                $homeroomClassIds = $teacher->homeroomClasses()->pluck('id');
-                $allClassIds = $taughtClassIds->merge($scheduledClassIds)->merge($homeroomClassIds)->unique()->filter();
-                $classes = Classes::whereIn('id', $allClassIds)->orderBy('name')->get();
+            if ($activeTab === 'students' && !$request->has('tab')) {
+                if ($teacher) {
+                    $taughtClassIds = $teacher->classSubjects()->pluck('class_id');
+                    $scheduledClassIds = $teacher->schedules()->pluck('class_id');
+                    $homeroomClassIds = $teacher->homeroomClasses()->pluck('id');
+                    $allClassIds = $taughtClassIds->merge($scheduledClassIds)->merge($homeroomClassIds)->unique()->filter();
+                    $classes = Classes::whereIn('id', $allClassIds)->orderBy('name')->get();
+                } else {
+                    $classes = collect();
+                }
+                
+                if ($classes->isEmpty()) {
+                    return redirect()->route('attendance.create');
+                }
+
+                $classId = $request->class_id ?: $classes->first()->id;
+                $latestAtt = Attendance::where('class_id', $classId)
+                    ->whereIn('session', ['pagi', 'siang', 'harian'])
+                    ->orderByDesc('date')
+                    ->first();
+
+                if (!$latestAtt) {
+                    $latestAtt = Attendance::firstOrCreate(
+                        [
+                            'date' => today()->toDateString(),
+                            'class_id' => $classId,
+                            'session' => 'pagi',
+                        ],
+                        [
+                            'teacher_id' => $teacher?->id ?? Teacher::active()->first()?->id,
+                        ]
+                    );
+                }
+
+                return redirect()->route('attendance.show', array_merge(['attendance' => $latestAtt->id], $request->query()));
             } else {
-                $classes = collect();
+                $classId = $request->class_id;
+                $classes = Classes::orderBy('name')->get();
             }
-            
-            if ($classes->isEmpty()) {
-                return redirect()->route('attendance.create');
-            }
-
-            $classId = $request->class_id ?: $classes->first()->id;
-            $latestAtt = Attendance::where('class_id', $classId)
-                ->whereIn('session', ['pagi', 'siang', 'harian'])
-                ->orderByDesc('date')
-                ->first();
-
-            if (!$latestAtt) {
-                $latestAtt = Attendance::firstOrCreate(
-                    [
-                        'date' => today()->toDateString(),
-                        'class_id' => $classId,
-                        'session' => 'pagi',
-                    ],
-                    [
-                        'teacher_id' => $teacher?->id ?? Teacher::active()->first()?->id,
-                    ]
-                );
-            }
-
-            return redirect()->route('attendance.show', array_merge(['attendance' => $latestAtt->id], $request->query()));
         } else {
             $classId = $request->class_id;
             $classes = Classes::orderBy('name')->get();
