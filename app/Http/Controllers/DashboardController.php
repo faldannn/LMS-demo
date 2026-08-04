@@ -32,7 +32,8 @@ class DashboardController extends Controller
         \App\Models\ClassSubject::whereNull('class_id')->orWhereDoesntHave('class')->delete();
 
         // Automatically purge ClassSubjects where the Schedule was deleted (unless materials/assignments/discussions exist)
-        \App\Models\ClassSubject::whereDoesntHave('materials')
+        \App\Models\ClassSubject::with('subject')
+            ->whereDoesntHave('materials')
             ->whereDoesntHave('assignments')
             ->whereDoesntHave('discussionThreads')
             ->get()
