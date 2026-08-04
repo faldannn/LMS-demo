@@ -111,7 +111,9 @@ class StudentAssignmentController extends Controller
 
         $todayAttendance = \App\Models\Attendance::query()
             ->where('class_id', $classSubject->class_id)
-            ->where('class_subject_id', $classSubject->id)
+            ->when(\Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id'), function ($q) use ($classSubject) {
+                $q->where('class_subject_id', $classSubject->id);
+            })
             ->whereDate('date', today())
             ->first();
 
@@ -162,12 +164,16 @@ class StudentAssignmentController extends Controller
             }
         }
 
-        $attendance = \App\Models\Attendance::firstOrCreate([
+        $attendanceConditions = [
             'date' => today(),
             'class_id' => $classSubject->class_id,
-            'class_subject_id' => $classSubject->id,
             'session' => $sessionKey,
-        ], [
+        ];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id')) {
+            $attendanceConditions['class_subject_id'] = $classSubject->id;
+        }
+
+        $attendance = \App\Models\Attendance::firstOrCreate($attendanceConditions, [
             'teacher_id' => $classSubject->teacher_id,
             'notes' => 'Absensi Mandiri Siswa - Mapel ' . $classSubject->subject->name,
         ]);
