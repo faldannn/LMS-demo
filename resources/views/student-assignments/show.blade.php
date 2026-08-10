@@ -45,9 +45,14 @@
                 @if($assignment->file_path)
                 <div class="mt-4 pt-4 border-top">
                     <h6 class="fw-bold mb-3">File Lampiran Tugas:</h6>
-                    <a href="{{ asset('storage/' . $assignment->file_path) }}" target="_blank" class="btn btn-outline-primary rounded-pill">
-                        <i class="bi bi-download me-2"></i> Unduh File ({{ $assignment->file_name }})
-                    </a>
+                    @include('partials.attachment-viewer', [
+                        'filePath' => $assignment->file_path,
+                        'fileName' => $assignment->file_name,
+                        'fileSize' => $assignment->file_size ? round($assignment->file_size / 1024, 2) . ' KB' : null,
+                        'mimeType' => $assignment->mime_type,
+                        'type' => $assignment->type,
+                        'title' => $assignment->title,
+                    ])
                 </div>
                 @endif
             </div>
@@ -84,10 +89,9 @@
                         @if($submission->content)
                             <div class="p-3 bg-white border rounded mb-3">
                                 @if(filter_var($submission->content, FILTER_VALIDATE_URL))
-                                    <a href="{{ $submission->content }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-link-45deg me-1"></i> Buka Link Google Drive / Tautan Tugas
-                                    </a>
-                                    <div class="text-muted small mt-2 truncate">{{ $submission->content }}</div>
+                                    @include('partials.attachment-viewer', [
+                                        'url' => $submission->content,
+                                    ])
                                 @else
                                     {!! nl2br(e($submission->content)) !!}
                                 @endif
@@ -95,9 +99,13 @@
                         @endif
                         
                         @if($submission->file_path)
-                            <a href="{{ asset('storage/' . $submission->file_path) }}" target="_blank" class="btn btn-sm btn-primary">
-                                <i class="bi bi-file-earmark-check me-2"></i>Lihat File Pengumpulan ({{ $submission->file_name }})
-                            </a>
+                            <div class="mt-3">
+                                @include('partials.attachment-viewer', [
+                                    'filePath' => $submission->file_path,
+                                    'fileName' => $submission->file_name,
+                                    'mimeType' => $submission->mime_type,
+                                ])
+                            </div>
                         @endif
                     </div>
                 @endif

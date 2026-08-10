@@ -52,41 +52,17 @@
             @endif
 
             {{-- Content Area --}}
-            @if($material->type === 'youtube' && $material->youtube_embed_url)
-                <div class="mt-6 border-t border-slate-100 pt-6">
-                    <div class="relative w-full overflow-hidden rounded-xl bg-slate-900 pt-[56.25%] shadow-sm">
-                        <iframe class="absolute inset-0 h-full w-full" src="{{ $material->youtube_embed_url }}" allowfullscreen title="YouTube"></iframe>
-                    </div>
-                    @if($material->url)
-                    <div class="mt-4">
-                        <a href="{{ $material->url }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
-                            <i class="bi bi-youtube text-rose-600"></i>Buka di YouTube
-                        </a>
-                    </div>
-                    @endif
-                </div>
-            @elseif($material->type === 'link' && $material->url)
-                <div class="mt-6 border-t border-slate-100 pt-6">
-                    <a href="{{ $material->url }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700">
-                        <i class="bi bi-box-arrow-up-right"></i>Buka Tautan
-                    </a>
-                </div>
-            @elseif($material->isDownloadable())
-                <div class="mt-6 border-t border-slate-100 pt-6">
-                    <a href="{{ route('materials.download', $material) }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700">
-                        <i class="bi bi-download"></i>Unduh {{ $material->type_label }} ({{ $material->file_size_formatted }})
-                    </a>
-                    <p class="mt-2 text-xs text-slate-500">{{ $material->file_name }} &bull; {{ $material->mime_type }}</p>
-                    
-                    @if($material->type === 'video')
-                    <div class="mt-4 overflow-hidden rounded-xl bg-black">
-                        <video controls class="w-full max-w-full" style="max-height:480px">
-                            <source src="{{ asset('storage/'.$material->file_path) }}" type="{{ $material->mime_type }}">
-                        </video>
-                    </div>
-                    @endif
-                </div>
-            @endif
+            <div class="mt-6 border-t border-slate-100 pt-6">
+                @include('partials.attachment-viewer', [
+                    'filePath' => $material->file_path,
+                    'fileName' => $material->file_name,
+                    'fileSize' => $material->file_size_formatted,
+                    'mimeType' => $material->mime_type,
+                    'url' => $material->url,
+                    'type' => $material->type,
+                    'title' => $material->title,
+                ])
+            </div>
         </div>
     </div>
 

@@ -52,10 +52,15 @@
 
                 @if($assignment->file_path)
                 <div class="mt-4 pt-4 border-top">
-                    <h6 class="fw-bold mb-3">File Lampiran:</h6>
-                    <a href="{{ asset('storage/' . $assignment->file_path) }}" target="_blank" class="btn btn-outline-primary rounded-pill">
-                        <i class="bi bi-download me-2"></i> Unduh File ({{ $assignment->file_name }})
-                    </a>
+                    <h6 class="fw-bold mb-3">File Lampiran Tugas:</h6>
+                    @include('partials.attachment-viewer', [
+                        'filePath' => $assignment->file_path,
+                        'fileName' => $assignment->file_name,
+                        'fileSize' => $assignment->file_size ? round($assignment->file_size / 1024, 2) . ' KB' : null,
+                        'mimeType' => $assignment->mime_type,
+                        'type' => $assignment->type,
+                        'title' => $assignment->title,
+                    ])
                 </div>
                 @endif
                 
