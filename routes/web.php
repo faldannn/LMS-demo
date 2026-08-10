@@ -145,6 +145,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             ->name('settings.kartu.sync-members');
         Route::post('settings/kartu-pull-attendance', [SettingController::class, 'pullKartuAttendance'])
             ->name('settings.kartu.pull-attendance');
+        Route::post('settings/cbt-sync', [SettingController::class, 'syncCbt'])
+            ->name('settings.cbt.sync');
 
 
         Route::prefix('security')->name('security.')->group(function () {

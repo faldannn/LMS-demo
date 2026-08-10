@@ -44,6 +44,10 @@
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
                 <i class="bi bi-clock-history"></i> Pengaturan Absensi
             </button>
+            <button type="button" id="tab-btn-cbt" onclick="selectTab('cbt-pane', this)"
+                class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
+                <i class="bi bi-arrow-repeat text-indigo-600"></i> Integrasi & Sync CBT
+            </button>
             @if(auth()->user()->isSuperAdmin())
             <button type="button" id="tab-btn-kartu" onclick="selectTab('kartu-pane', this)"
                 class="settings-tab-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap">
@@ -580,11 +584,160 @@
     </div>
     @endif
 
+    {{-- ========================================== --}}
+    {{-- TAB: INTEGRASI & SINKRONISASI CBT --}}
+    {{-- ========================================== --}}
+    <div id="cbt-pane" class="settings-pane">
+        <div class="space-y-6">
+            
+            {{-- Header / Status Card --}}
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i class="bi bi-arrow-repeat text-indigo-600 text-base"></i> Integrasi & Sinkronisasi Sistem Ujian CBT
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Kirim data master (Mata Pelajaran, Guru, Siswa, Admin) dari LMS ke Sistem Ujian CBT</p>
+                    </div>
+                    @php
+                        $cbtUrl = env('CBT_URL', 'http://127.0.0.1:8000');
+                        $cbtApiUrl = env('CBT_API_URL', 'http://127.0.0.1:8000/api');
+                        $hasSecret = !empty(env('SYNC_SECRET_KEY'));
+                    @endphp
+                    @if(auth()->user()->isSuperAdmin())
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0 {{ $hasSecret ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-rose-100 text-rose-700 border border-rose-200' }}">
+                        {{ $hasSecret ? '● SSO & Secret Key Terhubung' : '○ Secret Key Belum Diatur' }}
+                    </span>
+                    @endif
+
+                </div>
+
+                <div class="p-5 sm:p-6 space-y-6">
+                    
+                    @if(auth()->user()->isSuperAdmin())
+                    {{-- Server Specs Summary (Khusus SuperAdmin) --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                            <span class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">CBT Base URL</span>
+                            <span class="block text-sm font-extrabold text-slate-800 font-mono break-all">{{ $cbtUrl }}</span>
+                        </div>
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                            <span class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">CBT API Endpoint</span>
+                            <span class="block text-sm font-extrabold text-slate-800 font-mono break-all">{{ $cbtApiUrl }}</span>
+                        </div>
+                        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                            <span class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Otentikasi SSO</span>
+                            <span class="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+                                <i class="bi bi-shield-check text-emerald-600"></i> JWT SSO Ready
+                            </span>
+                        </div>
+                    </div>
+                    @endif
+
+
+                    {{-- Synced Items Breakdown --}}
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="bi bi-layers text-brand-600"></i> Data Master yang Akan Disinkronkan:
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                            <div class="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center gap-3 shadow-2xs">
+                                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-bold">
+                                    <i class="bi bi-journal-bookmark-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-slate-900">Mata Pelajaran</span>
+                                    <span class="text-slate-500">{{ \App\Models\Subject::count() }} Matapelajaran</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center gap-3 shadow-2xs">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-slate-900">Data Guru</span>
+                                    <span class="text-slate-500">{{ \App\Models\Teacher::count() }} Guru</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center gap-3 shadow-2xs">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-slate-900">Data Siswa</span>
+                                    <span class="text-slate-500">{{ \App\Models\Student::count() }} Siswa</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center gap-3 shadow-2xs">
+                                <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-lg font-bold">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-slate-900">Admin & Staff</span>
+                                    <span class="text-slate-500">{{ \App\Models\User::whereNotIn('role', ['siswa', 'guru'], 'and')->count() }} Admin/Staff</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Main Action Button Card --}}
+                    <div class="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-5 sm:p-6 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <h4 class="text-sm font-extrabold text-indigo-950 flex items-center gap-2">
+                                    <i class="bi bi-cloud-arrow-up-fill text-indigo-600 text-lg"></i> Kirim Semua Data ke Sistem CBT
+                                </h4>
+                                <p class="text-xs text-indigo-900/80 leading-relaxed max-w-2xl">
+                                    Klik tombol di sebelah kanan untuk mengirimkan dan menyinkronkan seluruh data mata pelajaran, akun guru, akun siswa, serta admin/staff dari LMS ke sistem Ujian CBT.
+                                </p>
+                            </div>
+
+                            <form method="POST" action="{{ route('settings.cbt.sync') }}" onsubmit="return handleCbtSyncSubmit(this)">
+                                @csrf
+                                <button type="submit" id="btnSyncCbt"
+                                    class="inline-flex items-center justify-center gap-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-6 py-3.5 text-xs sm:text-sm font-extrabold shadow-md hover:shadow-lg transition duration-200 shrink-0 cursor-pointer">
+                                    <i class="bi bi-arrow-repeat text-lg" id="syncIcon"></i>
+                                    <span id="syncText">Sinkronkan Data ke CBT</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 @endsection
 
 @push('scripts')
 <script>
+function handleCbtSyncSubmit(form) {
+    if (!confirm('Apakah Anda yakin ingin menyinkronkan seluruh data Mata Pelajaran, Guru, Siswa, dan Admin ke Sistem CBT?')) {
+        return false;
+    }
+    const btn = document.getElementById('btnSyncCbt');
+    const icon = document.getElementById('syncIcon');
+    const text = document.getElementById('syncText');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+    }
+    if (icon) {
+        icon.className = 'bi bi-arrow-repeat text-lg animate-spin';
+    }
+    if (text) {
+        text.textContent = 'Menyinkronkan data ke CBT...';
+    }
+    return true;
+}
+
 function selectTab(targetPaneId, clickedBtn) {
     // 1. Hide all tab panes
     document.querySelectorAll('.settings-pane').forEach(pane => {
@@ -640,6 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const paneMap = {
         'school-pane': 'tab-btn-school',
         'attendance-pane': 'tab-btn-attendance',
+        'cbt-pane': 'tab-btn-cbt',
         'kartu-pane': 'tab-btn-kartu',
         'features-pane': 'tab-btn-features',
         'system-pane': 'tab-btn-system'

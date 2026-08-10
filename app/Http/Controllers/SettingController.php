@@ -167,4 +167,20 @@ class SettingController extends Controller
             ->with('error', $result['message']);
     }
 
+    public function syncCbt(\App\Services\CbtSyncService $cbtSyncService)
+    {
+        abort_unless(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur Sinkronisasi CBT hanya untuk Admin dan Super Admin.');
+
+        $result = $cbtSyncService->syncAll();
+
+        if ($result['success']) {
+            return redirect()->route('settings.index', ['#cbt-pane'])
+                ->with('success', $result['message']);
+        }
+
+        return redirect()->route('settings.index', ['#cbt-pane'])
+            ->with('error', $result['message']);
+    }
+
 }
+
