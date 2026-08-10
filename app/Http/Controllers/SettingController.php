@@ -175,10 +175,12 @@ class SettingController extends Controller
 
         if ($result['success']) {
             return redirect()->route('settings.index', ['#cbt-pane'])
+                ->with('cbt_sync_success', true)
                 ->with('success', $result['message']);
         }
 
         return redirect()->route('settings.index', ['#cbt-pane'])
+            ->with('cbt_sync_error', true)
             ->with('error', $result['message']);
     }
 

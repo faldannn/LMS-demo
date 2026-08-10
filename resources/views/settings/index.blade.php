@@ -695,7 +695,7 @@
                                 </p>
                             </div>
 
-                            <form method="POST" action="{{ route('settings.cbt.sync') }}" onsubmit="return handleCbtSyncSubmit(this)">
+                            <form method="POST" action="{{ route('settings.cbt.sync') }}" onsubmit="return handleCbtSyncSubmit(event, this)">
                                 @csrf
                                 <button type="submit" id="btnSyncCbt"
                                     class="inline-flex items-center justify-center gap-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-6 py-3.5 text-xs sm:text-sm font-extrabold shadow-md hover:shadow-lg transition duration-200 shrink-0 cursor-pointer">
@@ -717,25 +717,83 @@
 
 @push('scripts')
 <script>
-function handleCbtSyncSubmit(form) {
-    if (!confirm('Apakah Anda yakin ingin menyinkronkan seluruh data Mata Pelajaran, Guru, Siswa, dan Admin ke Sistem CBT?')) {
-        return false;
+function handleCbtSyncSubmit(event, form) {
+    if (event) {
+        event.preventDefault();
     }
-    const btn = document.getElementById('btnSyncCbt');
-    const icon = document.getElementById('syncIcon');
-    const text = document.getElementById('syncText');
 
-    if (btn) {
-        btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed');
-    }
-    if (icon) {
-        icon.className = 'bi bi-arrow-repeat text-lg animate-spin';
-    }
-    if (text) {
-        text.textContent = 'Menyinkronkan data ke CBT...';
-    }
-    return true;
+    Swal.fire({
+        title: '<div class="flex items-center justify-center gap-2.5 text-indigo-950 font-extrabold text-lg sm:text-xl"><i class="bi bi-cloud-arrow-up-fill text-indigo-600 text-2xl"></i> Konfirmasi Sinkronisasi CBT</div>',
+        html: `
+            <div class="mt-3 text-left">
+                <p class="text-xs font-medium text-slate-600 mb-3 text-center">
+                    Apakah Anda yakin ingin mengirim dan menyinkronkan seluruh data berikut dari LMS ke Sistem Ujian CBT?
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shrink-0"><i class="bi bi-journal-bookmark-fill"></i></div>
+                        <div><span class="block font-extrabold text-slate-800">Mata Pelajaran</span><span class="text-[11px] text-slate-500">Mata pelajaran aktif</span></div>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base shrink-0"><i class="bi bi-person-badge-fill"></i></div>
+                        <div><span class="block font-extrabold text-slate-800">Data Guru</span><span class="text-[11px] text-slate-500">Akun pengajar & mapel</span></div>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base shrink-0"><i class="bi bi-people-fill"></i></div>
+                        <div><span class="block font-extrabold text-slate-800">Data Siswa</span><span class="text-[11px] text-slate-500">NIS & data kelas</span></div>
+                    </div>
+                    <div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base shrink-0"><i class="bi bi-shield-lock-fill"></i></div>
+                        <div><span class="block font-extrabold text-slate-800">Admin & Staff</span><span class="text-[11px] text-slate-500">Pengawas & Admin</span></div>
+                    </div>
+                </div>
+                <div class="mt-3.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200/60 text-[11px] text-emerald-800 flex items-center gap-2.5">
+                    <i class="bi bi-shield-check text-emerald-600 text-lg shrink-0"></i>
+                    <span>Sistem menggunakan fitur <strong>Upsert (Anti-Duplikasi Data)</strong>. Data yang sudah ada di CBT akan diperbarui tanpa membuat duplikat.</span>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Ya, Sinkronkan Sekarang!',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#4f46e5',
+        cancelButtonColor: '#94a3b8',
+        reverseButtons: true,
+        focusConfirm: false,
+        customClass: {
+            popup: 'rounded-2xl shadow-2xl p-5 border border-slate-100 max-w-lg',
+            confirmButton: 'rounded-xl px-5 py-2.5 text-xs font-extrabold shadow-md hover:shadow-lg transition cursor-pointer',
+            cancelButton: 'rounded-xl px-5 py-2.5 text-xs font-bold transition cursor-pointer'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading SweetAlert2 modal
+            Swal.fire({
+                title: '<div class="flex items-center justify-center gap-2.5 text-indigo-950 font-extrabold text-lg"><i class="bi bi-arrow-repeat text-indigo-600 animate-spin text-2xl"></i> Menyinkronkan Data ke CBT...</div>',
+                html: `
+                    <div class="my-3 text-center space-y-3">
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Mohon tunggu beberapa saat. Sistem sedang mengirimkan data ke server CBT...
+                        </p>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                            <div class="bg-indigo-600 h-full w-full animate-pulse"></div>
+                        </div>
+                    </div>
+                `,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl p-6 border border-slate-100'
+                }
+            });
+
+            // Trigger actual form submit
+            form.submit();
+        }
+    });
+
+    return false;
 }
 
 function selectTab(targetPaneId, clickedBtn) {
@@ -804,6 +862,46 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         selectTab('school-pane', document.getElementById('tab-btn-school'));
     }
+
+    {{-- SweetAlert2 Result Modal Handler for CBT Sync --}}
+    @if(session('cbt_sync_success'))
+        Swal.fire({
+            icon: 'success',
+            title: '<span class="text-slate-900 font-extrabold text-xl">Sinkronisasi CBT Berhasil!</span>',
+            html: `
+                <div class="my-2 text-left p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+                    <i class="bi bi-check-circle-fill text-emerald-600 me-1.5"></i>
+                    {{ session('success') }}
+                </div>
+            `,
+            confirmButtonColor: '#4f46e5',
+            confirmButtonText: '<i class="bi bi-check-lg me-1"></i> Selesai',
+            customClass: {
+                popup: 'rounded-2xl shadow-2xl p-6 border border-slate-100',
+                confirmButton: 'rounded-xl px-6 py-2.5 text-xs font-extrabold shadow-md'
+            }
+        });
+    @endif
+
+    @if(session('cbt_sync_error'))
+        Swal.fire({
+            icon: 'error',
+            title: '<span class="text-slate-900 font-extrabold text-xl">Kendala Sinkronisasi CBT</span>',
+            html: `
+                <div class="my-2 text-left p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 leading-relaxed">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-600 me-1.5"></i>
+                    {{ session('error') }}
+                </div>
+            `,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Tutup',
+            customClass: {
+                popup: 'rounded-2xl shadow-2xl p-6 border border-slate-100',
+                confirmButton: 'rounded-xl px-6 py-2.5 text-xs font-bold shadow-md'
+            }
+        });
+    @endif
+
 
     // GPS Geolocation Handler
     const btn = document.getElementById('btnGetLocation');
