@@ -44,23 +44,30 @@ class User extends Authenticatable
             return false;
         }
 
+        // Use session cache if available to prevent running Bcrypt on every single HTTP request
+        if (session()->has('needs_password_change')) {
+            return (bool) session('needs_password_change');
+        }
+
         $student = $this->student;
         if (!$student) {
+            session(['needs_password_change' => false]);
             return false;
         }
 
         $dobPassword = $student->dob ? $student->dob->format('Y-m-d') : null;
         $nisPassword = (string) ($student->nisn ?: $student->nis);
 
+        $needsChange = false;
         if ($dobPassword && \Illuminate\Support\Facades\Hash::check($dobPassword, $this->password)) {
-            return true;
+            $needsChange = true;
+        } elseif (\Illuminate\Support\Facades\Hash::check($nisPassword, $this->password)) {
+            $needsChange = true;
         }
 
-        if (\Illuminate\Support\Facades\Hash::check($nisPassword, $this->password)) {
-            return true;
-        }
+        session(['needs_password_change' => $needsChange]);
 
-        return false;
+        return $needsChange;
     }
 
 

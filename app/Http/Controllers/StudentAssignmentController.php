@@ -178,26 +178,25 @@ class StudentAssignmentController extends Controller
             'notes' => 'Absensi Mandiri Siswa - Mapel ' . $classSubject->subject->name,
         ]);
 
-        $allStudents = \App\Models\Student::where('class_id', $classSubject->class_id)->get();
-        foreach ($allStudents as $s) {
-            \App\Models\AttendanceDetail::firstOrCreate([
+        $allStudents = \App\Models\Student::where('class_id', $classSubject->class_id)->pluck('id');
+        if ($attendance->wasRecentlyCreated && $allStudents->isNotEmpty()) {
+            $bulkDetails = $allStudents->map(fn($sId) => [
                 'attendance_id' => $attendance->id,
-                'student_id' => $s->id,
-            ], [
+                'student_id' => $sId,
                 'status' => 'alfa',
-            ]);
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])->toArray();
+            \App\Models\AttendanceDetail::insertOrIgnore($bulkDetails);
         }
 
-        $detail = \App\Models\AttendanceDetail::where('attendance_id', $attendance->id)
-            ->where('student_id', $student->id)
-            ->first();
-
-        if ($detail) {
-            $detail->update([
-                'status' => 'hadir',
-                'check_in' => now(),
-            ]);
-        }
+        \App\Models\AttendanceDetail::updateOrCreate([
+            'attendance_id' => $attendance->id,
+            'student_id' => $student->id,
+        ], [
+            'status' => 'hadir',
+            'check_in' => now()->format('H:i:s'),
+        ]);
 
         return back()->with('success', 'Berhasil! Kehadiran Anda untuk mata pelajaran ' . $classSubject->subject->name . ' telah dicatat.');
     }

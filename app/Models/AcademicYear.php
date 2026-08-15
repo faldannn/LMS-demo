@@ -36,14 +36,32 @@ class AcademicYear extends Model
         return $this->hasMany(ReportCard::class);
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('academic_year_active');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('academic_year_active');
+        });
+    }
+
     public static function active(): ?self
     {
-        return static::where('is_active', true)->first();
+        try {
+            return \Illuminate\Support\Facades\Cache::remember('academic_year_active', 86400, function () {
+                return static::where('is_active', true)->with('semesters')->first();
+            });
+        } catch (\Throwable $e) {
+            return static::where('is_active', true)->first();
+        }
     }
 
     public function getFullLabelAttribute(): string
     {
-        $activeSemester = $this->semesters()->where('is_active', true)->first();
+        $activeSemester = $this->relationLoaded('semesters')
+            ? $this->semesters->firstWhere('is_active', true)
+            : $this->semesters()->where('is_active', true)->first();
 
         return $activeSemester
             ? "{$this->year} — Semester {$activeSemester->label}"

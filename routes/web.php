@@ -332,18 +332,23 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
 // Fallback route to serve public storage files when symlink/junction is not supported or working (e.g. PHP built-in server on Windows)
 Route::get('storage/{path}', function ($path) {
-    $fullPath = storage_path('app/public/' . $path);
-    
-    // Safety check: Prevent directory traversal attacks
-    if (str_contains($path, '..') || !str_starts_with(realpath($fullPath), realpath(storage_path('app/public')))) {
+    if (str_contains($path, '..') || str_contains($path, '\\')) {
         abort(403, 'Akses ditolak.');
     }
+
+    $fullPath = storage_path('app/public/' . $path);
+    $realBase = realpath(storage_path('app/public'));
 
     if (!file_exists($fullPath)) {
         abort(404, 'File tidak ditemukan.');
     }
+
+    $realPath = realpath($fullPath);
+    if (!$realPath || !$realBase || !str_starts_with($realPath, $realBase)) {
+        abort(403, 'Akses ditolak.');
+    }
     
-    return response()->file($fullPath);
+    return response()->file($realPath);
 })->where('path', '.*')->name('storage.fallback');
 
 // Route bantuan untuk running migrasi di hosting tanpa akses SSH (Dapat diakses Superadmin atau via secret key)

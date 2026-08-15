@@ -9,11 +9,30 @@ class Setting extends Model
 {
     protected $fillable = ['key', 'value', 'group'];
 
+    protected static ?array $runtimeCache = null;
+
+    public static function allCached(): array
+    {
+        if (static::$runtimeCache !== null) {
+            return static::$runtimeCache;
+        }
+
+        try {
+            static::$runtimeCache = Cache::remember('app.settings', 86400, function () {
+                return static::query()->pluck('value', 'key')->toArray();
+            });
+        } catch (\Throwable $e) {
+            static::$runtimeCache = [];
+        }
+
+        return static::$runtimeCache ?? [];
+    }
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = static::where('key', $key)->first();
+        $settings = static::allCached();
 
-        return $setting ? $setting->value : $default;
+        return array_key_exists($key, $settings) ? $settings[$key] : $default;
     }
 
     public static function set(string $key, mixed $value, string $group = 'general'): void
@@ -23,14 +42,19 @@ class Setting extends Model
             ['value' => $value, 'group' => $group]
         );
 
+        static::$runtimeCache = null;
         Cache::forget('app.settings');
     }
 
     public static function getGroup(string $group): array
     {
-        return static::where('group', $group)
-            ->pluck('value', 'key')
-            ->toArray();
+        try {
+            return static::where('group', $group)
+                ->pluck('value', 'key')
+                ->toArray();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     public static function isFeatureEnabled(string $featureKey, bool $default = false): bool

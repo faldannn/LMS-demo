@@ -359,6 +359,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'password_changed_at' => now(),
         ]);
+        session(['needs_password_change' => false]);
         return back()->with('success', 'Password berhasil diubah. Sekarang Anda dapat menggunakan seluruh fasilitas LMS.');
     }
 }
