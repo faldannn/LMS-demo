@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Block access to hidden files/folders (.git, .env)
+    RewriteRule (^\.|/\.) - [F]
+
+    # Block access to sensitive extensions
+    RewriteRule \.(env|json|lock|sql|sqlite|log|md|xml|yml|yaml)$ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
