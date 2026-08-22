@@ -184,6 +184,55 @@ class DashboardService
                 ->count()
             : 0;
 
+        $homeroomClass = $teacher ? $teacher->homeroomClasses()->first() : null;
+        $homeroomAttendanceToday = null;
+        if ($homeroomClass) {
+            $hAtt = Attendance::with('details')->where('class_id', $homeroomClass->id)
+                ->whereDate('date', $today)
+                ->whereIn('session', ['pagi', 'siang', 'harian'])
+                ->first();
+
+            $totalStudents = Student::active()->where('class_id', $homeroomClass->id)->count();
+            $hadir = 0; $sakit = 0; $izin = 0; $alfa = 0; $terlambat = 0;
+            if ($hAtt) {
+                foreach ($hAtt->details as $d) {
+                    match ($d->status) {
+                        'hadir' => $hadir++,
+                        'terlambat' => $terlambat++,
+                        'sakit' => $sakit++,
+                        'izin' => $izin++,
+                        'alfa' => $alfa++,
+                        default => null,
+                    };
+                }
+            }
+            $totalPresent = $hadir + $terlambat;
+            $percentage = $totalStudents > 0 ? (int) round($totalPresent / $totalStudents * 100) : 0;
+            $homeroomAttendanceToday = [
+                'class' => $homeroomClass,
+                'total' => $totalStudents,
+                'hadir' => $hadir,
+                'terlambat' => $terlambat,
+                'sakit' => $sakit,
+                'izin' => $izin,
+                'alfa' => $alfa,
+                'present_total' => $totalPresent,
+                'percentage' => $percentage,
+                'has_recorded' => !is_null($hAtt),
+            ];
+        }
+
+        $homeroomClassIds = $teacher ? $teacher->homeroomClasses()->pluck('classes.id') : collect();
+        $relevantClassIds = $classSubjects->pluck('class_id')->concat($homeroomClassIds)->unique();
+
+        $classAttendance = $this->attendanceService->getClassAttendanceSummary($today)
+            ->filter(fn ($row) => $relevantClassIds->contains($row['class']?->id))
+            ->values();
+
+        $avgAttendancePct = $classAttendance->isNotEmpty()
+            ? (int) round($classAttendance->avg('percentage'))
+            : 0;
+
         return [
             'teacher' => $teacher,
             'today_schedules' => $todaySchedules,
@@ -191,19 +240,19 @@ class DashboardService
             'active_assignments' => $activeAssignments,
             'active_quizzes' => $activeQuizzes,
             'recent_materials' => $recentMaterials,
-            'class_attendance' => $this->attendanceService->getClassAttendanceSummary($today)
-                ->filter(fn ($row) => $classSubjects->pluck('class_id')->contains($row['class']?->id))
-                ->values(),
+            'class_attendance' => $classAttendance,
+            'homeroom_attendance_today' => $homeroomAttendanceToday,
             'stats' => [
-                'classes' => $classSubjects->pluck('class_id')->unique()->count(),
+                'classes' => $relevantClassIds->count() ?: $classSubjects->pluck('class_id')->unique()->count(),
                 'students' => $myStudentCount,
                 'assignments' => $activeAssignments->count(),
                 'quizzes' => $activeQuizzes->count(),
                 'materials' => $recentMaterials->count(),
                 'pending_grading' => $pendingGrading,
+                'attendance_percentage' => $homeroomAttendanceToday ? $homeroomAttendanceToday['percentage'] : $avgAttendancePct,
             ],
             'monthly_trend' => $this->attendanceService->getMonthlyTrend(),
-            'homeroom_class' => $teacher ? $teacher->homeroomClasses()->first() : null,
+            'homeroom_class' => $homeroomClass,
         ];
     }
 

@@ -123,13 +123,13 @@ class AttendanceService
             'students as total_students' => fn($q) => $q->active(),
         ])->get()->keyBy('id');
 
-        // Get today's attendance summary per class in one query
+        // Get today's attendance summary per class in one query (count distinct students present)
         $attendanceSummary = DB::table('attendance as a')
             ->join('attendance_details as ad', 'a.id', '=', 'ad.attendance_id')
             ->where('a.date', $dateStr)
             ->selectRaw("
                 a.class_id,
-                SUM(ad.status IN ('hadir','terlambat')) as hadir_count
+                COUNT(DISTINCT CASE WHEN ad.status IN ('hadir','terlambat') THEN ad.student_id END) as hadir_count
             ")
             ->groupBy('a.class_id')
             ->pluck('hadir_count', 'class_id');
@@ -143,12 +143,14 @@ class AttendanceService
         return $classTotals->map(function ($class) use ($attendanceSummary, $classesWithAttendance) {
             $hadir = (int) ($attendanceSummary->get($class->id, 0));
             $total = (int) $class->total_students;
+            $percentage = $total > 0 ? (int) round($hadir / $total * 100) : 0;
 
             return [
                 'class'      => $class,
                 'hadir'      => $hadir,
                 'total'      => $total,
-                'percentage' => $total > 0 ? round($hadir / $total * 100) : 0,
+                'percent'    => $percentage,
+                'percentage' => $percentage,
                 'done'       => $classesWithAttendance->has($class->id),
             ];
         });

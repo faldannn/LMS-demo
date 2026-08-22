@@ -55,10 +55,46 @@
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         @include('dashboard.partials.stat-card', ['label' => 'Kelas', 'value' => $stats['classes'], 'icon' => 'bi-building', 'tone' => 'brand'])
         @include('dashboard.partials.stat-card', ['label' => 'Siswa', 'value' => number_format($stats['students']), 'icon' => 'bi-people', 'tone' => 'blue'])
+        @include('dashboard.partials.stat-card', ['label' => 'Kehadiran', 'value' => ($stats['attendance_percentage'] ?? 0) . '%', 'icon' => 'bi-pie-chart', 'tone' => ($stats['attendance_percentage'] ?? 0) >= 75 ? 'brand' : 'amber', 'hint' => 'Hari ini'])
         @include('dashboard.partials.stat-card', ['label' => 'Tugas Aktif', 'value' => $stats['assignments'], 'icon' => 'bi-journal-check', 'tone' => 'amber'])
         @include('dashboard.partials.stat-card', ['label' => 'Materi', 'value' => $stats['materials'], 'icon' => 'bi-file-earmark-text', 'tone' => 'slate'])
         @include('dashboard.partials.stat-card', ['label' => 'Perlu Dinilai', 'value' => $stats['pending_grading'], 'icon' => 'bi-pencil-square', 'tone' => 'rose', 'hint' => 'Tugas siswa'])
     </div>
+
+    @if(!empty($homeroom_attendance_today))
+    {{-- WIDGET KHUSUS WALI KELAS --}}
+    <div class="rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white p-5 shadow-sm ring-1 ring-amber-200 border-l-4 border-amber-500">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="space-y-1">
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-900 px-2.5 py-0.5 text-[11px] font-extrabold">
+                    <i class="bi bi-star-fill text-amber-500"></i> KELAS BINAAN WALI KELAS
+                </div>
+                <h3 class="text-base font-bold text-slate-900 mb-0 flex items-center gap-2">
+                    Kehadiran Kelas {{ $homeroom_attendance_today['class']?->name }} Hari Ini
+                </h3>
+                <p class="text-xs text-slate-600 mb-0">
+                    Total Siswa: <strong class="text-slate-900">{{ $homeroom_attendance_today['total'] }}</strong> · 
+                    Hadir: <strong class="text-emerald-700">{{ $homeroom_attendance_today['present_total'] }}</strong> · 
+                    Sakit: <strong class="text-amber-700">{{ $homeroom_attendance_today['sakit'] }}</strong> · 
+                    Izin: <strong class="text-sky-700">{{ $homeroom_attendance_today['izin'] }}</strong> · 
+                    Alfa: <strong class="text-rose-700">{{ $homeroom_attendance_today['alfa'] }}</strong>
+                </p>
+            </div>
+            <div class="flex items-center gap-4 shrink-0">
+                <div class="text-right">
+                    <span class="text-2xl font-black {{ $homeroom_attendance_today['percentage'] >= 75 ? 'text-emerald-600' : ($homeroom_attendance_today['percentage'] > 0 ? 'text-amber-600' : 'text-slate-400') }}">
+                        {{ $homeroom_attendance_today['percentage'] }}%
+                    </span>
+                    <p class="text-[10px] text-slate-500 mb-0 font-medium">Tingkat Kehadiran</p>
+                </div>
+                <a href="{{ route('attendance.homeroom-create', ['class_id' => $homeroom_attendance_today['class']?->id]) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>{{ $homeroom_attendance_today['has_recorded'] ? 'Update Absensi' : 'Input Absensi' }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif
 
   <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {{-- Jadwal hari ini --}}
@@ -150,44 +186,53 @@
             </div>
         </div>
 
-    </div>
-
-    {{-- Materi terbaru & kehadiran kelas --}}
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {{-- Kehadiran kelas --}}
         <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
-            <h2 class="mb-4 text-base font-bold text-slate-900"><i class="bi bi-file-earmark-richtext mr-2 text-brand-600"></i>Materi Terbaru</h2>
-            <div class="space-y-3">
-                @forelse($recent_materials as $mat)
-                <div class="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-brand-700"><i class="bi {{ $mat->type_icon }}"></i></div>
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate font-semibold text-slate-900">{{ $mat->title }}</p>
-                        <p class="text-xs text-slate-500">{{ $mat->classSubject?->subject?->name }} · {{ $mat->created_at->diffForHumans() }}</p>
-                    </div>
-                </div>
-                @empty
-                <p class="py-6 text-center text-sm text-slate-500">Belum ada materi.</p>
-                @endforelse
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-base font-bold text-slate-900 mb-0"><i class="bi bi-clipboard-check mr-2 text-blue-600"></i>Kehadiran Kelas Hari Ini</h2>
+                <span class="text-xs text-slate-400 font-medium">{{ today()->translatedFormat('d M Y') }}</span>
             </div>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
-            <h2 class="mb-4 text-base font-bold text-slate-900"><i class="bi bi-clipboard-check mr-2 text-blue-600"></i>Kehadiran Kelas Hari Ini</h2>
             <div class="space-y-3">
                 @forelse($class_attendance as $row)
+                @php
+                    $pct = (int) ($row['percent'] ?? $row['percentage'] ?? 0);
+                    $hadir = (int) ($row['hadir'] ?? 0);
+                    $total = (int) ($row['total'] ?? 0);
+                @endphp
                 <div class="rounded-xl bg-slate-50 px-4 py-3">
                     <div class="flex items-center justify-between">
-                        <p class="font-semibold text-slate-900">{{ $row['class']?->name }}</p>
-                        <span class="text-sm font-bold {{ ($row['percent'] ?? 0) >= 75 ? 'text-brand-600' : 'text-rose-600' }}">{{ $row['percent'] ?? 0 }}%</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 mb-0">{{ $row['class']?->name }}</p>
+                            <p class="text-[11px] text-slate-500 mb-0">{{ $hadir }} dari {{ $total }} siswa hadir</p>
+                        </div>
+                        <span class="text-sm font-extrabold {{ $pct >= 75 ? 'text-emerald-600' : ($pct > 0 ? 'text-amber-600' : 'text-slate-400') }}">{{ $pct }}%</span>
                     </div>
                     <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
-                        <div class="h-full rounded-full bg-brand-500" style="width: {{ min($row['percent'] ?? 0, 100) }}%"></div>
+                        <div class="h-full rounded-full {{ $pct >= 75 ? 'bg-emerald-500' : ($pct > 0 ? 'bg-amber-500' : 'bg-slate-300') }}" style="width: {{ min($pct, 100) }}%"></div>
                     </div>
                 </div>
                 @empty
                 <p class="py-6 text-center text-sm text-slate-500">Belum ada data absensi hari ini.</p>
                 @endforelse
             </div>
+        </div>
+    </div>
+
+    {{-- Materi terbaru --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+        <h2 class="mb-4 text-base font-bold text-slate-900"><i class="bi bi-file-earmark-richtext mr-2 text-brand-600"></i>Materi Terbaru</h2>
+        <div class="space-y-3">
+            @forelse($recent_materials as $mat)
+            <div class="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-brand-700"><i class="bi {{ $mat->type_icon }}"></i></div>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-semibold text-slate-900">{{ $mat->title }}</p>
+                    <p class="text-xs text-slate-500">{{ $mat->classSubject?->subject?->name }} · {{ $mat->created_at->diffForHumans() }}</p>
+                </div>
+            </div>
+            @empty
+            <p class="py-6 text-center text-sm text-slate-500">Belum ada materi.</p>
+            @endforelse
         </div>
     </div>
 </div>
