@@ -97,8 +97,27 @@
                                     {{ \Carbon\Carbon::parse($sched->start_time)->format('H:i') }} – {{ \Carbon\Carbon::parse($sched->end_time)->format('H:i') }}
                                 </div>
                                 
-                                <div class="font-bold text-slate-900 text-sm group-hover:text-brand-600 transition mb-1">
-                                    {{ $sched->subject }}
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <div class="font-bold text-slate-900 text-sm group-hover:text-brand-600 transition truncate">
+                                        {{ $sched->subject }}
+                                    </div>
+                                    @if(in_array($sched->today_attendance_status ?? '', ['hadir', 'terlambat'], true))
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[9px] shrink-0">
+                                            <i class="bi bi-check-circle-fill"></i> Hadir
+                                        </span>
+                                    @elseif(($sched->today_attendance_status ?? '') === 'alfa')
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 font-extrabold text-[9px] shrink-0">
+                                            <i class="bi bi-x-circle-fill"></i> Tidak Hadir
+                                        </span>
+                                    @elseif(($sched->today_attendance_status ?? '') === 'sakit')
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[9px] shrink-0">
+                                            <i class="bi bi-bandaid-fill"></i> Sakit
+                                        </span>
+                                    @elseif(($sched->today_attendance_status ?? '') === 'izin')
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-800 font-extrabold text-[9px] shrink-0">
+                                            <i class="bi bi-file-earmark-text-fill"></i> Izin
+                                        </span>
+                                    @endif
                                 </div>
                                 
                                 <div class="text-xs text-slate-500 flex items-center gap-1 mt-1 truncate" title="{{ $sched->teacher?->name ?? '-' }}">

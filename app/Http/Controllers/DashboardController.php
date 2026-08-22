@@ -66,16 +66,77 @@ class DashboardController extends Controller
             $classSubjects = $query->get();
         }
 
-        // Sort by class grade, class name, and subject name
-        $classSubjects = $classSubjects->sortBy([
-            ['class.grade', 'asc'],
-            ['class.name', 'asc'],
-            ['subject.name', 'asc'],
-        ]);
+        $todayAttendanceMap = [];
+        if ($user->isSiswa() && isset($student) && $student?->class_id) {
+            $dayOfWeek = today()->dayOfWeekIso;
+            $daySchedules = \App\Models\Schedule::where('class_id', $student->class_id)
+                ->where('day_of_week', $dayOfWeek)
+                ->orderBy('start_time')
+                ->get();
 
-        $teachers = $classSubjects->pluck('teacher')->filter()->unique('id')->sortBy('name')->values();
+            $todayAttendances = \App\Models\Attendance::with('details')
+                ->where('class_id', $student->class_id)
+                ->whereDate('date', today())
+                ->get();
 
-        return view('elearning.index', compact('classSubjects', 'teachers'));
+            $homeroomAtt = $todayAttendances->first(fn($a) => in_array($a->session, ['pagi', 'siang', 'harian'], true));
+            $homeroomStatus = null;
+            if ($homeroomAtt) {
+                $hDet = $homeroomAtt->details->firstWhere('student_id', $student->id);
+                if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
+                    $homeroomStatus = $hDet->status;
+                }
+            }
+
+            foreach ($classSubjects as $cs) {
+                $subName = $cs->subject?->name;
+                $slotNum = null;
+                $hasScheduleToday = false;
+                $timeScheduleStr = '';
+
+                if ($daySchedules->isNotEmpty() && $subName) {
+                    foreach ($daySchedules as $idx => $sched) {
+                        if ($sched->subject === $subName || stripos($sched->subject, $subName) !== false) {
+                            $slotNum = $idx + 1;
+                            $hasScheduleToday = true;
+                            if ($sched->start_time && $sched->end_time) {
+                                $timeScheduleStr = $sched->start_time->format('H:i') . ' - ' . $sched->end_time->format('H:i');
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                $sessionKey = $slotNum ? "mapel_{$slotNum}" : null;
+
+                $att = $todayAttendances->first(function ($a) use ($sessionKey, $subName, $cs) {
+                    if ($sessionKey && $a->session === $sessionKey) return true;
+                    if ($cs && $a->class_subject_id == $cs->id) return true;
+                    if ($subName && stripos($a->notes ?? '', $subName) !== false) return true;
+                    return false;
+                });
+
+                $studentStatus = null;
+                if ($att) {
+                    $det = $att->details->firstWhere('student_id', $student->id);
+                    if ($det) {
+                        $studentStatus = $det->status;
+                    }
+                }
+
+                if (!$studentStatus && $homeroomStatus) {
+                    $studentStatus = $homeroomStatus;
+                }
+
+                $todayAttendanceMap[$cs->id] = [
+                    'has_schedule_today' => $hasScheduleToday,
+                    'time_str' => $timeScheduleStr,
+                    'status' => $studentStatus,
+                ];
+            }
+        }
+
+        return view('elearning.index', compact('classSubjects', 'teachers', 'todayAttendanceMap'));
     }
 
     public function chartData(Request $request)

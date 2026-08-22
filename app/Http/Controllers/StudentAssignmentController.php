@@ -109,20 +109,58 @@ class StudentAssignmentController extends Controller
             }
         ]);
 
-        $todayAttendance = \App\Models\Attendance::query()
+        $dayOfWeek = today()->dayOfWeekIso;
+        $daySchedules = \App\Models\Schedule::where('class_id', $classSubject->class_id)
+            ->where('day_of_week', $dayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+
+        $slotNum = null;
+        if ($daySchedules->isNotEmpty()) {
+            foreach ($daySchedules as $idx => $sched) {
+                if ($sched->subject === $classSubject->subject->name || stripos($sched->subject, $classSubject->subject->name) !== false) {
+                    $slotNum = $idx + 1;
+                    break;
+                }
+            }
+        }
+
+        $sessionKey = $slotNum ? "mapel_{$slotNum}" : null;
+        $subName = $classSubject->subject->name;
+
+        $todayAttendance = \App\Models\Attendance::with('details')
             ->where('class_id', $classSubject->class_id)
-            ->when(\Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id'), function ($q) use ($classSubject) {
-                $q->where('class_subject_id', $classSubject->id);
-            })
             ->whereDate('date', today())
+            ->where(function ($q) use ($sessionKey, $subName, $classSubject) {
+                if ($sessionKey) {
+                    $q->where('session', $sessionKey);
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id')) {
+                    $q->orWhere('class_subject_id', $classSubject->id);
+                }
+                $q->orWhere('notes', 'like', "%{$subName}%");
+            })
             ->first();
 
         $studentAttendanceDetail = null;
         if ($todayAttendance) {
-            $studentAttendanceDetail = \App\Models\AttendanceDetail::query()
-                ->where('attendance_id', $todayAttendance->id)
-                ->where('student_id', $student->id)
+            $studentAttendanceDetail = $todayAttendance->details->firstWhere('student_id', $student->id);
+        }
+
+        // Fallback: Jika belum ada di mapel tapi ada catatan Sakit / Izin dari Wali Kelas di absensi harian
+        if (!$studentAttendanceDetail) {
+            $homeroomAtt = \App\Models\Attendance::with('details')
+                ->where('class_id', $classSubject->class_id)
+                ->whereDate('date', today())
+                ->whereIn('session', ['pagi', 'siang', 'harian'])
                 ->first();
+
+            if ($homeroomAtt) {
+                $hDet = $homeroomAtt->details->firstWhere('student_id', $student->id);
+                if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
+                    $studentAttendanceDetail = $hDet;
+                }
+            }
         }
 
         $attendanceWindow = $this->resolveAttendanceWindow($classSubject);

@@ -42,12 +42,39 @@
             @if($today_schedules->isNotEmpty())
             <div class="grid gap-3 sm:grid-cols-2">
                 @foreach($today_schedules as $jadwal)
-                <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4 transition hover:bg-white hover:shadow-sm">
                     <div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-600 text-white">
                         <span class="text-[10px] font-bold uppercase">{{ \Carbon\Carbon::parse($jadwal->start_time)->format('H:i') }}</span>
                     </div>
-                    <div class="min-w-0">
-                        <p class="font-bold text-slate-900">{{ $jadwal->subject }}</p>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="font-bold text-slate-900 truncate">
+                                @if($jadwal->class_subject_id)
+                                    <a href="{{ route('student.class-subjects.show', $jadwal->class_subject_id) }}" class="hover:text-brand-600">
+                                        {{ $jadwal->subject }}
+                                    </a>
+                                @else
+                                    {{ $jadwal->subject }}
+                                @endif
+                            </p>
+                            @if(in_array($jadwal->today_attendance_status ?? '', ['hadir', 'terlambat'], true))
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[10px] shrink-0">
+                                    <i class="bi bi-check-circle-fill"></i> Hadir
+                                </span>
+                            @elseif(($jadwal->today_attendance_status ?? '') === 'alfa')
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-extrabold text-[10px] shrink-0">
+                                    <i class="bi bi-x-circle-fill"></i> Tidak Hadir
+                                </span>
+                            @elseif(($jadwal->today_attendance_status ?? '') === 'sakit')
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] shrink-0">
+                                    <i class="bi bi-bandaid-fill"></i> Sakit
+                                </span>
+                            @elseif(($jadwal->today_attendance_status ?? '') === 'izin')
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 font-extrabold text-[10px] shrink-0">
+                                    <i class="bi bi-file-earmark-text-fill"></i> Izin
+                                </span>
+                            @endif
+                        </div>
                         <p class="text-sm text-slate-500">{{ $jadwal->teacher?->name ?? 'Guru' }}</p>
                         <p class="mt-1 text-xs text-slate-400">{{ \Carbon\Carbon::parse($jadwal->end_time)->format('H:i') }} @if($jadwal->room)· {{ $jadwal->room }}@endif</p>
                     </div>

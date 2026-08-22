@@ -157,6 +157,52 @@ class ScheduleController extends Controller
             $sched->class_subject_id = $matchedCs ? $matchedCs->id : null;
         }
 
+        if ($user->isSiswa() && $user->student) {
+            $student = $user->student;
+            $todayIso = today()->dayOfWeekIso;
+            $todayAttendances = \App\Models\Attendance::with('details')
+                ->where('class_id', $classId)
+                ->whereDate('date', today())
+                ->get();
+
+            $homeroomAtt = $todayAttendances->first(fn ($a) => in_array($a->session, ['pagi', 'siang', 'harian'], true));
+            $homeroomStatus = null;
+            if ($homeroomAtt) {
+                $hDet = $homeroomAtt->details->firstWhere('student_id', $student->id);
+                if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
+                    $homeroomStatus = $hDet->status;
+                }
+            }
+
+            $todaySlotScheds = $schedulesList->where('day_of_week', $todayIso)->values();
+            foreach ($todaySlotScheds as $idx => $sched) {
+                $slotNum = $idx + 1;
+                $sessionKey = "mapel_{$slotNum}";
+                $subName = $sched->subject;
+
+                $att = $todayAttendances->first(function ($a) use ($sessionKey, $subName, $sched) {
+                    if ($a->session === $sessionKey) return true;
+                    if ($sched->class_subject_id && $a->class_subject_id == $sched->class_subject_id) return true;
+                    if ($subName && stripos($a->notes ?? '', $subName) !== false) return true;
+                    return false;
+                });
+
+                $studentStatus = null;
+                if ($att) {
+                    $det = $att->details->firstWhere('student_id', $student->id);
+                    if ($det) {
+                        $studentStatus = $det->status;
+                    }
+                }
+
+                if (!$studentStatus && $homeroomStatus) {
+                    $studentStatus = $homeroomStatus;
+                }
+
+                $sched->today_attendance_status = $studentStatus;
+            }
+        }
+
         $schedules = $schedulesList->groupBy('day_of_week');
 
         return view('schedules.index', compact('classes', 'class', 'schedules', 'days', 'classId', 'operationalDays', 'maxDay'));

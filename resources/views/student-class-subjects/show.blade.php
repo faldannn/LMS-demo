@@ -73,32 +73,65 @@
     {{-- Absensi Pelajaran Hari Ini (Student Self Attendance) --}}
     @if(auth()->user()->isSiswa() && \App\Models\Setting::isFeatureEnabled('subject_attendance', false) && ($studentAttendanceDetail || $attendanceWindow['can_check_in'] || in_array($attendanceWindow['status'] ?? '', ['not_started', 'ended'])))
         <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
-            @if($studentAttendanceDetail && $studentAttendanceDetail->status === 'hadir')
-                <div class="rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-emerald-500/20">
+            @if($studentAttendanceDetail && in_array($studentAttendanceDetail->status, ['hadir', 'terlambat'], true))
+                <div class="rounded-xl border-2 border-emerald-500 bg-emerald-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-emerald-600/20">
                     <div class="flex items-center gap-3">
                         <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
                             <i class="bi bi-check-circle-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-white">BERHASIL ABSEN HADIR MAPEL HARI INI</h4>
-                            <p class="text-xs text-emerald-100 font-medium">Tercatat Hadir pada Pukul {{ $studentAttendanceDetail->check_in ? \Carbon\Carbon::parse($studentAttendanceDetail->check_in)->format('H:i') : now()->format('H:i') }} WIB</p>
+                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: HADIR</h4>
+                            <p class="text-xs text-emerald-100 font-medium">Tercatat Hadir pada Pukul {{ $studentAttendanceDetail->check_in ? \Carbon\Carbon::parse($studentAttendanceDetail->check_in)->format('H:i') : now()->format('H:i') }} WIB (Presensi Hari Ini)</p>
                         </div>
                     </div>
                     <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-emerald-700 uppercase tracking-wider shadow-sm">
                         ✅ HADIR
                     </span>
                 </div>
-            @elseif($studentAttendanceDetail && in_array($studentAttendanceDetail->status, ['sakit', 'izin', 'alfa']))
-                <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-center justify-between">
+            @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'alfa')
+                <div class="rounded-xl border-2 border-rose-500 bg-rose-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-rose-600/20">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 font-bold">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                            <i class="bi bi-x-circle-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-xs font-extrabold text-rose-900">STATUS KEHADIRAN: {{ strtoupper($studentAttendanceDetail->status) }}</h4>
-                            <p class="text-[11px] text-rose-700">Status kehadiran Anda telah ditetapkan oleh Guru Pengampu.</p>
+                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: TIDAK HADIR</h4>
+                            <p class="text-xs text-rose-100 font-medium">Tercatat Tidak Hadir pada jam mata pelajaran hari ini oleh Guru Pengampu.</p>
                         </div>
                     </div>
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-rose-700 uppercase tracking-wider shadow-sm">
+                        ❌ TIDAK HADIR
+                    </span>
+                </div>
+            @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'sakit')
+                <div class="rounded-xl border-2 border-amber-500 bg-amber-500 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-amber-500/20">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                            <i class="bi bi-bandaid-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: SAKIT</h4>
+                            <p class="text-xs text-amber-100 font-medium">Tercatat Sakit pada presensi hari ini (Wali Kelas / Guru Pengampu).</p>
+                        </div>
+                    </div>
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-amber-800 uppercase tracking-wider shadow-sm">
+                        🤒 SAKIT
+                    </span>
+                </div>
+            @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'izin')
+                <div class="rounded-xl border-2 border-sky-500 bg-sky-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-sky-600/20">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: IZIN</h4>
+                            <p class="text-xs text-sky-100 font-medium">Tercatat Izin pada presensi hari ini (Wali Kelas / Guru Pengampu).</p>
+                        </div>
+                    </div>
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-sky-800 uppercase tracking-wider shadow-sm">
+                        📄 IZIN
+                    </span>
                 </div>
             @elseif(!$attendanceWindow['can_check_in'])
                 <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">

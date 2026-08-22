@@ -230,6 +230,49 @@ class DashboardService
                 ->get()
             : collect();
 
+        if ($todaySchedules->isNotEmpty() && $student) {
+            $todayAttendances = Attendance::with('details')
+                ->where('class_id', $student->class_id)
+                ->whereDate('date', today())
+                ->get();
+
+            $homeroomAtt = $todayAttendances->first(fn ($a) => in_array($a->session, ['pagi', 'siang', 'harian'], true));
+            $homeroomStatus = null;
+            if ($homeroomAtt) {
+                $hDet = $homeroomAtt->details->firstWhere('student_id', $student->id);
+                if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
+                    $homeroomStatus = $hDet->status;
+                }
+            }
+
+            foreach ($todaySchedules as $idx => $sched) {
+                $slotNum = $idx + 1;
+                $sessionKey = "mapel_{$slotNum}";
+                $subName = $sched->subject;
+
+                $att = $todayAttendances->first(function ($a) use ($sessionKey, $subName, $sched) {
+                    if ($a->session === $sessionKey) return true;
+                    if ($sched->class_subject_id && $a->class_subject_id == $sched->class_subject_id) return true;
+                    if ($subName && stripos($a->notes ?? '', $subName) !== false) return true;
+                    return false;
+                });
+
+                $studentStatus = null;
+                if ($att) {
+                    $det = $att->details->firstWhere('student_id', $student->id);
+                    if ($det) {
+                        $studentStatus = $det->status;
+                    }
+                }
+
+                if (!$studentStatus && $homeroomStatus) {
+                    $studentStatus = $homeroomStatus;
+                }
+
+                $sched->today_attendance_status = $studentStatus;
+            }
+        }
+
         $recentMaterials = $classSubjectIds->isNotEmpty()
             ? Material::with('classSubject.subject')
                 ->whereIn('class_subject_id', $classSubjectIds)

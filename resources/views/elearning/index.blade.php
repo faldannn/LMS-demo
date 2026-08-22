@@ -150,11 +150,46 @@
                     <div id="content-section-{{ $classId }}" class="section-content p-4 pt-0">
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 pt-2 border-t border-slate-100">
                             @foreach($subjects as $cs)
+                            @php
+                                $attInfo = $todayAttendanceMap[$cs->id] ?? null;
+                                $attStatus = $attInfo['status'] ?? null;
+                            @endphp
                             <div data-subject-id="{{ $cs->subject_id }}" data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-xl bg-slate-50/50 p-3.5 ring-1 ring-slate-200/70 hover:bg-white hover:shadow-md hover:ring-brand-200 transition-all duration-200">
                                 <div class="mb-2">
-                                    <h5 class="text-xs font-extrabold text-slate-900 group-hover:text-brand-700 transition-colors">
-                                        {{ $cs->subject?->name ?? '-' }}
-                                    </h5>
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h5 class="text-xs font-extrabold text-slate-900 group-hover:text-brand-700 transition-colors">
+                                            @if(auth()->user()->isSiswa())
+                                                <a href="{{ route('student.class-subjects.show', $cs->id) }}" class="hover:underline">
+                                                    {{ $cs->subject?->name ?? '-' }}
+                                                </a>
+                                            @else
+                                                {{ $cs->subject?->name ?? '-' }}
+                                            @endif
+                                        </h5>
+                                        @if(auth()->user()->isSiswa())
+                                            @if(in_array($attStatus, ['hadir', 'terlambat'], true))
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[10px] shrink-0">
+                                                    <i class="bi bi-check-circle-fill"></i> Hadir
+                                                </span>
+                                            @elseif($attStatus === 'alfa')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-extrabold text-[10px] shrink-0">
+                                                    <i class="bi bi-x-circle-fill"></i> Tidak Hadir
+                                                </span>
+                                            @elseif($attStatus === 'sakit')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] shrink-0">
+                                                    <i class="bi bi-bandaid-fill"></i> Sakit
+                                                </span>
+                                            @elseif($attStatus === 'izin')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 font-extrabold text-[10px] shrink-0">
+                                                    <i class="bi bi-file-earmark-text-fill"></i> Izin
+                                                </span>
+                                            @elseif(!empty($attInfo['has_schedule_today']))
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-600 font-semibold text-[9px] shrink-0">
+                                                    <i class="bi bi-calendar-check"></i> Hari Ini
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
                                     <p class="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
                                         <i class="bi bi-person text-slate-400"></i>
                                         <span class="font-medium text-slate-600 truncate">{{ $cs->teacher?->name ?? 'Belum ditentukan' }}</span>
