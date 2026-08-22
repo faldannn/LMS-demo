@@ -246,17 +246,23 @@ class AttendanceService
         }
 
         return DB::transaction(function () use ($data, $teacher) {
+            $session = $data['session'] ?? 'pagi';
             $attendance = Attendance::updateOrCreate(
                 [
                     'date' => $data['date'],
                     'class_id' => $data['class_id'],
-                    'session' => $data['session'] ?? 'pagi',
+                    'session' => $session,
                 ],
                 ['teacher_id' => $teacher->id]
             );
 
             $this->upsertDetails($attendance->id, $data['details']);
             $this->notifyAlfaStudents($data['details'], $data['date']);
+
+            // Jika ini absensi kelas/harian (pagi/siang/harian), sinkronkan otomatis ke semua absensi mapel pada tanggal tersebut
+            if (in_array($session, ['pagi', 'siang', 'harian'], true)) {
+                $this->syncSubjectAttendancesFromDaily((int) $data['class_id'], $data['date'], $data['details']);
+            }
 
             return $attendance;
         });
@@ -269,10 +275,60 @@ class AttendanceService
     {
         return DB::transaction(function () use ($attendance, $data) {
             $this->upsertDetails($attendance->id, $data['details']);
-            // Optionally, you might want to notify newly alfa students here as well, 
-            // but for now keeping original behavior.
+
+            // Jika ini absensi kelas/harian, sinkronkan ke semua absensi mapel pada tanggal tersebut
+            if (in_array($attendance->session, ['pagi', 'siang', 'harian'], true)) {
+                $dateStr = $attendance->date instanceof \DateTimeInterface ? $attendance->date->toDateString() : (string) $attendance->date;
+                $this->syncSubjectAttendancesFromDaily((int) $attendance->class_id, $dateStr, $data['details']);
+            }
+
             return $attendance;
         });
+    }
+
+    /**
+     * Synchronize student statuses from daily class attendance to existing subject attendance (mapel_*) sessions.
+     */
+    public function syncSubjectAttendancesFromDaily(int $classId, string $date, array $details): void
+    {
+        $subjectAttendances = Attendance::where('class_id', $classId)
+            ->where('date', $date)
+            ->where('session', 'like', 'mapel_%')
+            ->get();
+
+        if ($subjectAttendances->isEmpty()) {
+            return;
+        }
+
+        foreach ($subjectAttendances as $sAtt) {
+            $syncData = [];
+            foreach ($details as $studentId => $detail) {
+                $status = $detail['status'] ?? null;
+                if (!$status) continue;
+
+                $checkIn = null;
+                if ($status === 'hadir') {
+                    $checkIn = !empty($detail['check_in']) ? \Carbon\Carbon::parse($detail['check_in'])->format('H:i:s') : now()->format('H:i:s');
+                }
+
+                $notes = $detail['notes'] ?? null;
+                if (in_array($status, ['sakit', 'izin'], true) && empty($notes)) {
+                    $notes = 'Dicatat ' . ucfirst($status) . ' oleh Wali Kelas';
+                }
+
+                $syncData[] = [
+                    'attendance_id' => $sAtt->id,
+                    'student_id'    => (int) $studentId,
+                    'status'        => $status,
+                    'check_in'      => $checkIn,
+                    'notes'         => $notes,
+                ];
+            }
+
+            if (!empty($syncData)) {
+                AttendanceDetail::upsert($syncData, ['attendance_id', 'student_id'], ['status', 'check_in', 'notes']);
+            }
+        }
     }
 
     private function upsertDetails(int $attendanceId, array $details): void

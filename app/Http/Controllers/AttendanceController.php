@@ -686,25 +686,19 @@ class AttendanceController extends Controller
                     ];
                 }
             } else {
-                // Satu Tanggal: Presensi Instant Auto-Save
-                $homeroomDetails = AttendanceDetail::whereHas('attendance', function ($q) use ($classId, $startDate) {
-                    $q->where('class_id', $classId)->where('date', $startDate);
-                })->whereIn('status', ['sakit', 'izin'])->get();
+                // Satu Tanggal: Presensi Instant Auto-Save & Sinkronisasi
+                $homeroomAtt = Attendance::with('details')->where('class_id', $classId)
+                    ->where('date', $startDate)
+                    ->whereIn('session', ['pagi', 'siang', 'harian'])
+                    ->first();
 
-                foreach ($homeroomDetails as $hDet) {
-                    $existing[$hDet->student_id] = [
-                        'status' => $hDet->status,
-                        'check_in' => null,
-                        'notes' => $hDet->notes ?: 'Dicatat ' . ucfirst($hDet->status) . ' oleh Wali Kelas',
-                        'from_homeroom' => true,
-                    ];
-                }
+                $homeroomDetails = $homeroomAtt ? $homeroomAtt->details->keyBy('student_id') : collect();
 
                 $sessionNotes = '';
                 $subjectModel = $selectedSubjectName ? \App\Models\Subject::where('name', $selectedSubjectName)->first() : null;
                 $targetCs = ($classId && $subjectModel) ? \App\Models\ClassSubject::where('class_id', $classId)->where('subject_id', $subjectModel->id)->first() : null;
 
-                $attQuery = Attendance::where('date', $startDate)->where('class_id', $classId);
+                $attQuery = Attendance::with('details')->where('date', $startDate)->where('class_id', $classId);
                 $att = $attQuery->where(function($q) use ($session, $targetCs, $selectedSubjectName) {
                     $q->where('session', $session);
                     if ($targetCs && \Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id')) {
@@ -715,14 +709,40 @@ class AttendanceController extends Controller
                     }
                 })->first();
 
-
+                $mapelDetails = $att ? $att->details->keyBy('student_id') : collect();
                 if ($att) {
                     $sessionNotes = $att->notes ?? '';
-                    foreach ($att->details as $detail) {
-                        $existing[$detail->student_id] = [
-                            'status' => $detail->status,
-                            'check_in' => $detail->check_in ? $detail->check_in->format('H:i') : null,
-                            'notes' => $detail->notes,
+                }
+
+                foreach ($students as $student) {
+                    $sId = $student->id;
+                    $hDet = $homeroomDetails->get($sId);
+                    $mDet = $mapelDetails->get($sId);
+
+                    // 1. Jika di Absensi Harian/Kelas dicatat Sakit atau Izin, jadikan status prioritas utama
+                    if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
+                        $existing[$sId] = [
+                            'status' => $hDet->status,
+                            'check_in' => null,
+                            'notes' => $hDet->notes ?: 'Dicatat ' . ucfirst($hDet->status) . ' oleh Wali Kelas',
+                            'from_homeroom' => true,
+                        ];
+                    }
+                    // 2. Jika sudah pernah diabsen di sesi mapel ini
+                    elseif ($mDet) {
+                        $existing[$sId] = [
+                            'status' => $mDet->status,
+                            'check_in' => $mDet->check_in ? $mDet->check_in->format('H:i') : null,
+                            'notes' => $mDet->notes,
+                            'from_homeroom' => false,
+                        ];
+                    }
+                    // 3. Jika belum ada di mapel ini tapi ada di absensi harian kelas
+                    elseif ($hDet) {
+                        $existing[$sId] = [
+                            'status' => $hDet->status,
+                            'check_in' => $hDet->check_in ? $hDet->check_in->format('H:i') : null,
+                            'notes' => $hDet->notes,
                             'from_homeroom' => false,
                         ];
                     }
@@ -782,9 +802,11 @@ class AttendanceController extends Controller
             $session = 'mapel_1';
         }
 
-        // Check if marked Sakit/Izin by Wali Kelas
+        // Check if marked Sakit/Izin by Wali Kelas di Absensi Harian/Kelas
         $isHomeroomSickPermission = AttendanceDetail::whereHas('attendance', function ($q) use ($classId, $date) {
-            $q->where('class_id', $classId)->where('date', $date);
+            $q->where('class_id', $classId)
+              ->where('date', $date)
+              ->whereIn('session', ['pagi', 'siang', 'harian']);
         })->where('student_id', $studentId)
           ->whereIn('status', ['sakit', 'izin'])
           ->exists();
