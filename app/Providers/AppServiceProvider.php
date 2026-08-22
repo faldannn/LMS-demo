@@ -86,13 +86,13 @@ class AppServiceProvider extends ServiceProvider
     private function loadRuntimeSettings(): void
     {
         try {
-            if (!Schema::hasTable('settings')) {
-                return;
-            }
-
             $settings = Cache::remember('app.settings', 3600, function () {
                 return Setting::query()->pluck('value', 'key')->toArray();
             });
+
+            if (empty($settings)) {
+                return;
+            }
 
             config([
                 'school.name' => $settings['school_name'] ?? config('school.name'),
