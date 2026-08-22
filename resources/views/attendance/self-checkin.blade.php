@@ -68,17 +68,14 @@
                         </div>
                     </div>
 
-                    <!-- Fallback file input for non-secure contexts / HTTP / Permission Denied -->
-                    <div id="cameraFallbackContainer" class="hidden py-6 text-center">
-                        <i class="bi bi-camera-fill text-5xl text-slate-400 mb-3 d-block"></i>
-                        <p class="text-sm text-slate-500 mb-4">Kamera langsung tidak tersedia.</p>
-                        <label class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-brand-700">
-                            <i class="bi bi-upload"></i> Ambil Foto / Pilih File
-                            <input type="file" id="filePhoto" accept="image/*" capture="user" class="hidden">
-                        </label>
-                        <div id="previewContainer" class="mt-4 hidden">
-                            <img id="fallbackPreview" class="mx-auto max-h-48 rounded-lg shadow-sm border border-slate-200" src="" alt="Preview">
-                        </div>
+                    <!-- Camera Error Notice (Only shown if camera is blocked/denied) -->
+                    <div id="cameraErrorContainer" class="hidden py-6 text-center">
+                        <i class="bi bi-camera-video-off text-5xl text-rose-500 mb-3 block"></i>
+                        <h6 class="text-base font-bold text-slate-800 mb-1">Akses Kamera Diperlukan</h6>
+                        <p class="text-xs text-slate-500 mb-4 max-w-sm mx-auto">Presensi mandiri siswa wajib menggunakan pengambilan foto wajah dari kamera langsung. Harap izinkan akses kamera di browser Anda.</p>
+                        <button type="button" id="btnRetryCamera" class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-brand-700">
+                            <i class="bi bi-arrow-clockwise"></i> Coba Akses Kamera Lagi
+                        </button>
                     </div>
 
                     <!-- Action Buttons -->

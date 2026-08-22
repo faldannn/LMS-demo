@@ -27,10 +27,8 @@ export class SelfAttendanceApp {
             btnRetake: root.querySelector('#btnRetakePhoto'),
             btnConfirm: root.querySelector('#btnConfirmPhoto'),
             successBox: root.querySelector('[data-success]'),
-            fallbackContainer: root.querySelector('#cameraFallbackContainer'),
-            fileInput: root.querySelector('#filePhoto'),
-            fallbackPreview: root.querySelector('#fallbackPreview'),
-            previewContainer: root.querySelector('#previewContainer'),
+            cameraErrorContainer: root.querySelector('#cameraErrorContainer'),
+            btnRetryCamera: root.querySelector('#btnRetryCamera'),
         };
         this.bindEvents();
     }
@@ -40,7 +38,7 @@ export class SelfAttendanceApp {
         this.els.btnCapturePhoto?.addEventListener('click', () => this.captureAndPreview());
         this.els.btnRetake?.addEventListener('click', () => this.retakePhoto());
         this.els.btnConfirm?.addEventListener('click', () => this.confirmPhoto());
-        this.els.fileInput?.addEventListener('change', (e) => this.handleFallbackFile(e));
+        this.els.btnRetryCamera?.addEventListener('click', () => this.startFlow());
     }
 
     async init() {
@@ -72,8 +70,7 @@ export class SelfAttendanceApp {
         this.goToStep('camera');
         const cameraOk = await this.startCamera();
         if (!cameraOk) {
-            this.setStatus('Kamera langsung tidak dapat diakses. Silakan gunakan opsi unggah foto di bawah.', 'warning');
-            this.showFallbackFileInput();
+            this.showCameraError();
         } else {
             this.setStatus('Hadapkan wajah Anda ke kamera lalu klik tombol di bawah untuk mengambil foto.');
         }
@@ -93,11 +90,11 @@ export class SelfAttendanceApp {
             this.els.video.srcObject = this.stream;
             await this.els.video.play();
             
-            // Show video, hide fallback file uploader
+            // Show video, hide camera error
             this.els.video.parentElement.classList.remove('hidden');
             if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
             if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
-            this.els.fallbackContainer?.classList.add('hidden');
+            this.els.cameraErrorContainer?.classList.add('hidden');
 
             this.initFaceTracking();
 
@@ -170,36 +167,12 @@ export class SelfAttendanceApp {
         });
     }
 
-    showFallbackFileInput() {
+    showCameraError() {
         this.els.video.parentElement.classList.add('hidden');
         if (this.els.captureAction) this.els.captureAction.classList.add('hidden');
         if (this.els.confirmAction) this.els.confirmAction.classList.add('hidden');
-        this.els.fallbackContainer?.classList.remove('hidden');
-    }
-
-    async handleFallbackFile(e) {
-        const file = e.target.files[0];
-        if (file) {
-            this.setStatus('Mengompresi gambar...');
-            try {
-                this.state.photoBlob = await this.compressImage(file);
-                
-                // Display preview image
-                if (this.els.fallbackPreview && this.els.previewContainer && this.state.photoBlob) {
-                    this.els.fallbackPreview.src = URL.createObjectURL(this.state.photoBlob);
-                    this.els.previewContainer.classList.remove('hidden');
-                }
-
-                // Show and customize the capture button to serve as the continue button
-                this.els.btnCapturePhoto.innerHTML = '<i class="bi bi-arrow-right-circle"></i> Lanjut dengan Foto Ini';
-                this.els.btnCapturePhoto.removeAttribute('disabled');
-                if (this.els.captureAction) this.els.captureAction.classList.remove('hidden');
-                this.setStatus('Foto berhasil dipilih. Klik tombol di bawah untuk memvalidasi lokasi GPS.');
-            } catch (err) {
-                console.error('Image compression error:', err);
-                this.setStatus('Gagal mengompresi gambar, coba lagi.', 'danger');
-            }
-        }
+        this.els.cameraErrorContainer?.classList.remove('hidden');
+        this.setStatus('Akses kamera langsung wajib diizinkan untuk melakukan presensi mandiri.', 'danger');
     }
 
     compressImage(file) {
