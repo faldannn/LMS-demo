@@ -36,10 +36,10 @@ class SsoController extends Controller
             $payload['kelas'] = $user->student?->class?->name;
         }
 
-        $secretKey = env('SYNC_SECRET_KEY', 'isi_kunci_rahasia_sso_123');
+        $secretKey = config('services.cbt.sync_secret_key') ?: (env('SYNC_SECRET_KEY') ?: 'wG5kM8p2Rq9yN3vX6zT4bS7cJf1dW0eA');
         $token = JWT::encode($payload, $secretKey, 'HS256');
 
-        $cbtUrl = rtrim(env('CBT_URL', 'http://cbt.local'), '/');
+        $cbtUrl = rtrim(config('services.cbt.url') ?: (env('CBT_URL') ?: 'https://cbt.smaiassyafiiyah02.com/api'), '/');
         
         return redirect($cbtUrl . '/sso/verify?token=' . $token);
     }
