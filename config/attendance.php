@@ -1,9 +1,25 @@
 <?php
 
 return [
-    'start_time' => env('ATTENDANCE_START_TIME', '07:00'),
+    // Presensi Siswa Pagi
+    'student_checkin_start' => env('ATTENDANCE_STUDENT_CHECKIN_START', '06:00'),
     'late_limit' => env('ATTENDANCE_LATE_LIMIT', '07:15'),
+    'student_checkout_start' => env('ATTENDANCE_STUDENT_CHECKOUT_START', '14:00'),
+    'student_checkout_end' => env('ATTENDANCE_STUDENT_CHECKOUT_END', '17:00'),
+
+    // Presensi Siswa Siang
+    'student_checkin_start_siang' => env('ATTENDANCE_STUDENT_CHECKIN_START_SIANG', '11:30'),
     'late_limit_siang' => env('ATTENDANCE_LATE_LIMIT_SIANG', '13:00'),
+    'student_checkout_start_siang' => env('ATTENDANCE_STUDENT_CHECKOUT_START_SIANG', '17:30'),
+    'student_checkout_end_siang' => env('ATTENDANCE_STUDENT_CHECKOUT_END_SIANG', '20:00'),
+
+    // Presensi Guru
+    'teacher_checkin_start' => env('ATTENDANCE_TEACHER_CHECKIN_START', '06:00'),
+    'teacher_late_limit' => env('ATTENDANCE_TEACHER_LATE_LIMIT', '07:15'),
+    'teacher_checkout_start' => env('ATTENDANCE_TEACHER_CHECKOUT_START', '15:00'),
+    'teacher_checkout_end' => env('ATTENDANCE_TEACHER_CHECKOUT_END', '18:00'),
+
+    'start_time' => env('ATTENDANCE_START_TIME', '07:00'),
     'end_time' => env('ATTENDANCE_END_TIME', '15:30'),
     'min_percentage' => (int) env('ATTENDANCE_MIN_PERCENTAGE', 75),
     'working_days' => (int) env('ATTENDANCE_WORKING_DAYS', 22),

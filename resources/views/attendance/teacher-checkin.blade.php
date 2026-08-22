@@ -27,7 +27,7 @@
                     </div>
                     <div>
                         <h6 class="text-sm font-bold text-slate-900">Absen Masuk</h6>
-                        <p class="text-[11px] text-slate-500">Batas Terlambat: {{ substr($lateLimit, 0, 5) }}</p>
+                        <p class="text-[11px] text-slate-500">Buka: {{ substr($checkinStart, 0, 5) }} | Batas Telat: {{ substr($lateLimit, 0, 5) }}</p>
                     </div>
                 </div>
                 @if($todayAttendance && $todayAttendance->check_in_at)
@@ -56,10 +56,17 @@
                 </div>
             @else
                 <div class="py-3 text-center">
-                    <p class="text-xs text-slate-500 mb-3">Silakan ambil foto wajah dan lokasi GPS Anda untuk melakukan Absen Masuk.</p>
-                    <button type="button" onclick="openCameraModal('check_in')" class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2" style="background-color: #059669; color: #ffffff;">
-                        <i class="bi bi-camera-fill text-sm"></i> Presensi Masuk Sekarang
-                    </button>
+                    @if(now()->format('H:i:s') < $checkinStart)
+                        <p class="text-xs text-amber-700 mb-3 font-semibold">Absen masuk baru dibuka pada pukul {{ substr($checkinStart, 0, 5) }} WIB.</p>
+                        <button disabled class="w-full rounded-xl bg-amber-50 border-2 border-amber-300 py-3 text-xs font-extrabold text-amber-700 cursor-not-allowed flex items-center justify-center gap-2">
+                            <i class="bi bi-clock-history text-amber-600 text-sm"></i> Belum Jam Masuk (Buka {{ substr($checkinStart, 0, 5) }})
+                        </button>
+                    @else
+                        <p class="text-xs text-slate-500 mb-3">Silakan ambil foto wajah dan lokasi GPS Anda untuk melakukan Absen Masuk.</p>
+                        <button type="button" onclick="openCameraModal('check_in')" class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2" style="background-color: #059669; color: #ffffff;">
+                            <i class="bi bi-camera-fill text-sm"></i> Presensi Masuk Sekarang
+                        </button>
+                    @endif
                 </div>
             @endif
         </div>
@@ -73,7 +80,7 @@
                     </div>
                     <div>
                         <h6 class="text-sm font-bold text-slate-900">Absen Pulang</h6>
-                        <p class="text-[11px] text-slate-500">Mulai Jam: {{ substr($checkoutStart, 0, 5) }}</p>
+                        <p class="text-[11px] text-slate-500">Rentang: {{ substr($checkoutStart, 0, 5) }} — {{ substr($checkoutEnd, 0, 5) }} WIB</p>
                     </div>
                 </div>
                 @if($todayAttendance && $todayAttendance->check_out_at)
@@ -109,6 +116,11 @@
                         <p class="text-xs text-amber-700 mb-3 font-semibold">Absen pulang baru dibuka pada pukul {{ substr($checkoutStart, 0, 5) }} WIB.</p>
                         <button disabled class="w-full rounded-xl bg-amber-50 border-2 border-amber-300 py-3 text-xs font-extrabold text-amber-700 cursor-not-allowed flex items-center justify-center gap-2">
                             <i class="bi bi-clock-history text-amber-600 text-sm"></i> Belum Jam Pulang (Mulai {{ substr($checkoutStart, 0, 5) }})
+                        </button>
+                    @elseif(now()->format('H:i:s') > $checkoutEnd)
+                        <p class="text-xs text-rose-600 mb-3 font-bold">Waktu absen pulang telah berakhir (Batas: {{ substr($checkoutEnd, 0, 5) }} WIB). Anda sudah tidak dapat absen pulang hari ini.</p>
+                        <button disabled class="w-full rounded-xl bg-rose-50 border-2 border-rose-300 py-3 text-xs font-extrabold text-rose-700 cursor-not-allowed flex items-center justify-center gap-2">
+                            <i class="bi bi-exclamation-octagon-fill text-rose-600 text-sm"></i> Waktu Absen Pulang Telah Berakhir
                         </button>
                     @else
                         <p class="text-xs text-slate-500 mb-3 font-medium">Silakan ambil foto wajah dan lokasi GPS Anda untuk Absen Pulang.</p>

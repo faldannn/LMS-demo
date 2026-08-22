@@ -101,11 +101,22 @@ class AppServiceProvider extends ServiceProvider
                 'school.email' => $settings['school_email'] ?? config('school.email'),
                 'school.principal' => $settings['school_principal'] ?? config('school.principal'),
 
-                'attendance.start_time' => $settings['att_start_time'] ?? config('attendance.start_time'),
-                'attendance.late_limit' => $settings['att_late_limit'] ?? config('attendance.late_limit'),
+                'attendance.student_checkin_start' => $settings['att_student_checkin_start'] ?? config('attendance.student_checkin_start', '06:00:00'),
+                'attendance.late_limit' => $settings['att_late_limit'] ?? config('attendance.late_limit', '07:15:00'),
+                'attendance.student_checkout_start' => $settings['att_student_checkout_start'] ?? config('attendance.student_checkout_start', '14:00:00'),
+                'attendance.student_checkout_end' => $settings['att_student_checkout_end'] ?? config('attendance.student_checkout_end', '17:00:00'),
+
+                'attendance.student_checkin_start_siang' => $settings['att_student_checkin_start_siang'] ?? config('attendance.student_checkin_start_siang', '11:30:00'),
                 'attendance.late_limit_siang' => $settings['att_late_limit_siang'] ?? config('attendance.late_limit_siang', '13:00:00'),
+                'attendance.student_checkout_start_siang' => $settings['att_student_checkout_start_siang'] ?? config('attendance.student_checkout_start_siang', '17:30:00'),
+                'attendance.student_checkout_end_siang' => $settings['att_student_checkout_end_siang'] ?? config('attendance.student_checkout_end_siang', '20:00:00'),
+
+                'attendance.teacher_checkin_start' => $settings['att_teacher_checkin_start'] ?? config('attendance.teacher_checkin_start', '06:00:00'),
                 'attendance.teacher_late_limit' => $settings['att_teacher_late_limit'] ?? config('attendance.teacher_late_limit', '07:15:00'),
                 'attendance.teacher_checkout_start' => $settings['att_teacher_checkout_start'] ?? config('attendance.teacher_checkout_start', '15:00:00'),
+                'attendance.teacher_checkout_end' => $settings['att_teacher_checkout_end'] ?? config('attendance.teacher_checkout_end', '18:00:00'),
+
+                'attendance.start_time' => $settings['att_start_time'] ?? config('attendance.start_time'),
                 'attendance.end_time' => $settings['att_end_time'] ?? config('attendance.end_time'),
                 'attendance.min_percentage' => $settings['att_min_pct'] ?? config('attendance.min_percentage'),
                 'attendance.working_days' => $settings['att_working_days'] ?? config('attendance.working_days'),

@@ -37,6 +37,19 @@ class TeacherAttendanceService
             ];
         }
 
+        // Validate time vs teacher_checkin_start
+        $checkinStartStr = config('attendance.teacher_checkin_start', '06:00:00');
+        $now = now();
+        $checkinStartTime = Carbon::createFromTimeString($checkinStartStr);
+
+        if ($now->lessThan($checkinStartTime)) {
+            return [
+                'success' => false,
+                'message' => 'Absen Masuk belum dibuka. Absen masuk dimulai pukul ' . substr($checkinStartStr, 0, 5) . ' WIB.',
+                'code' => 'too_early',
+            ];
+        }
+
         // Validate geofence
         $geo = $this->resolveGeofence($payload);
         if (!$geo['valid']) {
@@ -55,7 +68,6 @@ class TeacherAttendanceService
 
         // Determine status (hadir vs terlambat) based on teacher_late_limit config
         $lateLimitStr = config('attendance.teacher_late_limit', '07:15:00');
-        $now = now();
         $lateLimitTime = Carbon::createFromTimeString($lateLimitStr);
         $status = $now->greaterThan($lateLimitTime) ? 'terlambat' : 'hadir';
 
@@ -107,16 +119,26 @@ class TeacherAttendanceService
             ];
         }
 
-        // Validate time vs teacher_checkout_start
+        // Validate time vs teacher_checkout_start & teacher_checkout_end (cutoff)
         $checkoutStartStr = config('attendance.teacher_checkout_start', '15:00:00');
+        $checkoutEndStr = config('attendance.teacher_checkout_end', '18:00:00');
         $now = now();
         $checkoutStartTime = Carbon::createFromTimeString($checkoutStartStr);
+        $checkoutEndTime = Carbon::createFromTimeString($checkoutEndStr);
 
         if ($now->lessThan($checkoutStartTime)) {
             return [
                 'success' => false,
-                'message' => 'Absen Pulang belum dibuka. Absen pulang dimulai jam ' . substr($checkoutStartStr, 0, 5),
+                'message' => 'Absen Pulang belum dibuka. Absen pulang dimulai pukul ' . substr($checkoutStartStr, 0, 5) . ' WIB.',
                 'code' => 'too_early',
+            ];
+        }
+
+        if ($now->greaterThan($checkoutEndTime)) {
+            return [
+                'success' => false,
+                'message' => 'Waktu Absen Pulang telah berakhir (Batas: ' . substr($checkoutEndStr, 0, 5) . ' WIB). Anda sudah tidak dapat melakukan presensi pulang hari ini.',
+                'code' => 'checkout_expired',
             ];
         }
 

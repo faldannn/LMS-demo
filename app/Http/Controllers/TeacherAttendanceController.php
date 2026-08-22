@@ -24,10 +24,12 @@ class TeacherAttendanceController extends Controller
         }
 
         $todayAttendance = $this->attendanceService->getTodayAttendance($teacher);
+        $checkinStart = config('attendance.teacher_checkin_start', '06:00:00');
         $lateLimit = config('attendance.teacher_late_limit', '07:15:00');
         $checkoutStart = config('attendance.teacher_checkout_start', '15:00:00');
+        $checkoutEnd = config('attendance.teacher_checkout_end', '18:00:00');
 
-        return view('attendance.teacher-checkin', compact('teacher', 'todayAttendance', 'lateLimit', 'checkoutStart'));
+        return view('attendance.teacher-checkin', compact('teacher', 'todayAttendance', 'checkinStart', 'lateLimit', 'checkoutStart', 'checkoutEnd'));
     }
 
     public function status(): JsonResponse
@@ -56,8 +58,10 @@ class TeacherAttendanceController extends Controller
                 'check_out_photo' => $todayAttendance->check_out_photo ? asset('storage/' . $todayAttendance->check_out_photo) : null,
             ] : null,
             'config' => [
+                'teacher_checkin_start' => config('attendance.teacher_checkin_start', '06:00:00'),
                 'teacher_late_limit' => config('attendance.teacher_late_limit', '07:15:00'),
                 'teacher_checkout_start' => config('attendance.teacher_checkout_start', '15:00:00'),
+                'teacher_checkout_end' => config('attendance.teacher_checkout_end', '18:00:00'),
                 'geofence_lat' => (float) config('attendance.geofence.latitude'),
                 'geofence_lng' => (float) config('attendance.geofence.longitude'),
                 'geofence_radius' => (int) config('attendance.geofence.radius_meters'),

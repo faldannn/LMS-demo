@@ -184,33 +184,84 @@
                 
                 {{-- LEFT: SISWA & GURU --}}
                 <div class="space-y-6">
-                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-                        <div class="flex items-center gap-2 text-sm font-bold text-brand-600 border-b border-slate-100 pb-3">
-                            <i class="bi bi-people-fill text-base"></i> 1. Presensi Siswa
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat (Pagi)</label>
-                                <input type="time" name="late_limit" value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit') border-red-500 @enderror">
-                                @error('late_limit')
-                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="text-xs text-slate-400 mt-1">Siswa pagi terlambat jika absen lewat jam ini.</p>
+                    {{-- 1. Presensi Siswa --}}
+                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2 text-sm font-bold text-brand-600">
+                                <i class="bi bi-people-fill text-base"></i> 1. Presensi Siswa
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat (Siang)</label>
-                                <input type="time" name="late_limit_siang" value="{{ old('late_limit_siang', substr($settings['late_limit_siang'], 0, 5)) }}"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit_siang') border-red-500 @enderror">
-                                @error('late_limit_siang')
-                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="text-xs text-slate-400 mt-1">Siswa siang terlambat jika absen lewat jam ini.</p>
+                            <span class="text-[11px] font-semibold text-slate-400">Sesi Pagi &amp; Siang</span>
+                        </div>
+
+                        {{-- Sesi Pagi --}}
+                        <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5 space-y-3">
+                            <div class="flex items-center gap-1.5 text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                                <i class="bi bi-sun-fill text-amber-500"></i> Sesi Pagi
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Jam Buka Masuk</label>
+                                    <input type="time" name="student_checkin_start" value="{{ old('student_checkin_start', substr($settings['student_checkin_start'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('student_checkin_start') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Mulai buka absen masuk.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat</label>
+                                    <input type="time" name="late_limit" value="{{ old('late_limit', substr($settings['late_limit'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Lewat jam ini tercatat terlambat.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Mulai Absen Pulang</label>
+                                    <input type="time" name="student_checkout_start" value="{{ old('student_checkout_start', substr($settings['student_checkout_start'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('student_checkout_start') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Mulai buka absen pulang.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1">Batas Akhir Pulang (Cutoff)</label>
+                                    <input type="time" name="student_checkout_end" value="{{ old('student_checkout_end', substr($settings['student_checkout_end'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-rose-300 bg-rose-50/30 px-3 py-1.5 text-sm text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition @error('student_checkout_end') border-red-500 @enderror">
+                                    <p class="text-[11px] text-rose-500 mt-0.5 font-medium">Lewat jam ini tidak bisa absen pulang.</p>
+                                </div>
                             </div>
                         </div>
+
+                        {{-- Sesi Siang --}}
+                        <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5 space-y-3">
+                            <div class="flex items-center gap-1.5 text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                                <i class="bi bi-cloud-sun-fill text-sky-500"></i> Sesi Siang
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Jam Buka Masuk</label>
+                                    <input type="time" name="student_checkin_start_siang" value="{{ old('student_checkin_start_siang', substr($settings['student_checkin_start_siang'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('student_checkin_start_siang') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Mulai buka absen masuk siang.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat</label>
+                                    <input type="time" name="late_limit_siang" value="{{ old('late_limit_siang', substr($settings['late_limit_siang'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('late_limit_siang') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Lewat jam ini tercatat terlambat.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Mulai Absen Pulang</label>
+                                    <input type="time" name="student_checkout_start_siang" value="{{ old('student_checkout_start_siang', substr($settings['student_checkout_start_siang'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('student_checkout_start_siang') border-red-500 @enderror">
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Mulai buka absen pulang siang.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1">Batas Akhir Pulang (Cutoff)</label>
+                                    <input type="time" name="student_checkout_end_siang" value="{{ old('student_checkout_end_siang', substr($settings['student_checkout_end_siang'], 0, 5)) }}"
+                                        class="w-full rounded-lg border border-rose-300 bg-rose-50/30 px-3 py-1.5 text-sm text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition @error('student_checkout_end_siang') border-red-500 @enderror">
+                                    <p class="text-[11px] text-rose-500 mt-0.5 font-medium">Lewat jam ini tidak bisa absen pulang.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Minimal Kehadiran Siswa (%)</label>
-                            <div class="flex">
+                            <div class="flex max-w-xs">
                                 <input type="number" name="min_attendance" value="{{ old('min_attendance', $settings['min_attendance']) }}" min="1" max="100"
                                     class="w-full rounded-l-lg border border-r-0 border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('min_attendance') border-red-500 @enderror">
                                 <span class="inline-flex items-center px-3.5 rounded-r-lg border border-slate-300 bg-slate-100 text-slate-600 font-bold text-sm">%</span>
@@ -218,32 +269,43 @@
                             @error('min_attendance')
                                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-slate-400 mt-1">Batas minimal persentase kehadiran.</p>
+                            <p class="text-xs text-slate-400 mt-1">Batas minimal persentase kehadiran rapor.</p>
                         </div>
                     </div>
 
+                    {{-- 2. Presensi Guru --}}
                     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-                        <div class="flex items-center gap-2 text-sm font-bold text-emerald-600 border-b border-slate-100 pb-3">
-                            <i class="bi bi-person-badge-fill text-base"></i> 2. Presensi Guru
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2 text-sm font-bold text-emerald-600">
+                                <i class="bi bi-person-badge-fill text-base"></i> 2. Presensi Guru &amp; Tendik
+                            </div>
+                            <span class="text-[11px] font-semibold text-slate-400">Presensi Harian</span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat Guru</label>
-                                <input type="time" name="teacher_late_limit" value="{{ old('teacher_late_limit', substr($settings['teacher_late_limit'], 0, 5)) }}"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_late_limit') border-red-500 @enderror">
-                                @error('teacher_late_limit')
-                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="text-xs text-slate-400 mt-1">Guru terlambat jika absen masuk lewat jam ini.</p>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Jam Buka Masuk</label>
+                                <input type="time" name="teacher_checkin_start" value="{{ old('teacher_checkin_start', substr($settings['teacher_checkin_start'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_checkin_start') border-red-500 @enderror">
+                                <p class="text-[11px] text-slate-400 mt-0.5">Mulai buka absen masuk guru.</p>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Jam Mulai Absen Pulang</label>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Batas Terlambat</label>
+                                <input type="time" name="teacher_late_limit" value="{{ old('teacher_late_limit', substr($settings['teacher_late_limit'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_late_limit') border-red-500 @enderror">
+                                <p class="text-[11px] text-slate-400 mt-0.5">Guru terlambat jika absen lewat jam ini.</p>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Mulai Absen Pulang</label>
                                 <input type="time" name="teacher_checkout_start" value="{{ old('teacher_checkout_start', substr($settings['teacher_checkout_start'], 0, 5)) }}"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_checkout_start') border-red-500 @enderror">
-                                @error('teacher_checkout_start')
-                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                @enderror
-                                <p class="text-xs text-slate-400 mt-1">Absen pulang guru diizinkan mulai jam ini.</p>
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition @error('teacher_checkout_start') border-red-500 @enderror">
+                                <p class="text-[11px] text-slate-400 mt-0.5">Absen pulang guru dibuka mulai jam ini.</p>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1">Batas Akhir Pulang (Cutoff)</label>
+                                <input type="time" name="teacher_checkout_end" value="{{ old('teacher_checkout_end', substr($settings['teacher_checkout_end'], 0, 5)) }}"
+                                    class="w-full rounded-lg border border-rose-300 bg-rose-50/30 px-3 py-1.5 text-sm text-rose-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition @error('teacher_checkout_end') border-red-500 @enderror">
+                                <p class="text-[11px] text-rose-500 mt-0.5 font-medium">Lewat jam ini guru tidak bisa absen pulang.</p>
                             </div>
                         </div>
                     </div>
@@ -304,12 +366,24 @@
                 {{-- SUMMARY --}}
                 <div class="lg:col-span-2 rounded-xl border border-brand-200 bg-brand-50/50 p-4">
                     <div class="flex items-center gap-2 text-brand-800 text-xs font-bold mb-1">
-                        <i class="bi bi-info-circle-fill"></i> Ringkasan Parameter Absensi Aktif:
+                        <i class="bi bi-info-circle-fill"></i> Ringkasan Parameter Waktu Absensi Aktif:
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-700 mt-1.5">
-                        <div>• Terlambat Siswa Pagi: <strong>{{ substr($settings['late_limit'], 0, 5) }}</strong> | Siang: <strong>{{ substr($settings['late_limit_siang'], 0, 5) }}</strong></div>
-                        <div>• Terlambat Guru: <strong>{{ substr($settings['teacher_late_limit'], 0, 5) }}</strong> | Pulang: <strong>{{ substr($settings['teacher_checkout_start'], 0, 5) }}</strong></div>
-                        <div>• Geofence Radius: <strong>{{ $settings['geofence_radius'] }} Meter</strong> (Lat: {{ $settings['geofence_lat'] }}, Lng: {{ $settings['geofence_lng'] }})</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-700 mt-2">
+                        <div class="rounded-lg bg-white/80 p-2.5 border border-brand-100">
+                            <span class="font-bold text-slate-900 block mb-1">☀️ Siswa Pagi:</span>
+                            • Masuk: {{ substr($settings['student_checkin_start'], 0, 5) }} (Telat: {{ substr($settings['late_limit'], 0, 5) }})<br>
+                            • Pulang: {{ substr($settings['student_checkout_start'], 0, 5) }} — {{ substr($settings['student_checkout_end'], 0, 5) }} WIB
+                        </div>
+                        <div class="rounded-lg bg-white/80 p-2.5 border border-brand-100">
+                            <span class="font-bold text-slate-900 block mb-1">🌤️ Siswa Siang:</span>
+                            • Masuk: {{ substr($settings['student_checkin_start_siang'], 0, 5) }} (Telat: {{ substr($settings['late_limit_siang'], 0, 5) }})<br>
+                            • Pulang: {{ substr($settings['student_checkout_start_siang'], 0, 5) }} — {{ substr($settings['student_checkout_end_siang'], 0, 5) }} WIB
+                        </div>
+                        <div class="rounded-lg bg-white/80 p-2.5 border border-brand-100">
+                            <span class="font-bold text-slate-900 block mb-1">👨‍🏫 Guru &amp; Tendik:</span>
+                            • Masuk: {{ substr($settings['teacher_checkin_start'], 0, 5) }} (Telat: {{ substr($settings['teacher_late_limit'], 0, 5) }})<br>
+                            • Pulang: {{ substr($settings['teacher_checkout_start'], 0, 5) }} — {{ substr($settings['teacher_checkout_end'], 0, 5) }} WIB
+                        </div>
                     </div>
                 </div>
             </div>

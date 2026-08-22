@@ -21,10 +21,25 @@ class SettingController extends Controller
             'school_phone'     => config('school.phone', ''),
             'school_email'     => config('school.email', ''),
             'school_logo'      => config('school.logo', ''),
-            'late_limit'       => config('attendance.late_limit', '07:15'),
-            'late_limit_siang' => config('attendance.late_limit_siang', '13:00'),
-            'teacher_late_limit' => config('attendance.teacher_late_limit', '07:15'),
+
+            // Presensi Siswa Pagi
+            'student_checkin_start'  => config('attendance.student_checkin_start', '06:00'),
+            'late_limit'             => config('attendance.late_limit', '07:15'),
+            'student_checkout_start' => config('attendance.student_checkout_start', '14:00'),
+            'student_checkout_end'   => config('attendance.student_checkout_end', '17:00'),
+
+            // Presensi Siswa Siang
+            'student_checkin_start_siang'  => config('attendance.student_checkin_start_siang', '11:30'),
+            'late_limit_siang'             => config('attendance.late_limit_siang', '13:00'),
+            'student_checkout_start_siang' => config('attendance.student_checkout_start_siang', '17:30'),
+            'student_checkout_end_siang'   => config('attendance.student_checkout_end_siang', '20:00'),
+
+            // Presensi Guru
+            'teacher_checkin_start'  => config('attendance.teacher_checkin_start', '06:00'),
+            'teacher_late_limit'     => config('attendance.teacher_late_limit', '07:15'),
             'teacher_checkout_start' => config('attendance.teacher_checkout_start', '15:00'),
+            'teacher_checkout_end'   => config('attendance.teacher_checkout_end', '18:00'),
+
             'min_attendance'   => config('attendance.min_percentage', 75),
             'geofence_lat'     => config('attendance.geofence.latitude'),
             'geofence_lng'     => config('attendance.geofence.longitude'),
@@ -88,22 +103,50 @@ class SettingController extends Controller
     public function updateAttendance(Request $request)
     {
         $data = $request->validate([
-            'late_limit'             => 'required|date_format:H:i',
-            'late_limit_siang'       => 'required|date_format:H:i',
-            'teacher_late_limit'     => 'required|date_format:H:i',
-            'teacher_checkout_start' => 'required|date_format:H:i',
-            'min_attendance'         => 'required|integer|min:1|max:100',
-            'geofence_lat'           => 'required|numeric|between:-90,90',
-            'geofence_lng'           => 'required|numeric|between:-180,180',
-            'geofence_radius'        => 'required|integer|min:10|max:5000',
-            'face_detection_min'     => 'required|numeric|min:0.1|max:1',
-            'face_match_min'         => 'required|numeric|min:0.1|max:1',
+            // Siswa Pagi
+            'student_checkin_start'        => 'required|date_format:H:i',
+            'late_limit'                   => 'required|date_format:H:i',
+            'student_checkout_start'       => 'required|date_format:H:i',
+            'student_checkout_end'         => 'required|date_format:H:i',
+
+            // Siswa Siang
+            'student_checkin_start_siang'  => 'required|date_format:H:i',
+            'late_limit_siang'             => 'required|date_format:H:i',
+            'student_checkout_start_siang' => 'required|date_format:H:i',
+            'student_checkout_end_siang'   => 'required|date_format:H:i',
+
+            // Guru
+            'teacher_checkin_start'        => 'required|date_format:H:i',
+            'teacher_late_limit'           => 'required|date_format:H:i',
+            'teacher_checkout_start'       => 'required|date_format:H:i',
+            'teacher_checkout_end'         => 'required|date_format:H:i',
+
+            'min_attendance'               => 'required|integer|min:1|max:100',
+            'geofence_lat'                 => 'required|numeric|between:-90,90',
+            'geofence_lng'                 => 'required|numeric|between:-180,180',
+            'geofence_radius'              => 'required|integer|min:10|max:5000',
+            'face_detection_min'           => 'required|numeric|min:0.1|max:1',
+            'face_match_min'               => 'required|numeric|min:0.1|max:1',
         ]);
 
+        // Siswa Pagi
+        Setting::set('att_student_checkin_start', $data['student_checkin_start'] . ':00', 'attendance');
         Setting::set('att_late_limit', $data['late_limit'] . ':00', 'attendance');
+        Setting::set('att_student_checkout_start', $data['student_checkout_start'] . ':00', 'attendance');
+        Setting::set('att_student_checkout_end', $data['student_checkout_end'] . ':00', 'attendance');
+
+        // Siswa Siang
+        Setting::set('att_student_checkin_start_siang', $data['student_checkin_start_siang'] . ':00', 'attendance');
         Setting::set('att_late_limit_siang', $data['late_limit_siang'] . ':00', 'attendance');
+        Setting::set('att_student_checkout_start_siang', $data['student_checkout_start_siang'] . ':00', 'attendance');
+        Setting::set('att_student_checkout_end_siang', $data['student_checkout_end_siang'] . ':00', 'attendance');
+
+        // Guru
+        Setting::set('att_teacher_checkin_start', $data['teacher_checkin_start'] . ':00', 'attendance');
         Setting::set('att_teacher_late_limit', $data['teacher_late_limit'] . ':00', 'attendance');
         Setting::set('att_teacher_checkout_start', $data['teacher_checkout_start'] . ':00', 'attendance');
+        Setting::set('att_teacher_checkout_end', $data['teacher_checkout_end'] . ':00', 'attendance');
+
         Setting::set('att_min_pct', $data['min_attendance'], 'attendance');
         Setting::set('att_geofence_lat', $data['geofence_lat'], 'attendance');
         Setting::set('att_geofence_lng', $data['geofence_lng'], 'attendance');

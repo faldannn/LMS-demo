@@ -44,6 +44,21 @@ class SelfAttendanceService
             return ['success' => false, 'message' => 'Anda sudah presensi hari ini.', 'code' => 'duplicate'];
         }
 
+        $session = $student->class?->session ?? 'pagi';
+        $checkinStartStr = $session === 'siang'
+            ? config('attendance.student_checkin_start_siang', '11:30:00')
+            : config('attendance.student_checkin_start', '06:00:00');
+
+        $now = now();
+        $checkinStartTime = \Illuminate\Support\Carbon::createFromTimeString($checkinStartStr);
+        if ($now->lessThan($checkinStartTime)) {
+            return [
+                'success' => false,
+                'message' => 'Presensi belum dibuka. Presensi ' . ($session === 'siang' ? 'siang' : 'pagi') . ' dibuka mulai pukul ' . substr($checkinStartStr, 0, 5) . ' WIB.',
+                'code' => 'too_early',
+            ];
+        }
+
         $geo = $this->resolveGeofence($payload, $mode);
         $face = $this->resolveFaceValidation($payload, $mode);
 
