@@ -16,6 +16,7 @@ class MaterialController extends Controller
     {
         $this->authorize('view', $classSubject);
 
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
         $materials = $this->materialService->getByClassSubject($classSubject->id);
 
         return view('materials.index', compact('classSubject', 'materials'));
@@ -24,6 +25,8 @@ class MaterialController extends Controller
     public function create(ClassSubject $classSubject)
     {
         $this->authorize('manage', $classSubject);
+
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
 
         return view('materials.create', compact('classSubject'));
     }

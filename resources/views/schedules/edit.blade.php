@@ -80,17 +80,12 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Guru Pengampu <span class="text-danger">*</span></label>
-                            <select name="teacher_id" class="form-select @error('teacher_id') is-invalid @enderror" required>
+                            <select name="teacher_id" id="teacher-select" data-selected="{{ old('teacher_id', $schedule->teacher_id) }}" class="form-select @error('teacher_id') is-invalid @enderror" required>
                                 <option value="">-- Pilih Guru --</option>
                                 @foreach($teachers as $t)
-                                    @php
-                                        $teacherSubjects = $t->subjects->pluck('name')->toArray();
-                                        if ($t->subject) {
-                                            $legacySubjects = array_map('trim', explode(',', $t->subject));
-                                            $teacherSubjects = array_unique(array_merge($teacherSubjects, $legacySubjects));
-                                        }
-                                    @endphp
-                                    <option value="{{ $t->id }}" data-subjects="{{ json_encode($teacherSubjects) }}" {{ old('teacher_id', $schedule->teacher_id) == $t->id ? 'selected' : '' }}>{{ $t->name }} {{ $t->subject ? '('.$t->subject.')' : '' }}</option>
+                                    <option value="{{ $t->id }}" data-subjects="{{ json_encode($t->taught_subject_names) }}" {{ old('teacher_id', $schedule->teacher_id) == $t->id ? 'selected' : '' }}>
+                                        {{ $t->name }} {{ $t->subject ? '('.$t->subject.')' : '' }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('teacher_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -132,64 +127,74 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const subjectSelect = document.querySelector('select[name="subject"]');
-    const teacherSelect = document.querySelector('select[name="teacher_id"]');
+    const teacherSelect = document.getElementById('teacher-select');
     
     if (subjectSelect && teacherSelect) {
-        const allTeacherOptions = Array.from(teacherSelect.options);
+        const allTeacherOptions = Array.from(teacherSelect.options).filter(opt => opt.value);
         
-        subjectSelect.addEventListener('change', function () {
-            const selectedSubject = this.value;
+        function filterTeachers() {
+            const selectedSubject = (subjectSelect.value || '').trim().toLowerCase();
+            const currentSelectedValue = teacherSelect.value || teacherSelect.getAttribute('data-selected');
             
-            const currentTeacherOption = teacherSelect.options[teacherSelect.selectedIndex];
-            let currentTeacherMatches = false;
-            if (currentTeacherOption && currentTeacherOption.value) {
-                let subjects = [];
-                try {
-                    subjects = JSON.parse(currentTeacherOption.getAttribute('data-subjects') || '[]');
-                } catch (e) {
-                    subjects = [];
-                }
-                currentTeacherMatches = subjects.some(subj => subj.toLowerCase() === selectedSubject.toLowerCase());
-            }
-
-            if (!currentTeacherMatches) {
-                teacherSelect.value = "";
-            }
-            
-            teacherSelect.innerHTML = "";
-            teacherSelect.appendChild(allTeacherOptions[0]);
+            teacherSelect.innerHTML = '<option value="">-- Pilih Guru --</option>';
             
             if (!selectedSubject) {
-                for (let i = 1; i < allTeacherOptions.length; i++) {
-                    teacherSelect.appendChild(allTeacherOptions[i]);
-                }
+                allTeacherOptions.forEach(opt => teacherSelect.appendChild(opt.cloneNode(true)));
+                if (currentSelectedValue) teacherSelect.value = currentSelectedValue;
                 return;
             }
             
-            for (let i = 1; i < allTeacherOptions.length; i++) {
-                const option = allTeacherOptions[i];
+            const matchingOptions = [];
+            const otherOptions = [];
+            
+            allTeacherOptions.forEach(opt => {
                 let subjects = [];
                 try {
-                    subjects = JSON.parse(option.getAttribute('data-subjects') || '[]');
+                    subjects = JSON.parse(opt.getAttribute('data-subjects') || '[]');
                 } catch (e) {
                     subjects = [];
                 }
                 
-                const matches = subjects.some(subj => subj.toLowerCase() === selectedSubject.toLowerCase());
-                
+                const matches = subjects.some(subj => (subj || '').toLowerCase() === selectedSubject);
                 if (matches) {
-                    teacherSelect.appendChild(option);
+                    const cloned = opt.cloneNode(true);
+                    cloned.textContent = cloned.textContent.replace(' ✓', '') + ' ✓';
+                    matchingOptions.push(cloned);
+                } else {
+                    otherOptions.push(opt.cloneNode(true));
                 }
-            }
+            });
             
-            if (currentTeacherMatches) {
-                teacherSelect.value = currentTeacherOption.value;
+            if (matchingOptions.length > 0) {
+                const groupMatch = document.createElement('optgroup');
+                groupMatch.label = `Guru Pengampu Mapel ${subjectSelect.value}`;
+                matchingOptions.forEach(opt => groupMatch.appendChild(opt));
+                teacherSelect.appendChild(groupMatch);
+                
+                if (otherOptions.length > 0) {
+                    const groupOther = document.createElement('optgroup');
+                    groupOther.label = 'Guru Lainnya (Inval/Pengganti)';
+                    otherOptions.forEach(opt => groupOther.appendChild(opt));
+                    teacherSelect.appendChild(groupOther);
+                }
+                
+                if (currentSelectedValue) {
+                    teacherSelect.value = currentSelectedValue;
+                } else if (matchingOptions.length === 1) {
+                    teacherSelect.value = matchingOptions[0].value;
+                }
+            } else {
+                allTeacherOptions.forEach(opt => teacherSelect.appendChild(opt.cloneNode(true)));
+                if (currentSelectedValue) teacherSelect.value = currentSelectedValue;
             }
-        });
-
-        if (subjectSelect.value) {
-            subjectSelect.dispatchEvent(new Event('change'));
         }
+        
+        subjectSelect.addEventListener('change', () => {
+            teacherSelect.removeAttribute('data-selected');
+            filterTeachers();
+        });
+        
+        filterTeachers();
     }
 
     // Session filter for classes

@@ -75,4 +75,14 @@ class Teacher extends Model
             ? asset('storage/' . $this->photo)
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=10b981&color=fff';
     }
+
+    public function getTaughtSubjectNamesAttribute(): array
+    {
+        $rel = $this->relationLoaded('subjects')
+            ? $this->subjects->pluck('name')->toArray()
+            : $this->subjects()->pluck('name')->toArray();
+        $col = $this->subject ? array_map('trim', explode(',', $this->subject)) : [];
+        return array_values(array_unique(array_filter(array_merge($rel, $col))));
+    }
 }
+

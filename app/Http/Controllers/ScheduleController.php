@@ -130,11 +130,6 @@ class ScheduleController extends Controller
 
         $class = Classes::find($classId);
 
-        // Ensure E-Learning portal ClassSubject mappings are synced for this class
-        if ($classId) {
-            $this->syncClassSubjects((int) $classId);
-        }
-
         $operationalDays = $this->getOperationalDays();
         $days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         $maxDay = $this->getMaxDayOfWeek();
@@ -173,8 +168,14 @@ class ScheduleController extends Controller
         $classId = $request->get('class_id', $classes->first()?->id);
         $class = Classes::find($classId);
 
-        $teachers = Teacher::active()->orderBy('name')->get();
-        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $teachers = Teacher::active()->with('subjects')->orderBy('name')->get()->map(function ($t) {
+            return [
+                'id' => $t->id,
+                'name' => $t->name,
+                'taught_subjects' => $t->taught_subject_names,
+            ];
+        });
+        $subjects = \App\Models\Subject::active()->orderBy('name')->get();
         $operationalDays = $this->getOperationalDays();
         $maxDay = $this->getMaxDayOfWeek();
 

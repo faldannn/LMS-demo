@@ -17,6 +17,7 @@ class AssignmentController extends Controller
     {
         $this->authorize('view', $classSubject);
 
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
         $assignments = $this->assignmentService->getByClassSubject($classSubject->id);
 
         return view('assignments.index', compact('classSubject', 'assignments'));
@@ -25,6 +26,8 @@ class AssignmentController extends Controller
     public function create(ClassSubject $classSubject)
     {
         $this->authorize('manage', $classSubject);
+
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
 
         return view('assignments.create', compact('classSubject'));
     }

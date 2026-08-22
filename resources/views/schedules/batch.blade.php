@@ -93,18 +93,26 @@
 
                                     <div>
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Mata Pelajaran</label>
-                                        <input type="text" name="items[{{ $dayNum }}_{{ $idx }}][subject]" list="subject-options" 
-                                            value="{{ $sched->subject }}" placeholder="Pilih/Ketik Mapel..." 
-                                            class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 focus:border-brand-500" required>
+                                        <select name="items[{{ $dayNum }}_{{ $idx }}][subject]" onchange="filterTeachersForSlot(this)" 
+                                            class="subject-select w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 focus:border-brand-500" required>
+                                            <option value="">-- Pilih Mapel --</option>
+                                            @foreach($subjects as $sub)
+                                                <option value="{{ $sub->name }}" {{ (strcasecmp($sched->subject, $sub->name) === 0) ? 'selected' : '' }}>
+                                                    {{ $sub->name }} ({{ $sub->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
                                     <div>
                                         <label class="text-[10px] font-bold text-slate-400 uppercase">Guru Pengampu</label>
-                                        <select name="items[{{ $dayNum }}_{{ $idx }}][teacher_id]" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-brand-500" required>
+                                        <select name="items[{{ $dayNum }}_{{ $idx }}][teacher_id]" 
+                                            data-selected="{{ $sched->teacher_id }}"
+                                            class="teacher-select w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-brand-500" required>
                                             <option value="">-- Pilih Guru --</option>
                                             @foreach($teachers as $t)
-                                                <option value="{{ $t->id }}" {{ $sched->teacher_id == $t->id ? 'selected' : '' }}>
-                                                    {{ $t->name }}
+                                                <option value="{{ $t['id'] }}" {{ $sched->teacher_id == $t['id'] ? 'selected' : '' }}>
+                                                    {{ $t['name'] }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -127,13 +135,6 @@
                 </div>
             @endforeach
         </div>
-
-        {{-- Databound Subject Options Datalist --}}
-        <datalist id="subject-options">
-            @foreach($subjects as $sub)
-                <option value="{{ $sub->name }}">{{ $sub->code }} - {{ $sub->name }}</option>
-            @endforeach
-        </datalist>
 
         {{-- Save Button Bar --}}
         <div class="sticky bottom-4 mt-6 rounded-2xl bg-slate-900 p-4 shadow-xl text-white flex items-center justify-between">
@@ -194,6 +195,7 @@
 @push('scripts')
 <script>
     const teachersList = @json($teachers);
+    const subjectsList = @json($subjects);
     const defaultTimes = [
         ['07:15', '08:00'],
         ['08:00', '08:45'],
@@ -204,6 +206,78 @@
         ['12:45', '13:30'],
         ['13:30', '14:15']
     ];
+
+    function filterTeachersForSlot(subjectElem) {
+        const card = subjectElem.closest('.slot-card');
+        if (!card) return;
+
+        const teacherSelect = card.querySelector('.teacher-select');
+        if (!teacherSelect) return;
+
+        const selectedSubject = (subjectElem.value || '').trim().toLowerCase();
+        const currentSelectedId = teacherSelect.value || teacherSelect.getAttribute('data-selected') || '';
+
+        teacherSelect.innerHTML = '<option value="">-- Pilih Guru --</option>';
+
+        if (!selectedSubject) {
+            // Show all teachers
+            teachersList.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                if (String(t.id) === String(currentSelectedId)) opt.selected = true;
+                teacherSelect.appendChild(opt);
+            });
+            return;
+        }
+
+        const matchingTeachers = teachersList.filter(t => {
+            if (!t.taught_subjects || !Array.isArray(t.taught_subjects)) return false;
+            return t.taught_subjects.some(s => s.toLowerCase() === selectedSubject);
+        });
+
+        const otherTeachers = teachersList.filter(t => !matchingTeachers.some(m => m.id === t.id));
+
+        if (matchingTeachers.length > 0) {
+            const groupMatch = document.createElement('optgroup');
+            groupMatch.label = `Guru Pengampu ${subjectElem.value}`;
+            matchingTeachers.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `${t.name} ✓`;
+                if (String(t.id) === String(currentSelectedId)) opt.selected = true;
+                groupMatch.appendChild(opt);
+            });
+            teacherSelect.appendChild(groupMatch);
+
+            if (otherTeachers.length > 0) {
+                const groupOther = document.createElement('optgroup');
+                groupOther.label = 'Guru Lainnya (Inval/Pengganti)';
+                otherTeachers.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    if (String(t.id) === String(currentSelectedId)) opt.selected = true;
+                    groupOther.appendChild(opt);
+                });
+                teacherSelect.appendChild(groupOther);
+            }
+
+            // Auto-select if only 1 matching teacher and no pre-selection
+            if (matchingTeachers.length === 1 && (!currentSelectedId || !matchingTeachers.some(m => String(m.id) === String(currentSelectedId)))) {
+                teacherSelect.value = matchingTeachers[0].id;
+            }
+        } else {
+            // No specific teacher mapped for this subject, list all
+            teachersList.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                if (String(t.id) === String(currentSelectedId)) opt.selected = true;
+                teacherSelect.appendChild(opt);
+            });
+        }
+    }
 
     function updateBadgeCount(dayNum) {
         const container = document.getElementById(`slots-container-${dayNum}`);
@@ -217,10 +291,11 @@
         if (!container) return;
 
         const idx = Date.now() + Math.floor(Math.random() * 1000);
-        let teacherOptions = '<option value="">-- Pilih Guru --</option>';
-        teachersList.forEach(t => {
-            const sel = t.id == teacherId ? 'selected' : '';
-            teacherOptions += `<option value="${t.id}" ${sel}>${t.name}</option>`;
+        
+        let subjectOptions = '<option value="">-- Pilih Mapel --</option>';
+        subjectsList.forEach(sub => {
+            const sel = (sub.name.toLowerCase() === subject.toLowerCase()) ? 'selected' : '';
+            subjectOptions += `<option value="${sub.name}" ${sel}>${sub.name} (${sub.code})</option>`;
         });
 
         const slotHtml = `
@@ -240,13 +315,17 @@
 
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Mata Pelajaran</label>
-                    <input type="text" name="items[${dayNum}_${idx}][subject]" list="subject-options" value="${subject}" placeholder="Pilih/Ketik Mapel..." class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 focus:border-brand-500" required>
+                    <select name="items[${dayNum}_${idx}][subject]" onchange="filterTeachersForSlot(this)" 
+                        class="subject-select w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 focus:border-brand-500" required>
+                        ${subjectOptions}
+                    </select>
                 </div>
 
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Guru Pengampu</label>
-                    <select name="items[${dayNum}_${idx}][teacher_id]" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-brand-500" required>
-                        ${teacherOptions}
+                    <select name="items[${dayNum}_${idx}][teacher_id]" data-selected="${teacherId}" 
+                        class="teacher-select w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-brand-500" required>
+                        <option value="">-- Pilih Guru --</option>
                     </select>
                 </div>
 
@@ -257,6 +336,9 @@
         `;
 
         container.insertAdjacentHTML('beforeend', slotHtml);
+        const newCard = container.lastElementChild;
+        const newSubjectSelect = newCard.querySelector('.subject-select');
+        filterTeachersForSlot(newSubjectSelect);
         updateBadgeCount(dayNum);
     }
 
@@ -279,6 +361,13 @@
             }
         });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize teacher filters for all existing slots
+        document.querySelectorAll('.slot-card .subject-select').forEach(sel => {
+            filterTeachersForSlot(sel);
+        });
+    });
 </script>
 @endpush
 @endsection

@@ -21,6 +21,7 @@ class DiscussionController extends Controller
     {
         $this->authorize('view', $classSubject);
 
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
         $threads = $this->discussionService->listForClassSubject($classSubject->id);
 
         return view('discussions.index', compact('classSubject', 'threads'));
@@ -29,6 +30,8 @@ class DiscussionController extends Controller
     public function create(ClassSubject $classSubject)
     {
         $this->authorize('view', $classSubject);
+
+        $classSubject->loadMissing(['subject', 'class', 'teacher']);
 
         return view('discussions.create', compact('classSubject'));
     }
@@ -56,6 +59,7 @@ class DiscussionController extends Controller
             'user:id,name',
             'classSubject.class',
             'classSubject.subject',
+            'classSubject.teacher',
             'comments.user',
             'comments.children.user',
         ]);
