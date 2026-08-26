@@ -36,17 +36,21 @@ class DashboardService
 
     public function buildFor(User $user): array
     {
-        $common = [
-            'user' => $user,
-            'greeting' => $this->greeting(),
-            'today_label' => now()->translatedFormat('l, d F Y'),
-        ];
+        $cacheKey = "user_dashboard_data_{$user->id}_" . today()->toDateString();
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 30, function () use ($user) {
+            $common = [
+                'user' => $user,
+                'greeting' => $this->greeting(),
+                'today_label' => now()->translatedFormat('l, d F Y'),
+            ];
 
-        return match ($user->role) {
-            UserRole::Siswa => array_merge($common, $this->buildSiswaDashboard($user)),
-            UserRole::Guru => array_merge($common, $this->buildGuruDashboard($user)),
-            default => array_merge($common, $this->buildKepalaSekolahDashboard()),
-        };
+            return match ($user->role) {
+                UserRole::Siswa => array_merge($common, $this->buildSiswaDashboard($user)),
+                UserRole::Guru => array_merge($common, $this->buildGuruDashboard($user)),
+                default => array_merge($common, $this->buildKepalaSekolahDashboard()),
+            };
+        });
     }
 
     public function getLmsActivityTrend(int $days = 7): array
