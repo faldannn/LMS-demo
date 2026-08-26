@@ -19,8 +19,8 @@ class CbtSyncService
      */
     public function syncAll(): array
     {
-        $apiUrl = env('CBT_API_URL');
-        $secretKey = env('SYNC_SECRET_KEY');
+        $apiUrl = config('services.cbt.api_url');
+        $secretKey = config('services.cbt.sync_secret_key');
 
         if (!$apiUrl || !$secretKey) {
             return [

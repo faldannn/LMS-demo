@@ -31,8 +31,8 @@ class SyncCbtAfterImport implements ShouldQueue
 
     public function handle(): void
     {
-        $apiUrl = env('CBT_API_URL');
-        $secretKey = env('SYNC_SECRET_KEY');
+        $apiUrl = config('services.cbt.api_url');
+        $secretKey = config('services.cbt.sync_secret_key');
 
         if (!$apiUrl || !$secretKey) {
             Log::warning('CBT sync skipped during import: CBT_API_URL or SYNC_SECRET_KEY not set in .env');

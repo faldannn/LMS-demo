@@ -43,7 +43,7 @@ return [
     'cbt' => [
         'url' => env('CBT_URL', 'https://cbt.smaiassyafiiyah02.com/api'),
         'api_url' => env('CBT_API_URL', 'https://cbt.smaiassyafiiyah02.com/api'),
-        'sync_secret_key' => env('SYNC_SECRET_KEY', 'wG5kM8p2Rq9yN3vX6zT4bS7cJf1dW0eA'),
+        'sync_secret_key' => env('SYNC_SECRET_KEY'),
     ],
 
 ];

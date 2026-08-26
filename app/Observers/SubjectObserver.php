@@ -24,8 +24,8 @@ class SubjectObserver
         ];
 
         try {
-            $apiUrl = env('CBT_API_URL');
-            $secretKey = env('SYNC_SECRET_KEY');
+            $apiUrl = config('services.cbt.api_url');
+            $secretKey = config('services.cbt.sync_secret_key');
 
             if ($apiUrl && $secretKey) {
                 Http::timeout(5)
@@ -50,8 +50,8 @@ class SubjectObserver
         ];
 
         try {
-            $apiUrl = env('CBT_API_URL');
-            $secretKey = env('SYNC_SECRET_KEY');
+            $apiUrl = config('services.cbt.api_url');
+            $secretKey = config('services.cbt.sync_secret_key');
 
             if ($apiUrl && $secretKey) {
                 Http::timeout(5)

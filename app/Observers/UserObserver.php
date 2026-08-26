@@ -37,8 +37,8 @@ class UserObserver
                     'password' => $user->password,
                 ];
                 try {
-                    $apiUrl = env('CBT_API_URL');
-                    $secretKey = env('SYNC_SECRET_KEY');
+                    $apiUrl = config('services.cbt.api_url');
+                    $secretKey = config('services.cbt.sync_secret_key');
                     if ($apiUrl && $secretKey) {
                         Http::timeout(5)
                             ->withHeaders(['X-Sync-Secret' => $secretKey])
@@ -68,8 +68,8 @@ class UserObserver
                     'password' => $user->password,
                 ];
                 try {
-                    $apiUrl = env('CBT_API_URL');
-                    $secretKey = env('SYNC_SECRET_KEY');
+                    $apiUrl = config('services.cbt.api_url');
+                    $secretKey = config('services.cbt.sync_secret_key');
                     if ($apiUrl && $secretKey) {
                         Http::timeout(5)
                             ->withHeaders(['X-Sync-Secret' => $secretKey])
@@ -98,8 +98,8 @@ class UserObserver
         ];
 
         try {
-            $apiUrl = env('CBT_API_URL');
-            $secretKey = env('SYNC_SECRET_KEY');
+            $apiUrl = config('services.cbt.api_url');
+            $secretKey = config('services.cbt.sync_secret_key');
 
             if ($apiUrl && $secretKey) {
                 Http::timeout(5)
@@ -132,8 +132,8 @@ class UserObserver
         ];
 
         try {
-            $apiUrl = env('CBT_API_URL');
-            $secretKey = env('SYNC_SECRET_KEY');
+            $apiUrl = config('services.cbt.api_url');
+            $secretKey = config('services.cbt.sync_secret_key');
 
             if ($apiUrl && $secretKey) {
                 Http::timeout(5)
