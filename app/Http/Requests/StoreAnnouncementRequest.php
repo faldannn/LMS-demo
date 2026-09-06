@@ -18,7 +18,7 @@ class StoreAnnouncementRequest extends FormRequest
             'content' => 'required|string',
             'type' => 'required|in:umum,kelas',
             'class_id' => 'required_if:type,kelas|nullable|exists:classes,id',
-            'attachment' => 'nullable|file|max:20480|mimes:pdf,ppt,pptx,doc,docx,jpg,png',
+            'attachment' => 'nullable|' . \App\Support\UploadRules::ruleString('announcement'),
             'is_published' => 'boolean',
         ];
     }

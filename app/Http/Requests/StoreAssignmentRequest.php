@@ -19,7 +19,7 @@ class StoreAssignmentRequest extends FormRequest
             'type' => 'required|in:individu,kelompok',
             'due_date' => 'nullable|date',
             'max_score' => 'required|integer|min:1|max:100',
-            'file' => 'nullable|file|max:51200', // max 50MB
+            'file' => 'nullable|' . \App\Support\UploadRules::ruleString('assignment'),
             'is_published' => 'boolean',
         ];
     }

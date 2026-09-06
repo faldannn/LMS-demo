@@ -131,6 +131,24 @@ class LmsModuleTest extends TestCase
         $this->assertSame('dQw4w9WgXcQ', $material->youtube_id);
     }
 
+    public function test_guru_cannot_upload_a_video_larger_than_the_shared_hosting_limit(): void
+    {
+        $file = UploadedFile::fake()->create('rekaman-ujian.mp4', 102401, 'video/mp4');
+
+        $this->actingAs($this->guruUser)
+            ->from(route('materials.create', $this->classSubject))
+            ->post(route('materials.store', $this->classSubject), [
+                'title' => 'Rekaman pembelajaran',
+                'type' => 'video',
+                'file' => $file,
+                'is_published' => '1',
+            ])
+            ->assertRedirect(route('materials.create', $this->classSubject))
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('materials', 0);
+    }
+
     public function test_student_can_comment_on_material(): void
     {
         $material = Material::create([

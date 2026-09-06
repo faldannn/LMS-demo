@@ -32,7 +32,9 @@ return [
     ],
     'video' => [
       'mimes' => ['mp4', 'webm', 'mov'],
-      'max_kb' => 512000,
+      // Shared hosting: keep one upload from monopolizing PHP workers or disk.
+      // Use a video platform link for recordings larger than this limit.
+      'max_kb' => (int) env('LMS_MAX_VIDEO_UPLOAD_KB', 102400),
     ],
     'spreadsheet' => [
       'mimes' => ['xlsx', 'xls', 'csv'],
@@ -40,7 +42,11 @@ return [
     ],
     'assignment' => [
       'mimes' => ['pdf', 'doc', 'docx', 'zip', 'jpg', 'jpeg', 'png'],
-      'max_kb' => 20480,
+      'max_kb' => (int) env('LMS_MAX_ASSIGNMENT_UPLOAD_KB', 20480),
+    ],
+    'announcement' => [
+      'mimes' => ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      'max_kb' => (int) env('LMS_MAX_ANNOUNCEMENT_UPLOAD_KB', 20480),
     ],
   ],
 
