@@ -22,7 +22,7 @@ class CommentController extends Controller
             default => abort(404),
         };
 
-        if ($model instanceof Material) {
+        if ($model instanceof Material || $model instanceof Announcement) {
             $this->authorize('view', $model);
         }
 

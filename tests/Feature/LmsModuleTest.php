@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AcademicCalendarEvent;
 use App\Models\AcademicYear;
+use App\Models\Announcement;
 use App\Models\Assignment;
 use App\Models\Classes;
 use App\Models\ClassSubject;
@@ -228,5 +229,64 @@ class LmsModuleTest extends TestCase
             ->get(route('student.assignments.index'))
             ->assertOk()
             ->assertSee('Tugas 1');
+    }
+
+    public function test_student_cannot_export_school_attendance_data(): void
+    {
+        $this->actingAs($this->siswaUser)
+            ->get(route('attendance.export.students.excel'))
+            ->assertForbidden();
+
+        $this->actingAs($this->siswaUser)
+            ->get(route('attendance.export.teachers.excel'))
+            ->assertForbidden();
+    }
+
+    public function test_student_cannot_access_another_class_announcement_by_url(): void
+    {
+        $otherClass = Classes::create([
+            'name' => 'X IPA 2',
+            'grade' => 10,
+            'academic_year_id' => $this->class->academic_year_id,
+        ]);
+        $otherStudentUser = User::factory()->siswa()->create(['status' => true]);
+
+        $announcement = Announcement::create([
+            'title' => 'Khusus X IPA 2',
+            'content' => 'Informasi untuk kelas lain.',
+            'type' => 'kelas',
+            'class_id' => $otherClass->id,
+            'created_by' => $this->guruUser->id,
+            'is_published' => true,
+            'published_at' => now(),
+        ]);
+
+        Student::create([
+            'nis' => '2025100',
+            'name' => 'Siswa Kelas Lain',
+            'gender' => 'P',
+            'class_id' => $otherClass->id,
+            'user_id' => $otherStudentUser->id,
+            'status' => true,
+        ]);
+
+        $this->actingAs($this->siswaUser)
+            ->get(route('announcements.show', $announcement))
+            ->assertForbidden();
+
+        $this->actingAs($this->siswaUser)
+            ->get(route('announcements.download', $announcement))
+            ->assertForbidden();
+
+        $this->actingAs($this->siswaUser)
+            ->post(route('comments.store', ['announcement', $announcement->id]), [
+                'body' => 'Saya mencoba membuka pengumuman kelas lain.',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($otherStudentUser)
+            ->get(route('announcements.show', $announcement))
+            ->assertOk()
+            ->assertSee('Khusus X IPA 2');
     }
 }

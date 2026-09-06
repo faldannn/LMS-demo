@@ -243,8 +243,10 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     });
 
     Route::prefix('lms')->group(function () {
-        Route::get('attendance/export/students/excel', [AttendanceController::class, 'exportStudentsExcel'])->name('attendance.export.students.excel');
-        Route::get('attendance/export/teachers/excel', [AttendanceController::class, 'exportTeachersExcel'])->name('attendance.export.teachers.excel');
+        Route::middleware('can:access-staff')->group(function () {
+            Route::get('attendance/export/students/excel', [AttendanceController::class, 'exportStudentsExcel'])->name('attendance.export.students.excel');
+            Route::get('attendance/export/teachers/excel', [AttendanceController::class, 'exportTeachersExcel'])->name('attendance.export.teachers.excel');
+        });
         Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
         Route::get('attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');

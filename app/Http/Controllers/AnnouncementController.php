@@ -43,6 +43,8 @@ class AnnouncementController extends Controller
 
     public function show(Announcement $announcement)
     {
+        $this->authorize('view', $announcement);
+
         $announcement->load(['creator', 'class', 'comments.user', 'comments.children.user']);
 
         return view('announcements.show', compact('announcement'));
@@ -50,6 +52,7 @@ class AnnouncementController extends Controller
 
     public function download(Announcement $announcement)
     {
+        $this->authorize('view', $announcement);
         abort_unless($announcement->hasAttachment(), 404);
 
         return $this->announcementService->download($announcement);
