@@ -140,4 +140,50 @@ class AttendanceTest extends TestCase
         $student->refresh();
         $this->assertEquals(50.0, $student->attendance_percentage);
     }
+
+    public function test_admin_attendance_dashboard_uses_correct_class_summary_counts(): void
+    {
+        $students = Student::all();
+        $attendance = Attendance::create([
+            'date' => today()->toDateString(),
+            'class_id' => $this->class->id,
+            'teacher_id' => $this->teacher->id,
+            'session' => 'pagi',
+        ]);
+
+        AttendanceDetail::create([
+            'attendance_id' => $attendance->id,
+            'student_id' => $students[0]->id,
+            'status' => 'hadir',
+        ]);
+        AttendanceDetail::create([
+            'attendance_id' => $attendance->id,
+            'student_id' => $students[1]->id,
+            'status' => 'terlambat',
+        ]);
+        AttendanceDetail::create([
+            'attendance_id' => $attendance->id,
+            'student_id' => $students[2]->id,
+            'status' => 'alfa',
+        ]);
+
+        // SQLite stores a model's date-cast attribute with a midnight time;
+        // production MySQL DATE columns store the request value as a date.
+        \Illuminate\Support\Facades\DB::table('attendance')
+            ->where('id', $attendance->id)
+            ->update(['date' => today()->toDateString()]);
+        $this->assertSame(1, Attendance::whereBetween('date', [today()->toDateString(), today()->toDateString()])->count());
+
+        $response = $this->actingAs($this->admin)
+            ->get(route('attendance.index', ['period' => 'today']));
+
+        $response->assertOk();
+        $summary = $response->viewData('classSummaries')->first()->attendance_summary;
+
+        $this->assertSame(1, $summary['sessions']);
+        $this->assertSame(1, $summary['hadir']);
+        $this->assertSame(1, $summary['terlambat']);
+        $this->assertSame(1, $summary['alfa']);
+        $this->assertSame(66.7, $summary['percentage']);
+    }
 }

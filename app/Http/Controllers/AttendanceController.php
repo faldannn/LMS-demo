@@ -10,6 +10,7 @@ use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -112,35 +113,64 @@ class AttendanceController extends Controller
         if ($user->isKepalaSekolah() || $user->isAdmin()) {
             $viewMode = $request->get('view', 'grid') === 'list' ? 'list' : 'grid';
 
+            // The summary only needs counts. Loading every AttendanceDetail for
+            // every class turns a small dashboard into thousands of hydrated PHP
+            // models, especially when staff selects a 30-day range.
+            $detailTotalsByClass = AttendanceDetail::query()
+                ->select('attendance.class_id', 'attendance_details.status', DB::raw('COUNT(*) as total'))
+                ->join('attendance', 'attendance.id', '=', 'attendance_details.attendance_id')
+                ->when($classId, fn ($q) => $q->where('attendance.class_id', $classId))
+                ->whereBetween('attendance.date', [$sDate->toDateString(), $eDate->toDateString()])
+                ->groupBy('attendance.class_id', 'attendance_details.status')
+                ->get()
+                ->groupBy('class_id');
+
+            // Keep only the latest attendance record per class for the existing
+            // detail link. Its student details are intentionally not eager loaded.
+            $latestAttendancesByClass = Attendance::query()
+                ->select(['id', 'class_id', 'date'])
+                ->when($classId, fn ($q) => $q->where('class_id', $classId))
+                ->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])
+                ->orderByDesc('date')
+                ->orderByDesc('id')
+                ->get()
+                ->unique('class_id')
+                ->keyBy('class_id');
+
+            $sessionCountsByClass = Attendance::query()
+                ->select('class_id', DB::raw('COUNT(*) as total'))
+                ->when($classId, fn ($q) => $q->where('class_id', $classId))
+                ->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])
+                ->groupBy('class_id')
+                ->pluck('total', 'class_id');
+
             $classSummaries = Classes::withCount([
                     'students as active_students_count' => fn ($q) => $q->where('status', true),
                 ])
-                ->with([
-                    'homeroomTeacher:id,name',
-                    'attendances' => fn ($q) => $this->applyAttendanceFilters($q, $request)
-                        ->with(['teacher:id,name,nip', 'details'])
-                        ->orderByDesc('date')
-                        ->orderByDesc('id'),
-                ])
+                ->with('homeroomTeacher:id,name')
                 ->when($classId, fn ($q) => $q->where('id', $classId))
                 ->orderBy('name')
                 ->get()
-                ->map(function (Classes $class) {
-                    $attendances = $class->attendances;
-                    $details = $attendances->flatMap->details;
-                    $present = $details->whereIn('status', ['hadir', 'terlambat'])->count();
-                    $total = $details->count();
+                ->map(function (Classes $class) use ($detailTotalsByClass, $latestAttendancesByClass, $sessionCountsByClass) {
+                    $totals = $detailTotalsByClass->get($class->id, collect())
+                        ->pluck('total', 'status');
+                    $hadir = (int) ($totals['hadir'] ?? 0);
+                    $terlambat = (int) ($totals['terlambat'] ?? 0);
+                    $izin = (int) ($totals['izin'] ?? 0);
+                    $sakit = (int) ($totals['sakit'] ?? 0);
+                    $alfa = (int) ($totals['alfa'] ?? 0);
+                    $total = $hadir + $terlambat + $izin + $sakit + $alfa;
 
                     $class->attendance_summary = [
-                        'sessions' => $attendances->count(),
+                        'sessions' => (int) ($sessionCountsByClass[$class->id] ?? 0),
                         'students' => $class->active_students_count,
-                        'hadir' => $details->where('status', 'hadir')->count(),
-                        'terlambat' => $details->where('status', 'terlambat')->count(),
-                        'izin_sakit' => $details->whereIn('status', ['izin', 'sakit'])->count(),
-                        'alfa' => $details->where('status', 'alfa')->count(),
-                        'percentage' => $total > 0 ? round($present / $total * 100, 1) : 0,
+                        'hadir' => $hadir,
+                        'terlambat' => $terlambat,
+                        'izin_sakit' => $izin + $sakit,
+                        'alfa' => $alfa,
+                        'percentage' => $total > 0 ? round(($hadir + $terlambat) / $total * 100, 1) : 0,
                     ];
-                    $class->latest_attendance = $attendances->first();
+                    $class->latest_attendance = $latestAttendancesByClass->get($class->id);
 
                     return $class;
                 });
