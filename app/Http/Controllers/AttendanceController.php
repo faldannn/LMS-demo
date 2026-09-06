@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\StudentAttendanceExport;
 use App\Exports\TeacherAttendanceExport;
 use App\Http\Requests\StoreAttendanceRequest;
-use App\Models\{Attendance, AttendanceDetail, Classes, Student, Teacher, TeacherAttendance, SelfAttendanceLog, Schedule, ClassSubject, Setting};
+use App\Models\{Attendance, AttendanceDetail, Classes, Student, Teacher, TeacherAttendance, Schedule, ClassSubject, Setting};
 use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -76,15 +76,23 @@ class AttendanceController extends Controller
             $classes = Classes::orderBy('name')->get();
         }
 
-        // --- Data Presensi Guru (Admin & Kepala Sekolah) ---
-        $teachers = Teacher::active()->orderBy('name')->get();
-        $rawTeacherAttendances = TeacherAttendance::with(['teacher', 'user'])
-            ->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])
-            ->orderBy('date', 'desc')
-            ->get();
+        // Teacher data is only rendered on its own tab. Avoid loading every
+        // teacher log while the much more frequently used student tab is open.
+        $teachers = collect();
+        $rawTeacherAttendances = collect();
+        $teacherLogsGrouped = collect();
+        $teacherAttendances = collect();
 
-        $teacherLogsGrouped = $rawTeacherAttendances->groupBy('teacher_id');
-        $teacherAttendances = $rawTeacherAttendances->keyBy('teacher_id');
+        if ($activeTab === 'teachers') {
+            $teachers = Teacher::active()->orderBy('name')->get();
+            $rawTeacherAttendances = TeacherAttendance::with(['teacher', 'user'])
+                ->whereBetween('date', [$sDate->toDateString(), $eDate->toDateString()])
+                ->orderBy('date', 'desc')
+                ->get();
+
+            $teacherLogsGrouped = $rawTeacherAttendances->groupBy('teacher_id');
+            $teacherAttendances = $rawTeacherAttendances->keyBy('teacher_id');
+        }
 
         if ($isSingleDay) {
             $selectedDateLabel = $sDate->translatedFormat('d F Y');
@@ -100,13 +108,6 @@ class AttendanceController extends Controller
             'alfa' => $rawTeacherAttendances->where('status', 'alfa')->count(),
             'checked_out' => $rawTeacherAttendances->whereNotNull('check_out_at')->count(),
         ];
-
-        // --- Data Self Attendance Logs Siswa dengan Foto ---
-        $studentSelfLogs = SelfAttendanceLog::with(['student.class'])
-            ->whereNotNull('photo_path')
-            ->whereBetween('attendance_date', [$sDate->toDateString(), $eDate->toDateString()])
-            ->latest('checked_in_at')
-            ->get();
 
         if ($user->isKepalaSekolah() || $user->isAdmin()) {
             $viewMode = $request->get('view', 'grid') === 'list' ? 'list' : 'grid';
@@ -153,7 +154,6 @@ class AttendanceController extends Controller
                 'teacherAttendances',
                 'teacherLogsGrouped',
                 'teacherSummary',
-                'studentSelfLogs',
                 'selectedDateLabel',
                 'isSingleDay',
                 'sDate',
@@ -181,7 +181,6 @@ class AttendanceController extends Controller
             'teacherAttendances',
             'teacherLogsGrouped',
             'teacherSummary',
-            'studentSelfLogs',
             'selectedDateLabel',
             'isSingleDay',
             'sDate',
