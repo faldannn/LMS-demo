@@ -42,6 +42,11 @@ class SsoController extends Controller
 
         $cbtUrl = rtrim(config('services.cbt.url'), '/');
         
-        return redirect($cbtUrl . '/sso/verify?token=' . $token);
+        // Keep the signed credential out of browser history, proxy logs, and
+        // Referer headers by posting it directly to the CBT verifier.
+        return response()->view('auth.sso-post-redirect', [
+            'targetUrl' => $cbtUrl . '/sso/verify',
+            'token' => $token,
+        ])->header('Referrer-Policy', 'no-referrer');
     }
 }

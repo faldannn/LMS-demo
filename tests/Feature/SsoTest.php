@@ -13,7 +13,7 @@ class SsoTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_redirect_to_cbt_with_valid_jwt_token()
+    public function test_posts_a_valid_jwt_token_to_cbt_without_exposing_it_in_a_url()
     {
         /** @var User $user */
         $user = User::factory()->create([
@@ -25,15 +25,14 @@ class SsoTest extends TestCase
 
         $response = $this->actingAs($user)->get('/sso/to-cbt');
 
-        $response->assertRedirect();
-        
-        $targetUrl = $response->headers->get('Location');
-        $this->assertStringContainsString('http://127.0.0.1:8000/sso/verify?token=', $targetUrl);
+        $response->assertOk()
+            ->assertViewIs('auth.sso-post-redirect')
+            ->assertSee('action="http://127.0.0.1:8000/sso/verify"', false)
+            ->assertDontSee('/sso/verify?token=', false);
 
-        // Parse token
-        $urlParts = parse_url($targetUrl);
-        parse_str($urlParts['query'], $query);
-        $token = $query['token'];
+        preg_match('/name="token" value="([^"]+)"/', $response->getContent(), $matches);
+        $token = html_entity_decode($matches[1] ?? '');
+        $this->assertNotSame('', $token);
 
         $secretKey = env('SYNC_SECRET_KEY', 'isi_kunci_rahasia_sso_123');
         $decoded = JWT::decode($token, new Key($secretKey, 'HS256'));
