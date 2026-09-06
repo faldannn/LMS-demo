@@ -12,8 +12,7 @@ class RiansaKartuWebhookController extends Controller
 {
     public function __construct(
         private readonly RiansaKartuService $kartuService
-    ) {
-    }
+    ) {}
 
     /**
      * Handle incoming webhook POST from Riansa Kartu.
@@ -21,33 +20,36 @@ class RiansaKartuWebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
-        Log::info('RiansaKartu Webhook Received:', $request->all());
-
-        // Optional Secret Verification if Webhook Secret is set
         $secret = $this->kartuService->getWebhookSecret();
-        if ($secret) {
-            $headerSecret = $request->header('X-Webhook-Secret') ?? $request->header('X-Kartu-Secret') ?? $request->input('secret');
-            if ($headerSecret && !hash_equals((string) $secret, (string) $headerSecret)) {
-                Log::warning('RiansaKartu Webhook Secret Mismatch.');
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Invalid webhook secret token',
-                ], 401);
-            }
+        // Fail closed until both sides have a shared secret configured.
+        if (! is_string($secret) || $secret === '') {
+            Log::warning('RiansaKartu webhook rejected: secret is not configured.');
+
+            return response()->json(['status' => 'error', 'message' => 'Webhook is not configured'], 503);
         }
 
-        $payload = $request->all();
+        $headerSecret = $request->header('X-Webhook-Secret') ?? $request->header('X-Kartu-Secret') ?? $request->input('secret');
+        if (! is_string($headerSecret) || $headerSecret === '' || ! hash_equals($secret, $headerSecret)) {
+            Log::warning('RiansaKartu Webhook Secret Mismatch.');
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid webhook secret token',
+            ], 401);
+        }
+
+        $payload = $request->except('secret');
         $result = $this->kartuService->processWebhookPayload($payload);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => $result['message'],
             ], 400);
         }
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => $result['message'],
         ], 200);
     }

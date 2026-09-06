@@ -2,7 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Attendance, AttendanceDetail, Classes, Student, Teacher, User, AcademicYear};
+use App\Models\AcademicYear;
+use App\Models\Attendance;
+use App\Models\AttendanceDetail;
+use App\Models\Classes;
+use App\Models\Setting;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,8 +18,11 @@ class AttendanceTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $guru;
+
     private Classes $class;
+
     private Teacher $teacher;
 
     protected function setUp(): void
@@ -45,9 +55,16 @@ class AttendanceTest extends TestCase
 
     public function test_attendance_create_page_accessible_by_guru(): void
     {
+        Setting::set('feature_subject_attendance', '1');
         $this->actingAs($this->guru)
             ->get(route('attendance.create'))
             ->assertStatus(200);
+    }
+
+    public function test_attendance_create_redirects_when_feature_is_disabled(): void
+    {
+        Setting::set('feature_subject_attendance', '0');
+        $this->actingAs($this->guru)->get(route('attendance.create'))->assertRedirect(route('dashboard'));
     }
 
     public function test_student_cannot_access_attendance_create(): void
@@ -116,8 +133,7 @@ class AttendanceTest extends TestCase
         $att2 = Attendance::create([
             'date' => today()->subDay(),
             'class_id' => $this->class->id,
-            'teacher_id' =>
-                $this->teacher->id
+            'teacher_id' => $this->teacher->id,
         ]);
         AttendanceDetail::create(['attendance_id' => $att2->id, 'student_id' => $student->id, 'status' => 'alfa']);
 
