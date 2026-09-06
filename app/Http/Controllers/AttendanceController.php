@@ -198,6 +198,17 @@ class AttendanceController extends Controller
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
 
+        if (auth()->user()->isGuru()) {
+            $teacher = auth()->user()->teacher;
+            $allowedClassIds = $teacher
+                ? $teacher->classSubjects()->pluck('class_id')
+                    ->merge($teacher->homeroomClasses()->pluck('id'))
+                    ->unique()
+                : collect();
+
+            abort_unless($classId && $allowedClassIds->contains($classId), 403);
+        }
+
         $fileName = 'rekap_absensi_siswa_' . ($classId ? 'kelas_' . $classId . '_' : '') . now()->format('Ymd_His') . '.xlsx';
 
         return Excel::download(
@@ -208,6 +219,8 @@ class AttendanceController extends Controller
 
     public function exportTeachersExcel(Request $request)
     {
+        abort_unless(auth()->user()->isKepalaSekolah(), 403);
+
         $period = $request->get('period', 'month');
         $date = $request->get('date');
         $month = $request->get('month');

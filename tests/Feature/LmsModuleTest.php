@@ -242,6 +242,31 @@ class LmsModuleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_guru_can_only_export_students_from_an_assigned_class(): void
+    {
+        $otherClass = Classes::create([
+            'name' => 'X IPA 2',
+            'grade' => 10,
+            'academic_year_id' => $this->class->academic_year_id,
+        ]);
+
+        $this->actingAs($this->guruUser)
+            ->get(route('attendance.export.students.excel', ['class_id' => $this->class->id]))
+            ->assertOk();
+
+        $this->actingAs($this->guruUser)
+            ->get(route('attendance.export.students.excel'))
+            ->assertForbidden();
+
+        $this->actingAs($this->guruUser)
+            ->get(route('attendance.export.students.excel', ['class_id' => $otherClass->id]))
+            ->assertForbidden();
+
+        $this->actingAs($this->guruUser)
+            ->get(route('attendance.export.teachers.excel'))
+            ->assertForbidden();
+    }
+
     public function test_student_cannot_access_another_class_announcement_by_url(): void
     {
         $otherClass = Classes::create([
