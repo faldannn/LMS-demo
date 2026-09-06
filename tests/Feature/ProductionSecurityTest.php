@@ -74,6 +74,12 @@ class ProductionSecurityTest extends TestCase
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
     }
 
+    public function test_database_migrations_cannot_be_triggered_from_the_web(): void
+    {
+        $this->get('/artisan-migrate-run')
+            ->assertNotFound();
+    }
+
     public function test_maintenance_backup_route_works(): void
     {
         $this->actingAs($this->admin)

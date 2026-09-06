@@ -350,15 +350,3 @@ Route::get('storage/{path}', function ($path) {
     
     return response()->file($realPath);
 })->where('path', '.*')->name('storage.fallback');
-
-// Route bantuan untuk running migrasi di hosting tanpa akses SSH (Dapat diakses Superadmin atau via secret key)
-Route::get('artisan-migrate-run', function (\Illuminate\Http\Request $request) {
-    if ($request->get('key') !== 'assyafiiyah2026' && (!auth()->check() || !auth()->user()->isSuperAdmin())) {
-        abort(403, 'Akses ditolak. Silakan login sebagai Superadmin atau gunakan key.');
-    }
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    return '<div style="font-family:sans-serif; padding:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; color:#166534;">'
-        . '<h2>✅ Migrasi Database Berhasil Dijalankan!</h2>'
-        . '<pre style="background:#fff; padding:15px; border-radius:8px;">' . e(\Illuminate\Support\Facades\Artisan::output()) . '</pre>'
-        . '</div>';
-});
