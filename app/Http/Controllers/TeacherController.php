@@ -256,9 +256,9 @@ class TeacherController extends Controller
             return back()->withErrors(['error' => 'Akun user tidak ditemukan untuk guru ini.']);
         }
 
-        $newPass = $teacher->dob ? $teacher->dob->format('Y-m-d') : 'guru123';
+        $newPass = 'guru123';
         
-        $user->update(['password' => Hash::make($newPass)]);
+        $user->update(['password' => Hash::make($newPass), 'password_changed_at' => null]);
 
         $this->activityLogService->log(
             action: 'teacher_reset_password',

@@ -29,6 +29,7 @@ class UserManagementTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => '2025888',
+                'nisn' => '0012345888',
                 'name' => 'Siswa Auto Delete',
                 'gender' => 'L',
                 'class_id' => $this->class->id,
@@ -53,6 +54,7 @@ class UserManagementTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => '2025777',
+                'nisn' => '0012345777',
                 'name' => 'Siswa Delete User',
                 'gender' => 'L',
                 'class_id' => $this->class->id,

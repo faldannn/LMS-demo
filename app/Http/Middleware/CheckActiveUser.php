@@ -19,12 +19,12 @@ class CheckActiveUser
                     ->withErrors(['status' => 'Akun Anda telah dinonaktifkan.']);
             }
 
-            if ($user->isSiswa() && $user->needsPasswordChange()) {
+            if ($user->needsPasswordChange()) {
                 $routeName = $request->route()?->getName();
                 $allowed = ['profile', 'profile.update', 'profile.password', 'logout'];
                 if (!in_array($routeName, $allowed, true)) {
                     return redirect()->route('profile')
-                        ->with('warning', 'Demi keamanan, Anda wajib mengubah password bawaan (Tanggal Lahir) sebelum mengakses menu LMS.');
+                        ->with('warning', 'Demi keamanan, Anda wajib mengubah password bawaan sebelum mengakses menu LMS.');
                 }
             }
         }

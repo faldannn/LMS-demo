@@ -35,16 +35,18 @@ class TeacherAccountCreationTest extends TestCase
         $this->assertSame('199001012020121001', $user->username);
         $this->assertSame('guru.baru@example.com', $user->email);
         $this->assertSame(UserRole::Guru, $user->role);
-        $this->assertTrue(Hash::check('1990-01-01', $user->password));
+        $this->assertTrue(Hash::check('guru123', $user->password));
+        $this->assertTrue($user->needsPasswordChange());
 
         $this->post(route('logout'))->assertRedirect(route('login'));
 
         $this->post(route('login.post'), [
             'username' => '199001012020121001',
-            'password' => '1990-01-01',
+            'password' => 'guru123',
         ])->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticatedAs($user);
+        $this->get(route('dashboard'))->assertRedirect(route('profile'));
     }
 
     public function test_kepala_sekolah_can_update_teacher_and_change_password(): void

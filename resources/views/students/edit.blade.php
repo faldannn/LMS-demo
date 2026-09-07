@@ -22,7 +22,7 @@
             <x-card title="Data Siswa" icon="bi-pencil-square" glass="true">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nis" label="NIS" value="{{ old('nis', $student->nis) }}" required />
-                    <x-form-input name="nisn" label="NISN" value="{{ old('nisn', $student->nisn) }}" />
+                    <x-form-input name="nisn" label="NISN" value="{{ old('nisn', $student->nisn) }}" required />
                     
                     <div class="sm:col-span-2">
                         <x-form-input name="name" label="Nama Lengkap" value="{{ old('name', $student->name) }}" required />
@@ -88,7 +88,7 @@
                 <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-bold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                     <i class="bi bi-save"></i>Simpan Perubahan
                 </button>
-                <button type="button" onclick="if(confirm('Reset password {{ addslashes($student->name) }} ke default (Tanggal Lahir/NIS)?')) document.getElementById('reset-pw-{{ $student->id }}').submit();"
+                <button type="button" onclick="if(confirm('Reset password {{ addslashes($student->name) }} ke default (Tanggal Lahir/NISN)?')) document.getElementById('reset-pw-{{ $student->id }}').submit();"
                     class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-6 py-2.5 text-sm font-bold text-amber-700 shadow-sm transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
                     <i class="bi bi-key-fill"></i>Reset Password ke Default
                 </button>

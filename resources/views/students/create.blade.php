@@ -17,7 +17,7 @@
             <x-card title="Data Siswa" icon="bi-person-plus" glass="true">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nis" label="NIS" value="{{ old('nis') }}" placeholder="Nomor Induk Siswa" required />
-                    <x-form-input name="nisn" label="NISN" value="{{ old('nisn') }}" placeholder="Nomor Induk Siswa Nasional" />
+                    <x-form-input name="nisn" label="NISN" value="{{ old('nisn') }}" placeholder="Nomor Induk Siswa Nasional" required />
                     
                     <div class="sm:col-span-2">
                         <x-form-input name="name" label="Nama Lengkap" value="{{ old('name') }}" placeholder="Nama lengkap siswa" required />

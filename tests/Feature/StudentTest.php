@@ -38,6 +38,7 @@ class StudentTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => '2025099',
+                'nisn' => '0012345099',
                 'name' => 'Test Siswa',
                 'gender' => 'L',
                 'class_id' => $this->class->id,
@@ -46,17 +47,19 @@ class StudentTest extends TestCase
             ->assertRedirect(route('students.index'));
 
         $this->assertDatabaseHas('students', ['nis' => '2025099', 'name' => 'Test Siswa', 'status' => 1]);
-        $this->assertDatabaseHas('users', ['username' => '2025099']);
+        $this->assertDatabaseHas('users', ['username' => '0012345099']);
     }
 
-    public function test_student_can_login_with_nis_and_dob(): void
+    public function test_student_can_login_with_nisn_and_dob(): void
     {
         $nis = '2025200';
+        $nisn = '0012345200';
         $dob = '2005-08-17';
 
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => $nis,
+                'nisn' => $nisn,
                 'name' => 'Siswa Tanggal Lahir',
                 'gender' => 'L',
                 'dob' => $dob,
@@ -65,13 +68,13 @@ class StudentTest extends TestCase
             ])
             ->assertRedirect(route('students.index'));
 
-        $user = User::where('username', $nis)->firstOrFail();
+        $user = User::where('username', $nisn)->firstOrFail();
 
         $this->post(route('logout'));
 
         // Test login with YYYY-MM-DD
         $this->post(route('login.post'), [
-            'username' => $nis,
+            'username' => $nisn,
             'password' => '2005-08-17',
         ])->assertRedirect(route('dashboard'));
 
@@ -81,10 +84,12 @@ class StudentTest extends TestCase
     public function test_student_status_updates_toggle_login_access(): void
     {
         $nis = '2025101';
+        $nisn = '0012345101';
 
         $this->actingAs($this->admin)
             ->post(route('students.store'), [
                 'nis' => $nis,
+                'nisn' => $nisn,
                 'name' => 'Test Siswa Status',
                 'gender' => 'L',
                 'class_id' => $this->class->id,
@@ -94,7 +99,7 @@ class StudentTest extends TestCase
             ->assertRedirect(route('students.index'));
 
         $student = Student::where('nis', $nis)->firstOrFail();
-        $user = User::where('username', $nis)->firstOrFail();
+        $user = User::where('username', $nisn)->firstOrFail();
 
         $this->actingAs($this->admin)
             ->put(route('students.update', $student), [
@@ -121,8 +126,8 @@ class StudentTest extends TestCase
         $this->post(route('logout'));
 
         $this->post(route('login.post'), [
-            'username' => $nis,
-            'password' => $nis,
+            'username' => $nisn,
+            'password' => $nisn,
         ])->assertSessionHasErrors('username');
 
         $this->actingAs($this->admin)
@@ -150,8 +155,8 @@ class StudentTest extends TestCase
         $this->post(route('logout'));
 
         $this->post(route('login.post'), [
-            'username' => $nis,
-            'password' => $nis,
+            'username' => $nisn,
+            'password' => $nisn,
         ])->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticatedAs($user);

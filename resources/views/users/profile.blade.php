@@ -10,7 +10,7 @@
             <div class="alert alert-danger border-2 border-danger shadow-sm">
                 <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> PERHATIAN: Wajib Ganti Password Bawaan</h5>
                 <p class="mb-0">
-                    Anda saat ini masih menggunakan password bawaan (Tanggal Lahir YYYY-MM-DD atau NISN). Demi keamanan akun Anda, <strong>Anda diwajibkan mengubah password terlebih dahulu</strong> pada form Ganti Password di bawah sebelum dapat mengakses fitur LMS lainnya.
+                    Anda saat ini masih menggunakan password bawaan. Demi keamanan akun Anda, <strong>Anda diwajibkan mengubah password terlebih dahulu</strong> pada form Ganti Password di bawah sebelum dapat mengakses fitur LMS lainnya.
                 </p>
             </div>
         </div>
@@ -137,7 +137,7 @@
                                 </button>
                             </div>
                             <div class="form-text text-[11px] text-slate-500 mt-1">
-                                Password minimal 6 karakter.
+                                Password minimal 8 karakter.
                             </div>
                             @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>

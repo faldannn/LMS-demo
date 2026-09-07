@@ -130,20 +130,21 @@ class StudentController extends Controller
 
     public function resetPassword(Student $student)
     {
-        $newPass = $student->dob ? $student->dob->format('Y-m-d') : (string) $student->nis;
+        $newPass = $student->dob ? $student->dob->format('Y-m-d') : (string) ($student->nisn ?: $student->nis);
 
         if ($student->user) {
-            $student->user->update(['password' => \Illuminate\Support\Facades\Hash::make($newPass)]);
+            $student->user->update(['password' => \Illuminate\Support\Facades\Hash::make($newPass), 'password_changed_at' => null]);
             app(\App\Services\SessionManagementService::class)->revokeAllForUser($student->user->id);
             return back()->with('success', "Password akun siswa {$student->name} berhasil direset ke default ({$newPass}).");
         } else {
             $user = \App\Models\User::create([
-                'username' => $student->nis,
+                'username' => $student->nisn ?: $student->nis,
                 'password' => \Illuminate\Support\Facades\Hash::make($newPass),
                 'name' => $student->name,
                 'email' => $student->parent_email ?? null,
                 'role' => \App\Enums\UserRole::Siswa,
                 'status' => true,
+                'password_changed_at' => null,
             ]);
             $student->update(['user_id' => $user->id, 'status' => true]);
             return back()->with('success', "Akun siswa berhasil dibuat dan password direset ke default ({$newPass}).");

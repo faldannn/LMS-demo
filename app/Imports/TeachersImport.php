@@ -95,11 +95,8 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             $username = Str::slug($name, '.');
         }
 
-        // 7. Password (default to date of birth in YYYY-MM-DD format)
-        $passwordText = $dob ? $dob : self::DEFAULT_PASSWORD;
-        if (!empty($row['password'])) {
-            $passwordText = $row['password'];
-        }
+        // Every imported teacher receives a temporary password and must replace it.
+        $passwordText = self::DEFAULT_PASSWORD;
 
         // Wrap execution in withoutEvents to mute observers and prevent timeouts/deadlocks
         $teacher = User::withoutEvents(function () use ($row, $name, $email, $phone, $dob, $subjectStr, $nip, $username, $passwordText) {
@@ -127,6 +124,7 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                     'email' => $email,
                     'role' => UserRole::Guru,
                     'status' => true,
+                    'password_changed_at' => null,
                 ]);
             }
 

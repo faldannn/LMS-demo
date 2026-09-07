@@ -36,22 +36,30 @@ class User extends Authenticatable
 
     public function needsPasswordChange(): bool
     {
-        if (!$this->isSiswa()) {
-            return false;
-        }
-
         if ($this->password_changed_at !== null) {
             return false;
         }
 
         // Use session cache if available to prevent running Bcrypt on every single HTTP request
-        if (session()->has('needs_password_change')) {
+        if (session('needs_password_change_user_id') === $this->id) {
             return (bool) session('needs_password_change');
+        }
+
+        if ($this->isGuru()) {
+            $needsChange = \Illuminate\Support\Facades\Hash::check('guru123', $this->password);
+            session(['needs_password_change' => $needsChange, 'needs_password_change_user_id' => $this->id]);
+
+            return $needsChange;
+        }
+
+        if (!$this->isSiswa()) {
+            session(['needs_password_change' => false, 'needs_password_change_user_id' => $this->id]);
+            return false;
         }
 
         $student = $this->student;
         if (!$student) {
-            session(['needs_password_change' => false]);
+            session(['needs_password_change' => false, 'needs_password_change_user_id' => $this->id]);
             return false;
         }
 
@@ -65,7 +73,7 @@ class User extends Authenticatable
             $needsChange = true;
         }
 
-        session(['needs_password_change' => $needsChange]);
+        session(['needs_password_change' => $needsChange, 'needs_password_change_user_id' => $this->id]);
 
         return $needsChange;
     }

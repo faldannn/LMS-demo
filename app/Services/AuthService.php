@@ -45,7 +45,7 @@ class AuthService
                 $query->where('nip', $loginInput);
             })
             ->orWhereHas('student', function($query) use ($loginInput) {
-                $query->where('nis', $loginInput);
+                $query->where('nisn', $loginInput)->orWhere('nis', $loginInput);
             })
             ->first();
 

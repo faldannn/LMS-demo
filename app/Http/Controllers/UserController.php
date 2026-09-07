@@ -129,6 +129,7 @@ class UserController extends Controller
 
             if (!empty($data['password'])) {
                 $userData['password'] = Hash::make($data['password']);
+                $userData['password_changed_at'] = now();
             }
 
             $user->update($userData);
@@ -302,14 +303,14 @@ class UserController extends Controller
         
         $newPass = null;
         if ($user->role === \App\Enums\UserRole::Guru && $user->teacher) {
-            $newPass = $user->teacher->dob ? $user->teacher->dob->format('Y-m-d') : 'guru123';
+            $newPass = 'guru123';
         } elseif ($user->role === \App\Enums\UserRole::Siswa && $user->student) {
-            $newPass = $user->student->dob ? $user->student->dob->format('Y-m-d') : (string) $user->student->nis;
+            $newPass = $user->student->dob ? $user->student->dob->format('Y-m-d') : (string) ($user->student->nisn ?: $user->student->nis);
         } else {
             $newPass = 'Password123';
         }
 
-        $user->update(['password' => Hash::make($newPass)]);
+        $user->update(['password' => Hash::make($newPass), 'password_changed_at' => null]);
 
         $this->sessionService->revokeAllForUser($user->id);
 
@@ -348,7 +349,7 @@ class UserController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password' => 'required|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         if (!Hash::check($request->current_password, Auth::user()->password)) {
@@ -359,7 +360,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'password_changed_at' => now(),
         ]);
-        session(['needs_password_change' => false]);
+        session(['needs_password_change' => false, 'needs_password_change_user_id' => Auth::id()]);
         return back()->with('success', 'Password berhasil diubah. Sekarang Anda dapat menggunakan seluruh fasilitas LMS.');
     }
 }

@@ -45,7 +45,7 @@ class TeacherService extends BaseMasterDataService
                 }
             }
 
-            $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : self::DEFAULT_PASSWORD;
+            $password = self::DEFAULT_PASSWORD;
 
             $user = User::create([
                 'username' => $username,
@@ -110,6 +110,7 @@ class TeacherService extends BaseMasterDataService
 
         if (!empty($password)) {
             $userUpdates['password'] = Hash::make($password);
+            $userUpdates['password_changed_at'] = now();
         }
 
         $teacher->user?->update($userUpdates);

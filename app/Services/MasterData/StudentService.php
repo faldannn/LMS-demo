@@ -30,16 +30,17 @@ class StudentService extends BaseMasterDataService
 
             $password = null;
             if (!empty($data['create_account'])) {
-                $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $data['nis'];
+                $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) ($data['nisn'] ?? $data['nis']);
                 $data['status'] = true;
                 try {
                     $user = User::create([
-                        'username' => $data['nis'],
+                        'username' => $data['nisn'] ?? $data['nis'],
                         'password' => Hash::make($password),
                         'name' => $data['name'],
                         'email' => $data['parent_email'] ?? null,
                         'role' => UserRole::Siswa,
                         'status' => true,
+                        'password_changed_at' => null,
                     ]);
                     $data['user_id'] = $user->id;
                 } catch (UniqueConstraintViolationException | QueryException $e) {
@@ -80,7 +81,7 @@ class StudentService extends BaseMasterDataService
         $student = parent::update($model, $data);
 
         $userUpdates = [
-            'username' => $student->nis,
+            'username' => $student->nisn ?: $student->nis,
             'name' => $student->name,
             'status' => (bool) ($data['status'] ?? false),
         ];
@@ -89,19 +90,21 @@ class StudentService extends BaseMasterDataService
         }
         if (!empty($password)) {
             $userUpdates['password'] = Hash::make($password);
+            $userUpdates['password_changed_at'] = now();
         }
 
         if ($student->user) {
             $student->user->update($userUpdates);
         } else {
-            $passToUse = !empty($password) ? $password : (!empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $data['nis']);
+            $passToUse = !empty($password) ? $password : (!empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) ($student->nisn ?: $student->nis));
             $user = User::create([
-                'username' => $student->nis,
+                'username' => $student->nisn ?: $student->nis,
                 'password' => Hash::make($passToUse),
                 'name' => $student->name,
                 'email' => $student->parent_email ?? null,
                 'role' => UserRole::Siswa,
                 'status' => true,
+                'password_changed_at' => empty($password) ? null : now(),
             ]);
             $student->update([
                 'user_id' => $user->id,
@@ -145,14 +148,15 @@ class StudentService extends BaseMasterDataService
         $student = parent::restore($id);
 
         if (!$student->user) {
-            $password = !empty($student->dob) ? $student->dob->format('Y-m-d') : (string) $student->nis;
+            $password = !empty($student->dob) ? $student->dob->format('Y-m-d') : (string) ($student->nisn ?: $student->nis);
             $user = User::create([
-                'username' => $student->nis,
+                'username' => $student->nisn ?: $student->nis,
                 'password' => Hash::make($password),
                 'name' => $student->name,
                 'email' => $student->parent_email ?? null,
                 'role' => UserRole::Siswa,
                 'status' => true,
+                'password_changed_at' => null,
             ]);
             $student->update([
                 'user_id' => $user->id,
@@ -163,4 +167,3 @@ class StudentService extends BaseMasterDataService
         return $student;
     }
 }
-

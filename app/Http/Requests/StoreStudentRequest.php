@@ -26,7 +26,7 @@ class StoreStudentRequest extends FormRequest
                 Rule::unique('users', 'username')->ignore($userId),
             ],
             'nisn' => [
-                'nullable',
+                'required',
                 'string',
                 'max:20',
                 Rule::unique('students', 'nisn')->whereNull('deleted_at')->ignore($studentId),
@@ -42,7 +42,7 @@ class StoreStudentRequest extends FormRequest
             'parent_email' => 'nullable|email|max:100',
             'photo' => \App\Support\UploadRules::ruleString('image') . '|nullable',
             'status' => 'boolean',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8',
         ];
     }
 
@@ -50,6 +50,7 @@ class StoreStudentRequest extends FormRequest
     {
         return [
             'nis.unique' => 'NIS ini sudah terdaftar pada data siswa atau akun pengguna.',
+            'nisn.required' => 'NISN wajib diisi sebagai username login siswa.',
             'nisn.unique' => 'NISN ini sudah terdaftar.',
         ];
     }
