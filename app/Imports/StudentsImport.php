@@ -130,7 +130,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 $user = User::create($userData);
             } else {
                 if ($hasCol) {
-                    if ($user->password_changed_at === null) {
+                    $existingDob = Student::withTrashed()->where('user_id', $user->id)->value('dob');
+                    if ($user->password_changed_at === null && (string) $existingDob !== (string) $dob) {
                         $user->update(['password' => $hashedPassword]);
                     }
                 }
@@ -182,28 +183,57 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
     private function parseIndonesianDate(string $value): ?string
     {
-        $value = trim($value);
+        $value = trim(mb_strtolower($value));
         $months = [
-            'januari' => 'January', 'februari' => 'February', 'maret' => 'March',
-            'april' => 'April', 'mei' => 'May', 'juni' => 'June', 'juli' => 'July',
-            'agustus' => 'August', 'september' => 'September', 'oktober' => 'October',
-            'november' => 'November', 'desember' => 'December',
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+            'january' => 1, 'february' => 2, 'march' => 3, 'april' => 4,
+            'may' => 5, 'june' => 6, 'july' => 7, 'august' => 8,
+            'october' => 10, 'november' => 11, 'december' => 12,
+            'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'jun' => 6,
+            'jul' => 7, 'aug' => 8, 'sep' => 9, 'oct' => 10, 'nov' => 11, 'dec' => 12,
         ];
+        $monthNames = implode('|', array_keys($months));
+        $normalized = preg_replace('/([[:alpha:]])(\d)/u', '$1 $2', $value);
+        $normalized = preg_replace('/(\d)([[:alpha:]])/u', '$1 $2', $normalized);
+        $normalized = preg_replace('/[^[:alnum:]]+/u', ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', trim($normalized));
 
-        if (preg_match('/(\d{1,2})\s+([[:alpha:]]+)\s+(\d{4})/u', $value, $matches)) {
-            $month = $months[mb_strtolower($matches[2])] ?? null;
-            if ($month && ($timestamp = strtotime("{$matches[1]} {$month} {$matches[3]}"))) {
-                return date('Y-m-d', $timestamp);
-            }
+        if (preg_match("/\\b(\\d{1,2})(?:\\s+bulan)?\\s+($monthNames)\\s+(\\d{2,4})\\b/u", $normalized, $matches)) {
+            return $this->dateFromParts((int) $matches[3], $months[$matches[2]], (int) $matches[1]);
         }
 
-        if (preg_match('/(\d{1,2})[-.\/\s]+(\d{1,2})[-.\/\s]+(\d{4})/', $value, $matches)) {
-            $timestamp = strtotime("{$matches[3]}-{$matches[2]}-{$matches[1]}");
-            if ($timestamp) {
-                return date('Y-m-d', $timestamp);
-            }
+        if (preg_match("/\\b(\\d{4})\\s+($monthNames)\\s+(\\d{1,2})\\b/u", $normalized, $matches)) {
+            return $this->dateFromParts((int) $matches[1], $months[$matches[2]], (int) $matches[3]);
         }
 
-        return ($timestamp = strtotime($value)) ? date('Y-m-d', $timestamp) : null;
+        if (preg_match("/\\b($monthNames)\\s+(\\d{1,2})\\s+(\\d{4})\\b/u", $normalized, $matches)) {
+            return $this->dateFromParts((int) $matches[3], $months[$matches[1]], (int) $matches[2]);
+        }
+
+        if (preg_match('/\\b(20\\d{2})\\s+(\\d{1,2})\\s+(\\d{1,2})\\b/', $normalized, $matches)) {
+            return $this->dateFromParts((int) $matches[1], (int) $matches[2], (int) $matches[3]);
+        }
+
+        if (preg_match('/\\b(\\d{1,2})\\s+(\\d{1,2})\\s+(\\d{2,4})\\b/', $normalized, $matches)) {
+            return $this->dateFromParts((int) $matches[3], (int) $matches[2], (int) $matches[1]);
+        }
+
+        // Beberapa formulir menulis tahun lebih dulu, lalu "tanggal DD bulan".
+        if (preg_match('/\\b(20\\d{2})\\b/', $normalized, $year) && preg_match("/\\b(\\d{1,2})\\s+($monthNames)\\b/u", $normalized, $date)) {
+            return $this->dateFromParts((int) $year[1], $months[$date[2]], (int) $date[1]);
+        }
+
+        return null;
+    }
+
+    private function dateFromParts(int $year, int $month, int $day): ?string
+    {
+        if ($year < 100) {
+            $year += 2000;
+        }
+
+        return checkdate($month, $day, $year) ? sprintf('%04d-%02d-%02d', $year, $month, $day) : null;
     }
 }
