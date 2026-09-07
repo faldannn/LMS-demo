@@ -81,7 +81,11 @@ class Student extends Model
     // ── Helpers ─────────────────────────────────────────────
     public function getGenderLabelAttribute(): string
     {
-        return $this->gender === 'L' ? 'Laki-laki' : 'Perempuan';
+        return match ($this->gender) {
+            'L' => 'Laki-laki',
+            'P' => 'Perempuan',
+            default => 'Belum diisi',
+        };
     }
 
     public function getAgeAttribute(): int

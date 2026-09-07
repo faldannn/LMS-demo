@@ -301,6 +301,7 @@ class TeachersImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     private function matchClass(string $className): ?Classes
     {
         $className = strtoupper(trim($className));
+        $className = str_replace('SHOSUM', 'SOSHUM', $className);
         if (empty($className) || in_array($className, ['-', '_', 'TIADA', 'TIDAK ADA', 'WAKIL KURIKULUM', 'KARYAWAN', 'TU'])) {
             return null;
         }

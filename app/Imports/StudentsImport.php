@@ -18,6 +18,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     private ?AcademicYear $cachedAcademicYear = null;
     private array $classCache = [];
     private array $hashedPasswords = [];
+    private array $seenNisns = [];
     private ?bool $hasPasswordChangedAtColumn = null;
 
     private function resolveGrade(string $className): int
@@ -31,8 +32,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
     public function model(array $row): ?Student
     {
-        $rawNisn = trim((string)($row['nisn'] ?? $row['nis'] ?? ''));
-        $nama = trim((string)($row['nama_lengkap'] ?? $row['nama'] ?? ''));
+        $rawNisn = trim((string)($row['nisn'] ?? $row['nomor_induk_siswa_nasional'] ?? $row['nis'] ?? ''));
+        $nama = trim((string)($row['nama_lengkap'] ?? $row['nama_siswa'] ?? $row['nama'] ?? ''));
         $kelasName = trim((string)($row['kelas'] ?? ''));
 
         if (empty($nama) || empty($rawNisn)) {
@@ -56,6 +57,13 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
 
         $nisn = substr(trim($nisn), 0, 20);
         $nis = $nisn; // NIS alias NISN
+
+        // Jangan sampai baris duplikat dalam satu file menimpa data siswa lain.
+        if (isset($this->seenNisns[$nisn])) {
+            Log::warning('StudentsImport skipped duplicate NISN in source file', ['nisn' => $nisn]);
+            return null;
+        }
+        $this->seenNisns[$nisn] = true;
 
         // In-memory Caching Tahun Ajaran (Hanya query 1x)
         if ($this->cachedAcademicYear === null) {
@@ -81,15 +89,12 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
         $class = $this->classCache[$targetClassName];
 
         $dob = null;
-        $rawTtl = $row['tempat_tanggal_lahir'] ?? $row['tanggal_lahir'] ?? null;
+        $rawTtl = $row['tempat_tanggal_lahir'] ?? $row['ttl'] ?? $row['tanggal_lahir'] ?? null;
         if (!empty($rawTtl)) {
             if (is_numeric($rawTtl)) {
                 $dob = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rawTtl)->format('Y-m-d');
             } else {
-                $ts = strtotime($rawTtl);
-                if ($ts) {
-                    $dob = date('Y-m-d', $ts);
-                }
+                $dob = $this->parseIndonesianDate((string) $rawTtl);
             }
         }
 
@@ -137,7 +142,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                     [
                         'nis' => $nis,
                         'name' => substr($nama, 0, 150),
-                        'gender' => strtoupper($row['jk'] ?? 'L') === 'L' ? 'L' : 'P',
+                        'gender' => $this->resolveGender($row['jk'] ?? $row['jenis_kelamin'] ?? $row['jenis_kelamin_opsional'] ?? null),
                         'dob' => $dob,
                         'class_id' => $class->id,
                         'parent_name' => $row['nama_ortu'] ?? null,
@@ -165,5 +170,40 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     public function onError(\Throwable $e): void
     {
         Log::warning('StudentsImport error: ' . $e->getMessage());
+    }
+
+    private function resolveGender(mixed $value): string
+    {
+        $value = strtoupper(trim((string) $value));
+
+        return in_array($value, ['L', 'LAKI-LAKI', 'LAKI LAKI'], true) ? 'L'
+            : (in_array($value, ['P', 'PEREMPUAN'], true) ? 'P' : 'T');
+    }
+
+    private function parseIndonesianDate(string $value): ?string
+    {
+        $value = trim($value);
+        $months = [
+            'januari' => 'January', 'februari' => 'February', 'maret' => 'March',
+            'april' => 'April', 'mei' => 'May', 'juni' => 'June', 'juli' => 'July',
+            'agustus' => 'August', 'september' => 'September', 'oktober' => 'October',
+            'november' => 'November', 'desember' => 'December',
+        ];
+
+        if (preg_match('/(\d{1,2})\s+([[:alpha:]]+)\s+(\d{4})/u', $value, $matches)) {
+            $month = $months[mb_strtolower($matches[2])] ?? null;
+            if ($month && ($timestamp = strtotime("{$matches[1]} {$month} {$matches[3]}"))) {
+                return date('Y-m-d', $timestamp);
+            }
+        }
+
+        if (preg_match('/(\d{1,2})[-.\/\s]+(\d{1,2})[-.\/\s]+(\d{4})/', $value, $matches)) {
+            $timestamp = strtotime("{$matches[3]}-{$matches[2]}-{$matches[1]}");
+            if ($timestamp) {
+                return date('Y-m-d', $timestamp);
+            }
+        }
+
+        return ($timestamp = strtotime($value)) ? date('Y-m-d', $timestamp) : null;
     }
 }

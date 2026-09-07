@@ -200,7 +200,7 @@ class StudentController extends Controller
             'Expires' => '0'
         ];
 
-        $columns = ['nis', 'nisn', 'nama', 'kelas', 'jk', 'tanggal_lahir', 'nama_ortu', 'no_hp_ortu'];
+        $columns = ['nama', 'nisn', 'kelas', 'tanggal_lahir', 'jenis_kelamin_opsional', 'nama_ortu', 'no_hp_ortu'];
 
         $callback = function() use ($columns) {
             $file = fopen('php://output', 'w');
@@ -208,12 +208,11 @@ class StudentController extends Controller
             
             // Add a sample row to guide users
             fputcsv($file, [
-                '2025021', // nis
-                '0012345678', // nisn
                 'Ahmad Yusuf', // nama
+                '0012345678', // nisn
                 'X-RPL-1', // kelas (must exist in classes table)
-                'L', // jk (L/P)
                 '2008-04-12', // tanggal_lahir (YYYY-MM-DD)
+                'L', // jenis_kelamin_opsional (L/P, boleh kosong)
                 'Bambang Yusuf', // nama_ortu
                 '081234567890' // no_hp_ortu
             ]);
