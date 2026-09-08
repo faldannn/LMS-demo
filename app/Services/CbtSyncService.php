@@ -31,6 +31,44 @@ class CbtSyncService
         }
 
         $apiUrl = rtrim($apiUrl, '/');
+
+        $batchPayload = [
+            'subjects' => Subject::query()->get()->map(fn ($subject) => [
+                'id' => $subject->id, 'name' => $subject->name, 'code' => $subject->code, 'level' => $subject->grade,
+            ])->all(),
+            'teachers' => Teacher::with('user')->get()->map(function ($teacher) {
+                $user = $teacher->user;
+                return [
+                    'username' => $user?->username ?? $teacher->email, 'name' => $teacher->name, 'role' => 'guru',
+                    'tanggal_lahir' => $teacher->dob?->format('Y-m-d'),
+                    'subjects' => $teacher->subject ? array_values(array_filter(array_map('trim', explode(',', $teacher->subject)))) : [],
+                    'email' => $teacher->email ?? $user?->email, 'password' => $user?->password,
+                ];
+            })->filter(fn ($teacher) => !empty($teacher['username']))->values()->all(),
+            'students' => Student::with(['class', 'user'])->get()->map(fn ($student) => [
+                'nis' => $student->nis, 'nama' => $student->name, 'kelas' => $student->class?->name ?? 'Umum',
+                'ruangan' => $student->class?->room, 'tanggal_lahir' => $student->dob?->format('Y-m-d'), 'password' => $student->user?->password,
+            ])->all(),
+            'admins' => User::whereNotIn('role', ['siswa', 'guru'])->get()->map(function ($user) {
+                $role = $user->role instanceof UserRole ? $user->role->value : (string) $user->role;
+                return ['username' => $user->username, 'name' => $user->name, 'role' => $role === 'superadmin' ? 'admin' : 'admin', 'email' => $user->email, 'subjects' => [], 'password' => $user->password];
+            })->all(),
+        ];
+
+        try {
+            $response = Http::connectTimeout(5)->timeout(45)->retry(3, 1500, throw: false)
+                ->withHeaders(['X-Sync-Secret' => $secretKey])
+                ->post("{$apiUrl}/sync/batch", $batchPayload);
+            if ($response->successful()) {
+                $counts = $response->json('counts', []);
+                return ['success' => true, 'message' => "Sinkronisasi batch CBT berhasil: {$counts['subjects']} mapel, {$counts['teachers']} guru, {$counts['students']} siswa, {$counts['admins']} admin/staf.", 'stats' => $counts];
+            }
+            return ['success' => false, 'message' => 'Sinkronisasi batch CBT gagal: HTTP ' . $response->status(), 'stats' => []];
+        } catch (\Throwable $e) {
+            Log::error('CBT batch sync failed', ['message' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Sinkronisasi batch CBT gagal: ' . $e->getMessage(), 'stats' => []];
+        }
+
         $stats = [
             'subjects' => 0,
             'teachers' => 0,

@@ -21,6 +21,9 @@ app()->booted(function () {
         ->everyMinute()
         ->withoutOverlapping();
 
+    // One compact, retried request avoids hundreds of PHP/MySQL connections on shared hosting.
+    $schedule->command('cbt:sync-all')->everyTenMinutes()->withoutOverlapping();
+
     // Cleanup expired sessions and stale cache tags
     $schedule->command('session:gc')->dailyAt('01:00');
     $schedule->command('cache:prune-stale-tags')->weekly();
