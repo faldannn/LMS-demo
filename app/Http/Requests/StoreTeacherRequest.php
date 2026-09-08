@@ -16,7 +16,7 @@ class StoreTeacherRequest extends FormRequest
         return [
             'nip' => 'nullable|string|max:30|unique:teachers,nip',
             'name' => 'required|string|max:100',
-            'dob' => 'required|date',
+            'dob' => 'nullable|date',
             'subject' => 'nullable|string|max:100',
             'subject_ids' => 'nullable|array',
             'subject_ids.*' => 'exists:subjects,id',

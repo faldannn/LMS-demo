@@ -18,7 +18,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nip" label="NIP" value="{{ old('nip') }}" placeholder="Nomor Induk Pegawai" />
                     <x-form-input name="name" label="Nama Lengkap" value="{{ old('name') }}" placeholder="Nama lengkap guru" required />
-                    <x-form-input name="dob" type="date" label="Tanggal Lahir" value="{{ old('dob') }}" required />
+                    <x-form-input name="dob" type="date" label="Tanggal Lahir (Opsional)" value="{{ old('dob') }}" />
                     <div class="sm:col-span-2">
                         <label class="mb-1.5 block text-sm font-semibold text-slate-700">Mata Pelajaran yang Diajar</label>
                         <div class="grid grid-cols-1 gap-2 rounded-xl border border-slate-300 bg-slate-50 p-4 max-h-48 overflow-y-auto sm:grid-cols-2">
