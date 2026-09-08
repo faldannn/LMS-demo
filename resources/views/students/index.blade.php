@@ -75,6 +75,7 @@
                     <tr class="border-b border-slate-100 bg-slate-50/80">
                         <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">NIS</th>
                         <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Nama Siswa</th>
+                        <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Tanggal Lahir</th>
                         <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Kelas</th>
                         <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">JK</th>
                         <th class="whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Ortu / HP</th>
@@ -97,6 +98,9 @@
                                     <div class="text-xs text-slate-500">NISN: {{ $student->nisn ?? '-' }}</div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-700">
+                            {{ $student->dob?->translatedFormat('d M Y') ?? '-' }}
                         </td>
                         <td class="whitespace-nowrap px-4 py-3">
                             <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700">{{ $student->class?->name }}</span>
@@ -159,7 +163,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-16 text-center">
+                        <td colspan="9" class="px-4 py-16 text-center">
                             <i class="bi bi-people text-6xl text-slate-200"></i>
                             <h5 class="mt-4 text-lg font-bold text-slate-400">Tidak ada data siswa ditemukan</h5>
                             <p class="mt-1 text-sm text-slate-400">Coba sesuaikan pencarian atau filter Anda.</p>
