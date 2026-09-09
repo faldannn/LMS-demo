@@ -15,8 +15,8 @@
                     <i class="bi bi-people-fill text-lg"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold leading-none">{{ $users->total() }}</div>
-                    <div class="mt-1 text-xs font-medium opacity-80">Total User</div>
+                    <div class="text-2xl font-extrabold leading-none">{{ $userStats['total'] }}</div>
+                    <div class="mt-1 text-xs font-medium opacity-80">Total Akun Semua Peran</div>
                 </div>
             </div>
         </div>
@@ -29,7 +29,7 @@
                     <i class="bi bi-person-badge-fill text-lg"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold leading-none">{{ $users->getCollection()->where('role', \App\Enums\UserRole::Guru)->count() }}</div>
+                    <div class="text-2xl font-extrabold leading-none">{{ $userStats['guru'] }}</div>
                     <div class="mt-1 text-xs font-medium opacity-80">Guru</div>
                 </div>
             </div>
@@ -43,7 +43,7 @@
                     <i class="bi bi-mortarboard-fill text-lg"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold leading-none">{{ $users->getCollection()->where('role', \App\Enums\UserRole::Siswa)->count() }}</div>
+                    <div class="text-2xl font-extrabold leading-none">{{ $userStats['siswa'] }}</div>
                     <div class="mt-1 text-xs font-medium opacity-80">Siswa</div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                     <i class="bi bi-shield-fill-check text-lg"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-extrabold leading-none">{{ $users->getCollection()->filter(fn($u) => $u->isAdmin() || $u->isSuperAdmin())->count() }}</div>
+                    <div class="text-2xl font-extrabold leading-none">{{ $userStats['admin'] }}</div>
                     <div class="mt-1 text-xs font-medium opacity-80">Admin & Superadmin</div>
                 </div>
             </div>

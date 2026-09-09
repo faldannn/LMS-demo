@@ -19,18 +19,25 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        $roleCounts = User::query()->selectRaw('role, COUNT(*) as total')->groupBy('role')->pluck('total', 'role');
+        $userStats = [
+            'total' => $roleCounts->sum(),
+            'guru' => $roleCounts->get('guru', 0),
+            'siswa' => $roleCounts->get('siswa', 0),
+            'admin' => $roleCounts->get('admin', 0) + $roleCounts->get('superadmin', 0),
+        ];
         $users = User::with(['teacher', 'student'])
             ->when(
                 $request->search,
                 fn($q) =>
-                $q->where('name', 'like', "%{$request->search}%")
-                    ->orWhere('username', 'like', "%{$request->search}%")
+                $q->where(fn ($search) => $search->where('name', 'like', "%{$request->search}%")
+                    ->orWhere('username', 'like', "%{$request->search}%"))
             )
             ->when($request->role, fn($q) => $q->where('role', $request->role))
             ->orderBy('name')
             ->paginate(20)->withQueryString();
 
-        return view('users.index', compact('users'));
+        return view('users.index', compact('users', 'userStats'));
     }
 
     public function create()
