@@ -140,17 +140,20 @@ class ScheduleController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $classSubjects = ClassSubject::where('class_id', $classId)->with('subject')->get();
+        // Old curriculum assignments can reference a removed/soft-deleted subject.
+        // Keep the timetable visible, without linking those rows to a missing subject.
+        $classSubjects = ClassSubject::where('class_id', $classId)
+            ->whereHas('subject')->with('subject')->get();
         
         foreach ($schedulesList as $sched) {
             $matchedCs = $classSubjects->first(function ($cs) use ($sched) {
-                return (int) $cs->teacher_id === (int) $sched->teacher_id && 
+                return $cs->subject !== null && (int) $cs->teacher_id === (int) $sched->teacher_id && 
                        stripos($cs->subject->name, $sched->subject) !== false;
             });
             
             if (!$matchedCs) {
                 $matchedCs = $classSubjects->first(function ($cs) use ($sched) {
-                    return stripos($cs->subject->name, $sched->subject) !== false;
+                    return $cs->subject !== null && stripos($cs->subject->name, $sched->subject) !== false;
                 });
             }
 
