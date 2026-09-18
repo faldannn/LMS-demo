@@ -46,6 +46,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->view('errors.429', ['message' => 'Terlalu banyak permintaan. Silakan coba lagi nanti.'], 429);
             }
 
+            // An expired browser session is expected user flow, not a server
+            // failure. In particular this can happen when opening the CBT SSO
+            // link from an older LMS tab.
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return redirect()->guest(route('login'));
+            }
+
             if (!app()->environment('production') || $request->expectsJson()) {
                 return null;
             }
