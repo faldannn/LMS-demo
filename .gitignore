@@ -27,3 +27,13 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Codex / AI attachments & local scratch
+.codex-remote-attachments/
+scratch/
+debug_*.php
+connect_ssh.bat
+
+# Logs
+storage/logs/*
+!storage/logs/.gitignore

@@ -136,7 +136,7 @@ class DashboardController extends Controller
             }
         }
 
-        return view('elearning.index', compact('classSubjects', 'teachers', 'todayAttendanceMap'));
+        return view('elearning.index', compact('classSubjects', 'todayAttendanceMap'));
     }
 
     public function chartData(Request $request)
