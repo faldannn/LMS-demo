@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use App\Enums\UserRole;
 
@@ -19,6 +22,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // A class normally shares one public IP address.  Do not let ten
+        // different students signing in at once exhaust one shared limit.
+        // Failed-password protection remains in AuthService and is keyed to
+        // the individual account.
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(30)
+            ->by(strtolower((string) $request->input('username')).'|'.$request->ip()));
+
         \App\Models\Student::observe(\App\Observers\StudentObserver::class);
         \App\Models\Teacher::observe(\App\Observers\TeacherObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
@@ -132,4 +142,3 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 }
-

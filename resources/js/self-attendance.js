@@ -82,11 +82,33 @@ export class SelfAttendanceApp {
             return false;
         }
 
-        try {
-            this.stream = await navigator.mediaDevices.getUserMedia({
+        // Some older Android/iPhone browsers reject an ideal front-camera
+        // constraint even though a camera is available. Retry once with a
+        // generic video constraint before showing the permission error.
+        const constraints = [{
                 video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
                 audio: false,
-            });
+            }, {
+                video: true,
+                audio: false,
+            }];
+
+        let lastError = null;
+        for (const constraint of constraints) {
+            try {
+                this.stream = await navigator.mediaDevices.getUserMedia(constraint);
+                break;
+            } catch (error) {
+                lastError = error;
+            }
+        }
+
+        if (!this.stream) {
+            console.error('Camera access error:', lastError);
+            return false;
+        }
+
+        try {
             this.els.video.srcObject = this.stream;
             await this.els.video.play();
             
@@ -101,6 +123,7 @@ export class SelfAttendanceApp {
             return true;
         } catch (e) {
             console.error('Camera access error:', e);
+            this.stopCamera();
             return false;
         }
     }
