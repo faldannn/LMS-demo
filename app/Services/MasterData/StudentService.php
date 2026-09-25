@@ -28,8 +28,60 @@ class StudentService extends BaseMasterDataService
                 $data['photo'] = $data['photo']->store('students/photos', 'public');
             }
 
+            $createAccount = !empty($data['create_account']);
+            $restoredStudent = Student::onlyTrashed()
+                ->where(function ($query) use ($data) {
+                    $query->where('nis', $data['nis']);
+
+                    if (!empty($data['nisn'])) {
+                        $query->orWhere('nisn', $data['nisn']);
+                    }
+                })
+                ->first();
+
             $password = null;
-            if (!empty($data['create_account'])) {
+            if ($restoredStudent) {
+                $username = $data['nisn'] ?: $data['nis'];
+                $user = User::where('username', $username)->first();
+
+                if ($createAccount && !$user) {
+                    $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) $username;
+                    $user = User::create([
+                        'username' => $username,
+                        'password' => Hash::make($password),
+                        'name' => $data['name'],
+                        'email' => $data['parent_email'] ?? null,
+                        'role' => UserRole::Siswa,
+                        'status' => true,
+                        'password_changed_at' => null,
+                    ]);
+                }
+
+                if ($user) {
+                    $user->update([
+                        'name' => $data['name'],
+                        'email' => $data['parent_email'] ?? $user->email,
+                        'role' => UserRole::Siswa,
+                        'status' => true,
+                    ]);
+                    $data['user_id'] = $user->id;
+                    $data['status'] = true;
+                } else {
+                    $data['status'] = false;
+                }
+
+                unset($data['create_account'], $data['password']);
+                $restoredStudent->restoreQuietly();
+                $restoredStudent->update($data);
+
+                if ($password) {
+                    $restoredStudent->setAttribute('generated_password', $password);
+                }
+
+                return $restoredStudent;
+            }
+
+            if ($createAccount) {
                 $password = !empty($data['dob']) ? date('Y-m-d', strtotime($data['dob'])) : (string) ($data['nisn'] ?? $data['nis']);
                 $data['status'] = true;
                 try {
@@ -54,7 +106,7 @@ class StudentService extends BaseMasterDataService
             } else {
                 $data['status'] = false;
             }
-            unset($data['create_account']);
+            unset($data['create_account'], $data['password']);
 
             $student = parent::create($data);
             if ($password) {

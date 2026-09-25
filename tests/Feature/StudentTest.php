@@ -197,6 +197,54 @@ class StudentTest extends TestCase
             ->assertSessionHasErrors('nis');
     }
 
+    public function test_creating_student_restores_a_matching_soft_deleted_student_and_reuses_orphaned_account(): void
+    {
+        $nis = '2025999';
+        $nisn = '0012345999';
+        $student = Student::create([
+            'nis' => $nis,
+            'nisn' => $nisn,
+            'name' => 'Data Lama',
+            'gender' => 'L',
+            'class_id' => $this->class->id,
+            'status' => false,
+        ]);
+        $student->delete();
+        $orphanedUser = User::create([
+            'username' => $nisn,
+            'password' => Hash::make('password'),
+            'name' => 'Akun Gagal',
+            'role' => \App\Enums\UserRole::Siswa,
+            'status' => false,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('students.store'), [
+                'nis' => $nis,
+                'nisn' => $nisn,
+                'name' => 'Data Dipulihkan',
+                'gender' => 'P',
+                'class_id' => $this->class->id,
+                'status' => true,
+            ])
+            ->assertRedirect(route('students.index'));
+
+        $this->assertDatabaseHas('students', [
+            'id' => $student->id,
+            'nis' => $nis,
+            'name' => 'Data Dipulihkan',
+            'gender' => 'P',
+            'user_id' => $orphanedUser->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertSame(1, Student::withTrashed()->where('nis', $nis)->count());
+        $this->assertDatabaseHas('users', [
+            'id' => $orphanedUser->id,
+            'name' => 'Data Dipulihkan',
+            'status' => true,
+        ]);
+    }
+
     public function test_admin_can_delete_student(): void
     {
         $student = Student::create([

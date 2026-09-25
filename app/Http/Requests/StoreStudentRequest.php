@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Requests;
 
+use App\Models\Student;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,6 +18,18 @@ class StoreStudentRequest extends FormRequest
         $student = $this->route('student');
         $studentId = $student?->id;
         $userId = $student?->user_id;
+        $restoredStudent = $studentId ? null : Student::onlyTrashed()
+            ->where(function ($query) {
+                $query->where('nis', $this->input('nis'));
+
+                if ($this->filled('nisn')) {
+                    $query->orWhere('nisn', $this->input('nisn'));
+                }
+            })
+            ->first();
+        $restoredUserId = $restoredStudent
+            ? User::where('username', $this->input('nisn') ?: $this->input('nis'))->value('id')
+            : null;
 
         return [
             'nis' => [
@@ -23,7 +37,7 @@ class StoreStudentRequest extends FormRequest
                 'string',
                 'max:20',
                 Rule::unique('students', 'nis')->whereNull('deleted_at')->ignore($studentId),
-                Rule::unique('users', 'username')->ignore($userId),
+                Rule::unique('users', 'username')->ignore($userId ?: $restoredUserId),
             ],
             'nisn' => [
                 'required',
