@@ -17,6 +17,7 @@ class StudentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
         $this->admin = User::factory()->kepalaSekolah()->create(['status' => true]);
         $year = AcademicYear::create([
             'year' => '2024/2025',
