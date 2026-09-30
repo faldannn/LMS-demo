@@ -178,7 +178,7 @@
     setInterval(updateLiveClock, 1000);
     updateLiveClock();
 
-    // Check GPS on load
+    // Check GPS on load - fast caching & continuous watch
     function initGPS() {
         const statusEl = document.getElementById('gpsStatusContainer');
         if (!navigator.geolocation) {
@@ -186,17 +186,31 @@
             return;
         }
 
+        const updatePosition = (pos) => {
+            currentLat = pos.coords.latitude;
+            currentLng = pos.coords.longitude;
+            statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-emerald-400 me-1"></i> <span class="text-emerald-400">GPS Terhubung & Aktif (${currentLat.toFixed(5)}, ${currentLng.toFixed(5)})</span>`;
+        };
+
+        // Quick position with 30s cache so user does not wait
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                currentLat = pos.coords.latitude;
-                currentLng = pos.coords.longitude;
-                statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-emerald-400 me-1"></i> <span class="text-emerald-400">GPS Aktif & Terhubung (${currentLat.toFixed(5)}, ${currentLng.toFixed(5)})</span>`;
-            },
+            updatePosition,
             (err) => {
-                statusEl.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-rose-400 me-1"></i> <span class="text-rose-400">Gagal mendapatkan lokasi GPS: ${err.message}. Harap aktifkan izin lokasi.</span>`;
+                navigator.geolocation.getCurrentPosition(
+                    updatePosition,
+                    (err2) => {
+                        statusEl.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-rose-400 me-1"></i> <span class="text-rose-400">Gagal mendapatkan lokasi GPS: ${err2.message}. Harap aktifkan izin lokasi.</span>`;
+                    },
+                    { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+                );
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
         );
+
+        // Keep position fresh in background
+        if (navigator.geolocation.watchPosition) {
+            navigator.geolocation.watchPosition(updatePosition, null, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
+        }
     }
     initGPS();
 
@@ -283,7 +297,7 @@
         }
 
         if (currentLat === null || currentLng === null) {
-            showAlert('Sedang membaca koordinat GPS... Jika muncul popup izin lokasi, klik Izinkan.', 'warning');
+            showAlert('Sedang memastikan koordinat GPS... Mohon izinkan akses lokasi jika diminta.', 'warning');
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     currentLat = pos.coords.latitude;
@@ -291,9 +305,9 @@
                     sendPayload();
                 },
                 (err) => {
-                    showAlert('Gagal membaca GPS: ' + err.message + '. Harap aktifkan GPS Anda.', 'danger');
+                    showAlert('Gagal membaca GPS: ' + err.message + '. Harap aktifkan izin lokasi/GPS di perangkat Anda.', 'danger');
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
             );
             return;
         }

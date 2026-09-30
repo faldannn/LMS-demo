@@ -19,8 +19,8 @@
             </div>
             <div class="shrink-0">
                 <a href="{{ route('attendance.self-checkin') }}" class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-brand-700 shadow-md hover:bg-brand-50 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                    <i class="bi bi-camera-video text-lg"></i>
-                    Ambil Presensi Wajah & GPS
+                    <i class="bi bi-camera-fill text-lg"></i>
+                    Presensi Cepat Foto & GPS
                 </a>
             </div>
         </div>

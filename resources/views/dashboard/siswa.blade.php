@@ -15,8 +15,8 @@
             <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
                 <i class="bi bi-camera-video text-xl"></i>
             </div>
-            <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Presensi Wajah & GPS</p>
-            <p class="mt-1 text-xs text-slate-500">Absen dengan verifikasi wajah dan lokasi sekolah</p>
+            <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Presensi Siswa (Foto & GPS)</p>
+            <p class="mt-1 text-xs text-slate-500">Ambil foto selfie cepat dan catat lokasi GPS sekolah</p>
         </a>
         <a href="{{ route('attendance.mine') }}" class="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md hover:ring-brand-200">
             <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
