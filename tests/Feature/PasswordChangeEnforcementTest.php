@@ -16,6 +16,12 @@ class PasswordChangeEnforcementTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+    }
+
     public function test_student_with_default_password_must_change_it_before_accessing_dashboard(): void
     {
         $student = $this->makeStudentWithAccount('2008-04-12');

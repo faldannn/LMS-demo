@@ -112,47 +112,69 @@
         </div>
 
         {{-- Ganti Password --}}
-        <div class="card">
-            <div class="card-header"><i class="bi bi-shield-lock me-2 text-primary"></i>Ganti Password</div>
+        <div class="card @if($user->needsPasswordChange()) border-2 border-warning shadow-md @endif">
+            <div class="card-header @if($user->needsPasswordChange()) bg-warning bg-opacity-10 text-dark fw-bold @endif">
+                <i class="bi bi-shield-lock me-2 @if($user->needsPasswordChange()) text-warning @else text-primary @endif"></i>
+                @if($user->needsPasswordChange())
+                    Aktivasi Akun: Buat Password Baru Anda
+                @else
+                    Ganti Password
+                @endif
+            </div>
             <div class="card-body">
+                @if($user->needsPasswordChange())
+                    <p class="text-muted small mb-3">
+                        Silakan buat password baru yang aman dan mudah Anda ingat (minimal 6 karakter) untuk menyelesaikan aktivasi akun.
+                    </p>
+                @endif
                 <form method="POST" action="{{ route('profile.password') }}">
                     @csrf @method('PUT')
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Password Lama <span class="text-danger">*</span></label>
-                            <div class="relative">
-                                <input type="password" name="current_password" id="current_password" class="form-control pr-10 @error('current_password') is-invalid @enderror" required>
-                                <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('current_password', this)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                        @if(!$user->needsPasswordChange())
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Password Lama <span class="text-danger">*</span></label>
+                                <div class="relative">
+                                    <input type="password" name="current_password" id="current_password" class="form-control pr-10 @error('current_password') is-invalid @enderror" required placeholder="Masukkan password saat ini">
+                                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('current_password', this)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                @error('current_password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                             </div>
-                            @error('current_password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                        </div>
+                        @endif
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Password Baru <span class="text-danger">*</span></label>
                             <div class="relative">
-                                <input type="password" name="password" id="password" class="form-control pr-10 @error('password') is-invalid @enderror" required minlength="6">
+                                <input type="password" name="password" id="password" class="form-control pr-10 @error('password') is-invalid @enderror" required minlength="6" placeholder="Minimal 6 karakter">
                                 <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('password', this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
                             <div class="form-text text-[11px] text-slate-500 mt-1">
-                                Password minimal 8 karakter.
+                                Password minimal 6 karakter.
                             </div>
                             @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Konfirmasi Password <span class="text-danger">*</span></label>
                             <div class="relative">
-                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control pr-10" required>
+                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control pr-10" required minlength="6" placeholder="Ketik ulang password baru">
                                 <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" onclick="togglePasswordVisibility('password_confirmation', this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="d-grid mt-3">
-                        <button type="submit" class="btn btn-warning"><i class="bi bi-key me-2"></i>Ganti Password</button>
+                    <div class="d-grid mt-4">
+                        @if($user->needsPasswordChange())
+                            <button type="submit" class="btn btn-success fw-bold py-2.5">
+                                <i class="bi bi-check2-circle me-2"></i>Simpan Password & Masuk ke Dashboard
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-warning fw-semibold">
+                                <i class="bi bi-key me-2"></i>Ganti Password
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>

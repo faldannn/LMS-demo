@@ -354,20 +354,50 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $user = Auth::user();
+        $isMandatory = $user->needsPasswordChange();
 
-        if (!Hash::check($request->current_password, Auth::user()->password)) {
-            return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
+        $rules = [
+            'password' => 'required|string|min:6|confirmed',
+        ];
+
+        if (!$isMandatory) {
+            $rules['current_password'] = 'required';
+        } else {
+            $rules['current_password'] = 'nullable';
         }
 
-        Auth::user()->update([
+        $request->validate($rules, [
+            'password.required' => 'Password baru wajib diisi.',
+            'password.min' => 'Password baru minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+            'current_password.required' => 'Password lama wajib diisi.',
+        ]);
+
+        if (!$isMandatory) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
+            }
+        }
+
+        if (Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Password baru tidak boleh sama dengan password lama/bawaan. Silakan buat password baru yang berbeda.']);
+        }
+
+        $user->update([
             'password' => Hash::make($request->password),
             'password_changed_at' => now(),
         ]);
-        session(['needs_password_change' => false, 'needs_password_change_user_id' => Auth::id()]);
-        return back()->with('success', 'Password berhasil diubah. Sekarang Anda dapat menggunakan seluruh fasilitas LMS.');
+
+        session([
+            'needs_password_change' => false,
+            'needs_password_change_user_id' => $user->id,
+        ]);
+
+        if ($isMandatory) {
+            return redirect()->route('dashboard')->with('success', 'Selamat! Password baru Anda berhasil disimpan. Sekarang Anda dapat mengakses seluruh fasilitas LMS.');
+        }
+
+        return back()->with('success', 'Password berhasil diubah.');
     }
 }

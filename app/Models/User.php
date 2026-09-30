@@ -71,6 +71,8 @@ class User extends Authenticatable
             $needsChange = true;
         } elseif (\Illuminate\Support\Facades\Hash::check($nisPassword, $this->password)) {
             $needsChange = true;
+        } elseif (\Illuminate\Support\Facades\Hash::check('siswa123', $this->password) || \Illuminate\Support\Facades\Hash::check('123456', $this->password) || \Illuminate\Support\Facades\Hash::check('12345678', $this->password)) {
+            $needsChange = true;
         }
 
         session(['needs_password_change' => $needsChange, 'needs_password_change_user_id' => $this->id]);
