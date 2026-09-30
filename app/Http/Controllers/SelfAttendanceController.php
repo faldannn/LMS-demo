@@ -16,7 +16,12 @@ class SelfAttendanceController extends Controller
             ->where('status', 'success')
             ->first();
 
-        return view('attendance.self-checkin', compact('student', 'todayLog'));
+        $session = $student->class?->session ?? 'pagi';
+        $checkinStart = $session === 'siang'
+            ? config('attendance.student_checkin_start_siang', '11:30:00')
+            : config('attendance.student_checkin_start', '06:00:00');
+
+        return view('attendance.self-checkin', compact('student', 'todayLog', 'checkinStart', 'session'));
     }
 
     public function logs()
