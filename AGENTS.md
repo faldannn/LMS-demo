@@ -1,40 +1,29 @@
-# Project Rules & Development Workflow - LMS Assyafiiyah
+# Project Rules & Development Workflow - LMS Demo Nexus (Demo System)
 
-Setiap pengerjaan tugas, penambahan fitur, ataupun perbaikan bug di repository LMS ini **WAJIB** mematuhi 4 tahap alur kerja baku berikut secara berurutan:
-
----
-
-## 1. Edit Lokal (Local Development)
-- Seluruh modifikasi file (controller, model, view Blade, database migration, dan konfigurasi) harus dikerjakan secara lokal di direktori workspace `c:\laravel10\lms-assyafiiyah`.
-- Dilarang keras melakukan hotfix langsung di server produksi tanpa melalui kode lokal.
+Project folder ini adalah **LMS Demo System** yang berdiri sendiri (standalone) untuk kebutuhan showcase / portfolio CP Nexus.
 
 ---
 
-## 2. Testing & Validasi (Local Verification)
-- Setiap setelah selesai melakukan perubahan kode, lakukan testing dan validasi terlebih dahulu:
-  - Verifikasi sintaks PHP: `php -l <path-to-file>`
-  - Jalankan test jika ada unit/feature test terkait (`php artisan test`).
-  - Pastikan tidak ada syntax error atau regresi logic.
+## 1. Lingkungan Mandiri (Standalone Environment)
+- **Terputus Total dari Server Produksi**: DILARANG mengunggah, menghubungkan, atau menyinkronkan file ke server hosting produksi Hostinger (`domains/smaiassyafiiyah02.com/public_html/lms/`) atau server hosting lainnya.
+- **Terputus dari GitHub Utama**: Project ini telah diputus dari remote repository `NexusDevWeb/lms-assyafiiyah.git`.
+- File perubahan hanya disimpan dan dikembangkan secara lokal di folder `c:\laravel10\Copy an\lms-assyafiiyah-copy` sampai repository GitHub baru untuk demo disiapkan.
 
 ---
 
-## 3. Git Commit & Push (Version Control)
-- Cek status dengan `git status`.
-- Stage seluruh perubahan terkait dan buat commit dengan pesan deskriptif:
+## 2. Testing & Validasi Lokal
+- Verifikasi sintaks PHP: `php -l <path-to-file>`
+- Jalankan test jika ada unit/feature test: `php artisan test`
+- Pastikan tampilan dan fitur demo berjalan optimal tanpa ketergantungan API/server live.
+
+---
+
+## 3. Version Control (Repository Demo Baru)
+- Setelah remote repository GitHub baru demo ditambahkan oleh pemilik:
   ```powershell
-  git add -A; git commit -m "<tipe>: <deskripsi perubahan>"
-  ```
-- Lakukan sinkronisasi dan push ke branch `main`:
-  ```powershell
-  git pull --rebase origin main; git push origin main
+  git remote add origin <url-repo-baru>
+  git add -A
+  git commit -m "<tipe>: <deskripsi perubahan>"
+  git push -u origin main
   ```
 
----
-
-## 4. Deploy ke Production (Automated Deployment)
-- Unggah file yang diubah ke server Hostinger (`domains/smaiassyafiiyah02.com/public_html/lms/`).
-- Jalankan pembersihan dan pembaruan cache Laravel di server:
-  - `php artisan config:cache`
-  - `php artisan route:cache`
-  - `php artisan view:clear`
-- Konfirmasi dan verifikasi fungsionalitas live berjalan normal.

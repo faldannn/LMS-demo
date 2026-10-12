@@ -41,8 +41,8 @@ return [
     ],
 
     'cbt' => [
-        'url' => env('CBT_URL', 'https://cbt.smaiassyafiiyah02.com/api'),
-        'api_url' => env('CBT_API_URL', 'https://cbt.smaiassyafiiyah02.com/api'),
+        'url' => env('CBT_URL', 'http://127.0.0.1:8000'),
+        'api_url' => env('CBT_API_URL', 'http://127.0.0.1:8000/api'),
         'sync_secret_key' => env('SYNC_SECRET_KEY'),
     ],
 
