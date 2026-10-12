@@ -57,7 +57,7 @@ class Setting extends Model
         }
     }
 
-    public static function isFeatureEnabled(string $featureKey, bool $default = false): bool
+    public static function isFeatureEnabled(string $featureKey, bool $default = true): bool
     {
         $val = static::get("feature_{$featureKey}", null);
         if ($val === null) {

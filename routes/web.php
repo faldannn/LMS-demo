@@ -173,6 +173,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
     Route::middleware('can:access-elearning')->prefix('akademik')->group(function () {
         Route::get('elearning', [DashboardController::class, 'elearning'])->name('elearning.index');
+        Route::get('class-subjects/{classSubject}', [StudentAssignmentController::class, 'showClassSubject'])
+            ->name('teacher.class-subjects.show');
 
         // Materials
         Route::get('materials/{classSubject}', [MaterialController::class, 'index'])->name('materials.index');

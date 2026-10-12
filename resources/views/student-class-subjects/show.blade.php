@@ -57,139 +57,353 @@
                 <h3 class="text-2xl font-extrabold">{{ $classSubject->subject->name }}</h3>
                 <p class="text-brand-100 text-sm mt-1">Guru Pengampu: <span class="font-semibold text-white">{{ $classSubject->teacher->name }}</span></p>
             </div>
-            <div class="flex gap-3">
-                <div class="rounded-xl bg-white/10 px-4 py-2.5 text-center min-w-[80px]">
-                    <div class="text-xl font-black">{{ $classSubject->materials->count() }}</div>
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                <div class="rounded-xl bg-white/10 px-3.5 py-2 text-center min-w-[75px] backdrop-blur-xs">
+                    <div class="text-lg sm:text-xl font-black">{{ $classSubject->materials->count() }}</div>
                     <div class="text-[10px] text-brand-100 font-semibold uppercase tracking-wider">Materi</div>
                 </div>
-                <div class="rounded-xl bg-white/10 px-4 py-2.5 text-center min-w-[80px]">
-                    <div class="text-xl font-black">{{ $classSubject->assignments->count() }}</div>
+                <div class="rounded-xl bg-white/10 px-3.5 py-2 text-center min-w-[75px] backdrop-blur-xs">
+                    <div class="text-lg sm:text-xl font-black">{{ $classSubject->assignments->count() }}</div>
                     <div class="text-[10px] text-brand-100 font-semibold uppercase tracking-wider">Tugas</div>
                 </div>
+                @if(!auth()->user()->isSiswa())
+                <div class="rounded-xl bg-white/10 px-3.5 py-2 text-center min-w-[85px] backdrop-blur-xs">
+                    <div class="text-lg sm:text-xl font-black">
+                        {{ ($attendanceStats['hadir'] ?? 0) + ($attendanceStats['terlambat'] ?? 0) }}/{{ $attendanceStats['total'] ?? $classStudents->count() }}
+                    </div>
+                    <div class="text-[10px] text-brand-100 font-semibold uppercase tracking-wider">Siswa Hadir</div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
 
-    {{-- Absensi Pelajaran Hari Ini (Student Self Attendance) --}}
-    @if(auth()->user()->isSiswa() && \App\Models\Setting::isFeatureEnabled('subject_attendance', false) && ($studentAttendanceDetail || $attendanceWindow['can_check_in'] || in_array($attendanceWindow['status'] ?? '', ['not_started', 'ended'])))
-        <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+    {{-- ── 1. UNTUK SISWA: HANYA STATUS KEHADIRAN PRIBADI & TOMBOL KLIK HADIR (TANPA LAPORAN SEKELAS) ── --}}
+    @if(auth()->user()->isSiswa())
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 font-extrabold text-lg border border-emerald-200">
+                        <i class="bi bi-person-check-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                            Presensi Pelajaran Hari Ini
+                            <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                                Aktif
+                            </span>
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">
+                            Status kehadiran mandiri Anda pada mata pelajaran {{ $classSubject->subject->name }}.
+                        </p>
+                    </div>
+                </div>
+
+                @if(!empty($activeSchedule))
+                    <span class="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                        <i class="bi bi-clock"></i> {{ $activeSchedule->start_time->format('H:i') }} - {{ $activeSchedule->end_time->format('H:i') }} WIB
+                    </span>
+                @endif
+            </div>
+
             @if($studentAttendanceDetail && in_array($studentAttendanceDetail->status, ['hadir', 'terlambat'], true))
-                <div class="rounded-xl border-2 border-emerald-500 bg-emerald-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-emerald-600/20">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                <div class="rounded-xl border-2 {{ $studentAttendanceDetail->status === 'terlambat' ? 'border-amber-400 bg-amber-500' : 'border-emerald-500 bg-emerald-600' }} text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+                    <div class="flex items-center gap-3.5">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white font-black text-2xl">
                             <i class="bi bi-check-circle-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: HADIR</h4>
-                            <p class="text-xs text-emerald-100 font-medium">Tercatat Hadir pada Pukul {{ $studentAttendanceDetail->check_in ? \Carbon\Carbon::parse($studentAttendanceDetail->check_in)->format('H:i') : now()->format('H:i') }} WIB (Presensi Hari Ini)</p>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-sm font-black text-white uppercase tracking-wide">
+                                    {{ $studentAttendanceDetail->status === 'terlambat' ? 'STATUS: HADIR (TERLAMBAT)' : 'STATUS: HADIR DI KELAS' }}
+                                </h4>
+                                <span class="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                                    {{ $studentAttendanceDetail->check_in ? \Carbon\Carbon::parse($studentAttendanceDetail->check_in)->format('H:i') : now()->format('H:i') }} WIB
+                                </span>
+                            </div>
+                            <p class="text-xs text-emerald-100 font-medium mt-0.5">
+                                Kehadiran Anda pada mata pelajaran {{ $classSubject->subject->name }} telah sukses tercatat di sistem LMS.
+                            </p>
                         </div>
                     </div>
-                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-emerald-700 uppercase tracking-wider shadow-sm">
-                        ✅ HADIR
-                    </span>
-                </div>
-            @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'alfa')
-                <div class="rounded-xl border-2 border-rose-500 bg-rose-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-rose-600/20">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: TIDAK HADIR</h4>
-                            <p class="text-xs text-rose-100 font-medium">Tercatat Tidak Hadir pada jam mata pelajaran hari ini oleh Guru Pengampu.</p>
-                        </div>
-                    </div>
-                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-rose-700 uppercase tracking-wider shadow-sm">
-                        ❌ TIDAK HADIR
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black {{ $studentAttendanceDetail->status === 'terlambat' ? 'text-amber-800' : 'text-emerald-700' }} uppercase tracking-wider shadow-sm shrink-0">
+                        {{ $studentAttendanceDetail->status === 'terlambat' ? '⏰ TERLAMBAT' : '✅ SUDAH HADIR' }}
                     </span>
                 </div>
             @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'sakit')
                 <div class="rounded-xl border-2 border-amber-500 bg-amber-500 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-amber-500/20">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                    <div class="flex items-center gap-3.5">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-2xl">
                             <i class="bi bi-bandaid-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: SAKIT</h4>
-                            <p class="text-xs text-amber-100 font-medium">Tercatat Sakit pada presensi hari ini (Wali Kelas / Guru Pengampu).</p>
+                            <h4 class="text-sm font-extrabold text-white">STATUS: SAKIT</h4>
+                            <p class="text-xs text-amber-100 font-medium mt-0.5">Anda tercatat Sakit pada presensi hari ini (Keterangan: {{ $studentAttendanceDetail->notes ?: 'Disinkronkan dari presensi harian' }}).</p>
                         </div>
                     </div>
-                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-amber-800 uppercase tracking-wider shadow-sm">
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-amber-800 uppercase tracking-wider shadow-sm shrink-0">
                         🤒 SAKIT
                     </span>
                 </div>
             @elseif($studentAttendanceDetail && $studentAttendanceDetail->status === 'izin')
                 <div class="rounded-xl border-2 border-sky-500 bg-sky-600 text-white p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-sky-600/20">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-xl">
+                    <div class="flex items-center gap-3.5">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-2xl">
                             <i class="bi bi-file-earmark-text-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-white">STATUS KEHADIRAN: IZIN</h4>
-                            <p class="text-xs text-sky-100 font-medium">Tercatat Izin pada presensi hari ini (Wali Kelas / Guru Pengampu).</p>
+                            <h4 class="text-sm font-extrabold text-white">STATUS: IZIN</h4>
+                            <p class="text-xs text-sky-100 font-medium mt-0.5">Anda tercatat Izin pada presensi hari ini (Keterangan: {{ $studentAttendanceDetail->notes ?: 'Disinkronkan dari presensi harian' }}).</p>
                         </div>
                     </div>
-                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-sky-800 uppercase tracking-wider shadow-sm">
+                    <span class="rounded-full bg-white px-4 py-1.5 text-xs font-black text-sky-800 uppercase tracking-wider shadow-sm shrink-0">
                         📄 IZIN
                     </span>
                 </div>
-            @elseif(!$attendanceWindow['can_check_in'])
-                <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-white font-bold text-lg shadow-md">
-                            @if(($attendanceWindow['status'] ?? '') === 'not_started')
-                                <i class="bi bi-lock-fill"></i>
-                            @elseif(($attendanceWindow['status'] ?? '') === 'ended')
-                                <i class="bi bi-clock-history"></i>
-                            @else
-                                <i class="bi bi-calendar-x-fill"></i>
-                            @endif
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-extrabold text-slate-900">
-                                @if(($attendanceWindow['status'] ?? '') === 'not_started')
-                                    Absensi Pelajaran Belum Dibuka
-                                @elseif(($attendanceWindow['status'] ?? '') === 'ended')
-                                    Waktu Absensi Pelajaran Telah Berakhir
-                                @else
-                                    Tidak Ada Jadwal Pelajaran Hari Ini
-                                @endif
-                            </h4>
-                            <p class="text-xs text-slate-600 mt-0.5">{{ $attendanceWindow['message'] }}</p>
-                        </div>
-                    </div>
-                    <button type="button" disabled class="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-5 py-2.5 text-xs font-extrabold text-slate-500 cursor-not-allowed shadow-none border border-slate-300">
-                        <i class="bi bi-lock"></i> 
-                        @if(($attendanceWindow['status'] ?? '') === 'not_started')
-                            BELUM DIBUKA
-                        @elseif(($attendanceWindow['status'] ?? '') === 'ended')
-                            SUDAH BERAKHIR
-                        @else
-                            TIDAK ADA JADWAL
-                        @endif
-                    </button>
-                </div>
-            @else
-                <div class="rounded-xl border-2 border-brand-200 bg-brand-50/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white font-bold text-lg shadow-md">
+            @elseif(!empty($attendanceWindow['can_check_in']))
+                <div class="rounded-xl border-2 border-emerald-300 bg-emerald-50/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center gap-3.5">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xl shadow-md shadow-emerald-600/20">
                             <i class="bi bi-hand-index-thumb-fill"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-slate-900">Absensi Pelajaran Hari Ini</h4>
-                            <p class="text-xs text-slate-500">{{ $attendanceWindow['message'] }}</p>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-sm font-black text-slate-900">
+                                    {{ !empty($attendanceWindow['is_late']) ? 'Presensi Susulan Mata Pelajaran' : 'Sesi Presensi Sedang Dibuka' }}
+                                </h4>
+                                @if(!empty($attendanceWindow['is_late']))
+                                    <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
+                                        Terlambat
+                                    </span>
+                                @else
+                                    <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                                        Jam Pelajaran
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium mt-1">
+                                {{ $attendanceWindow['message'] }} Klik tombol di samping untuk mengonfirmasi kehadiran Anda.
+                            </p>
                         </div>
                     </div>
-                    <form method="POST" action="{{ route('student.class-subjects.check-in', $classSubject->id) }}">
+                    <form method="POST" action="{{ route('student.class-subjects.check-in', $classSubject->id) }}" class="shrink-0 w-full sm:w-auto">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition">
-                            <i class="bi bi-hand-index-thumb"></i> KLIK HADIR SEKARANG
+                        <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-xs font-black text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-500 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer">
+                            <i class="bi bi-fingerprint text-base"></i>
+                            <span>{{ !empty($attendanceWindow['is_late']) ? 'KLIK HADIR (TERLAMBAT)' : 'KLIK HADIR SEKARANG' }}</span>
                         </button>
                     </form>
                 </div>
+            @else
+                <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600 font-bold text-lg">
+                            @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                                <i class="bi bi-clock"></i>
+                            @else
+                                <i class="bi bi-calendar-event"></i>
+                            @endif
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-slate-800">
+                                @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                                    Presensi Belum Dibuka
+                                @else
+                                    Jadwal Pelajaran
+                                @endif
+                            </h4>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">{{ $attendanceWindow['message'] }}</p>
+                        </div>
+                    </div>
+                    <span class="rounded-xl bg-slate-200 px-3.5 py-1.5 text-[11px] font-bold text-slate-600 shrink-0">
+                        @if(($attendanceWindow['status'] ?? '') === 'not_started')
+                            Belum Jam Mulai
+                        @else
+                            Di Luar Jam Jadwal
+                        @endif
+                    </span>
+                </div>
             @endif
-
         </div>
+
+    {{-- ── 2. UNTUK GURU & STAFF: LAPORAN LENGKAP PRESENSI KELAS ("SIAPA SAJA YANG MENGIKUTI") ── --}}
+    @else
+        <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200 space-y-4">
+            {{-- Header Laporan Presensi Guru --}}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 font-extrabold text-lg border border-brand-200">
+                        <i class="bi bi-clipboard2-check-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                            Laporan Presensi Siswa Mata Pelajaran
+                            <span class="inline-flex items-center rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-black text-brand-700 border border-brand-200 uppercase tracking-wider">
+                                Laporan Guru
+                            </span>
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">
+                            Mengetahui siapa saja siswa kelas {{ $classSubject->class->name }} yang mengikuti pelajaran {{ $classSubject->subject->name }} hari ini.
+                        </p>
+                    </div>
+                </div>
+
+                <a href="{{ route('attendance.create', ['class_id' => $classSubject->class_id]) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 text-xs font-black shadow-sm transition">
+                    <i class="bi bi-pencil-square"></i> Input / Edit Presensi Kelas
+                </a>
+            </div>
+
+            {{-- Ringkasan Statistik Kehadiran --}}
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-black text-slate-700 border border-slate-200 shadow-2xs">
+                    👥 Total: {{ $attendanceStats['total'] ?? $classStudents->count() }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 border border-emerald-200 shadow-2xs">
+                    🟢 Hadir: {{ $attendanceStats['hadir'] ?? 0 }}
+                </span>
+                @if(!empty($attendanceStats['terlambat']))
+                <span class="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-700 border border-amber-200 shadow-2xs">
+                    ⏰ Telat: {{ $attendanceStats['terlambat'] }}
+                </span>
+                @endif
+                <span class="inline-flex items-center gap-1 rounded-lg bg-yellow-50 px-2.5 py-1 text-[11px] font-black text-yellow-800 border border-yellow-200 shadow-2xs">
+                    🟡 Sakit: {{ $attendanceStats['sakit'] ?? 0 }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2.5 py-1 text-[11px] font-black text-sky-700 border border-sky-200 shadow-2xs">
+                    🔵 Izin: {{ $attendanceStats['izin'] ?? 0 }}
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1 text-[11px] font-black text-rose-700 border border-rose-200 shadow-2xs">
+                    🔴 Belum Hadir: {{ $attendanceStats['alfa'] ?? 0 }}
+                </span>
+            </div>
+
+            {{-- Filter Pencarian Cepat Siswa --}}
+            <div class="relative">
+                <i class="bi bi-search absolute left-3.5 top-2.5 text-xs text-slate-400"></i>
+                <input type="text" 
+                       id="searchStudentInput" 
+                       placeholder="Ketik untuk mencari nama siswa sekelas..." 
+                       onkeyup="filterStudentList()" 
+                       class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs text-slate-700 focus:border-brand-500 focus:outline-hidden focus:ring-1 focus:ring-brand-500">
+            </div>
+
+            {{-- Tabel Laporan Presensi Siswa Khusus Guru --}}
+            <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                <table class="w-full text-left text-xs text-slate-600" id="studentRosterTable">
+                    <thead class="bg-slate-50/80 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 w-12 text-center">No</th>
+                            <th class="py-2.5 px-3">Nama Siswa</th>
+                            <th class="py-2.5 px-3">NIS</th>
+                            <th class="py-2.5 px-3 text-center">Status Kehadiran</th>
+                            <th class="py-2.5 px-3 text-center">Waktu Presensi</th>
+                            <th class="py-2.5 px-3">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @php
+                            $attendanceMap = $todayAttendance ? $todayAttendance->details->keyBy('student_id') : collect();
+                        @endphp
+
+                        @forelse($classStudents as $idx => $st)
+                            @php
+                                $detail = $attendanceMap->get($st->id);
+                                $stStatus = $detail?->status ?? 'alfa';
+                            @endphp
+                            <tr class="hover:bg-slate-50/60 transition" data-student-name="{{ strtolower($st->name) }}">
+                                <td class="py-2.5 px-3 text-center text-slate-400 font-bold text-[11px]">
+                                    {{ $idx + 1 }}
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black">
+                                            {{ strtoupper(substr($st->name, 0, 2)) }}
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-900">
+                                                {{ $st->name }}
+                                            </div>
+                                            <div class="text-[10px] text-slate-400">
+                                                NISN: {{ $st->nisn ?: '-' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">
+                                    {{ $st->nis }}
+                                </td>
+                                <td class="py-2.5 px-3 text-center">
+                                    @if($stStatus === 'hadir')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-800">
+                                            <i class="bi bi-check-circle-fill"></i> Hadir
+                                        </span>
+                                    @elseif($stStatus === 'terlambat')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-black text-amber-800">
+                                            <i class="bi bi-clock-history"></i> Terlambat
+                                        </span>
+                                    @elseif($stStatus === 'sakit')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-[10px] font-black text-yellow-800">
+                                            <i class="bi bi-bandaid"></i> Sakit
+                                        </span>
+                                    @elseif($stStatus === 'izin')
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-[10px] font-black text-sky-800">
+                                            <i class="bi bi-file-earmark-text"></i> Izin
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-500">
+                                            <i class="bi bi-dash-circle"></i> Belum Hadir
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-3 text-center font-mono text-[11px] text-slate-600">
+                                    @if($detail && $detail->check_in)
+                                        <span class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($detail->check_in)->format('H:i') }}</span>
+                                        <span class="text-[9px] text-slate-400">WIB</span>
+                                    @else
+                                        <span class="text-slate-300">-</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 px-3 text-[11px] text-slate-500 truncate max-w-[180px]">
+                                    @if($detail && $detail->notes)
+                                        <span title="{{ $detail->notes }}">{{ $detail->notes }}</span>
+                                    @elseif($stStatus === 'hadir' || $stStatus === 'terlambat')
+                                        <span class="text-slate-400">Presensi Mandiri</span>
+                                    @else
+                                        <span class="text-slate-300">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-6 text-center text-slate-400">
+                                    Tidak ada data siswa di kelas ini.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @push('scripts')
+        <script>
+            function filterStudentList() {
+                const input = document.getElementById('searchStudentInput');
+                if (!input) return;
+                const filter = input.value.toLowerCase();
+                const rows = document.querySelectorAll('#studentRosterTable tbody tr');
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-student-name') || '';
+                    if (name.includes(filter)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        </script>
+        @endpush
     @endif
 
     {{-- Main Content Grid --}}

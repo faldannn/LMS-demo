@@ -24,6 +24,8 @@ class SettingSeeder extends Seeder
             ['att_end_time', '15:30', 'attendance'],
             ['att_min_pct', '75', 'attendance'],
             ['att_working_days', '22', 'attendance'],
+            ['feature_subject_attendance', '1', 'features'],
+            ['subject_attendance', '1', 'features'],
         ];
 
         foreach ($settings as [$key, $value, $group]) {

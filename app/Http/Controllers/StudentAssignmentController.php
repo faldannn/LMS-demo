@@ -89,9 +89,10 @@ class StudentAssignmentController extends Controller
 
     public function showClassSubject(ClassSubject $classSubject)
     {
-        $student = auth()->user()->student;
+        $user = auth()->user();
+        $student = $user->student;
 
-        if (!$student || $student->class_id !== $classSubject->class_id) {
+        if ($user->isSiswa() && (!$student || $student->class_id !== $classSubject->class_id)) {
             abort(403, 'Anda tidak memiliki akses ke mata pelajaran ini.');
         }
 
@@ -105,7 +106,9 @@ class StudentAssignmentController extends Controller
                 $query->where('is_published', true)->orderBy('due_date', 'asc');
             },
             'assignments.submissions' => function ($query) use ($student) {
-                $query->where('student_id', $student->id);
+                if ($student) {
+                    $query->where('student_id', $student->id);
+                }
             }
         ]);
 
@@ -125,10 +128,11 @@ class StudentAssignmentController extends Controller
             }
         }
 
-        $sessionKey = $slotNum ? "mapel_{$slotNum}" : null;
+        $sessionKey = $slotNum ? "mapel_{$slotNum}" : 'mapel_1';
         $subName = $classSubject->subject->name;
 
-        $todayAttendance = \App\Models\Attendance::with('details')
+        // Ambil atau inisialisasi presensi mapel hari ini
+        $todayAttendance = \App\Models\Attendance::with(['details.student'])
             ->where('class_id', $classSubject->class_id)
             ->whereDate('date', today())
             ->where(function ($q) use ($sessionKey, $subName, $classSubject) {
@@ -142,13 +146,76 @@ class StudentAssignmentController extends Controller
             })
             ->first();
 
+        // Jadwal hari ini untuk mapel ini
+        $activeSchedule = $daySchedules->first(function($s) use ($classSubject) {
+            return $s->subject === $classSubject->subject->name || stripos($s->subject, $classSubject->subject->name) !== false;
+        });
+
+        // Ambil semua siswa di kelas ini
+        $classStudents = \App\Models\Student::where('class_id', $classSubject->class_id)
+            ->orderBy('name')
+            ->get();
+
+        // Jika hari ini ada jadwal dan belum dibuat presensinya, buat otomatis agar daftar siswa siap
+        if (!$todayAttendance && $activeSchedule) {
+            $attConditions = [
+                'date' => today()->toDateString(),
+                'class_id' => $classSubject->class_id,
+                'session' => $sessionKey,
+            ];
+            if (\Illuminate\Support\Facades\Schema::hasColumn('attendance', 'class_subject_id')) {
+                $attConditions['class_subject_id'] = $classSubject->id;
+            }
+
+            $todayAttendance = \App\Models\Attendance::firstOrCreate($attConditions, [
+                'teacher_id' => $classSubject->teacher_id,
+                'notes' => 'Presensi Mapel ' . $classSubject->subject->name,
+            ]);
+        }
+
+        // Sinkronisasi seluruh murid ke attendance_details jika attendance aktif
+        if ($todayAttendance && $classStudents->isNotEmpty()) {
+            $existingDetailStudentIds = $todayAttendance->details->pluck('student_id')->toArray();
+            $missingStudents = $classStudents->whereNotIn('id', $existingDetailStudentIds);
+
+            if ($missingStudents->isNotEmpty()) {
+                // Cek apakah ada catatan izin/sakit wali kelas dari absensi harian
+                $homeroomAtt = \App\Models\Attendance::with('details')
+                    ->where('class_id', $classSubject->class_id)
+                    ->whereDate('date', today())
+                    ->whereIn('session', ['pagi', 'siang', 'harian'])
+                    ->first();
+                $homeroomMap = $homeroomAtt ? $homeroomAtt->details->keyBy('student_id') : collect();
+
+                $toInsert = [];
+                foreach ($missingStudents as $mStudent) {
+                    $defStatus = 'alfa';
+                    if ($homeroomMap->has($mStudent->id)) {
+                        $hStatus = $homeroomMap[$mStudent->id]->status;
+                        if (in_array($hStatus, ['sakit', 'izin'], true)) {
+                            $defStatus = $hStatus;
+                        }
+                    }
+                    $toInsert[] = [
+                        'attendance_id' => $todayAttendance->id,
+                        'student_id' => $mStudent->id,
+                        'status' => $defStatus,
+                    ];
+                }
+                if (!empty($toInsert)) {
+                    \App\Models\AttendanceDetail::insert($toInsert);
+                    $todayAttendance->load('details.student');
+                }
+            }
+        }
+
         $studentAttendanceDetail = null;
-        if ($todayAttendance) {
+        if ($todayAttendance && $student) {
             $studentAttendanceDetail = $todayAttendance->details->firstWhere('student_id', $student->id);
         }
 
-        // Fallback: Jika belum ada di mapel tapi ada catatan Sakit / Izin dari Wali Kelas di absensi harian
-        if (!$studentAttendanceDetail) {
+        // Fallback jika belum terisi di mapel tapi ada catatan sakit/izin dari absensi wali kelas
+        if ($student && (!$studentAttendanceDetail || $studentAttendanceDetail->status === 'alfa')) {
             $homeroomAtt = \App\Models\Attendance::with('details')
                 ->where('class_id', $classSubject->class_id)
                 ->whereDate('date', today())
@@ -158,14 +225,44 @@ class StudentAssignmentController extends Controller
             if ($homeroomAtt) {
                 $hDet = $homeroomAtt->details->firstWhere('student_id', $student->id);
                 if ($hDet && in_array($hDet->status, ['sakit', 'izin'], true)) {
-                    $studentAttendanceDetail = $hDet;
+                    if ($studentAttendanceDetail) {
+                        $studentAttendanceDetail->status = $hDet->status;
+                        $studentAttendanceDetail->notes = 'Catatan Wali Kelas';
+                        $studentAttendanceDetail->save();
+                    }
                 }
             }
         }
 
         $attendanceWindow = $this->resolveAttendanceWindow($classSubject);
 
-        return view('student-class-subjects.show', compact('classSubject', 'todayAttendance', 'studentAttendanceDetail', 'attendanceWindow'));
+        // Statistik Kehadiran Kelas
+        $attendanceStats = [
+            'total' => $classStudents->count(),
+            'hadir' => 0,
+            'terlambat' => 0,
+            'sakit' => 0,
+            'izin' => 0,
+            'alfa' => 0,
+        ];
+
+        if ($todayAttendance) {
+            foreach ($todayAttendance->details as $det) {
+                if (isset($attendanceStats[$det->status])) {
+                    $attendanceStats[$det->status]++;
+                }
+            }
+        }
+
+        return view('student-class-subjects.show', compact(
+            'classSubject',
+            'todayAttendance',
+            'studentAttendanceDetail',
+            'attendanceWindow',
+            'classStudents',
+            'attendanceStats',
+            'activeSchedule'
+        ));
     }
 
     public function checkInSubject(ClassSubject $classSubject)
@@ -185,6 +282,9 @@ class StudentAssignmentController extends Controller
             return back()->withErrors(['attendance' => $attendanceWindow['message']]);
         }
 
+        $isLate = !empty($attendanceWindow['is_late']);
+        $newStatus = $isLate ? 'terlambat' : 'hadir';
+
         $dayOfWeek = today()->dayOfWeekIso;
         $daySchedules = \App\Models\Schedule::where('class_id', $classSubject->class_id)
             ->where('day_of_week', $dayOfWeek)
@@ -203,7 +303,7 @@ class StudentAssignmentController extends Controller
         }
 
         $attendanceConditions = [
-            'date' => today(),
+            'date' => today()->toDateString(),
             'class_id' => $classSubject->class_id,
             'session' => $sessionKey,
         ];
@@ -213,30 +313,20 @@ class StudentAssignmentController extends Controller
 
         $attendance = \App\Models\Attendance::firstOrCreate($attendanceConditions, [
             'teacher_id' => $classSubject->teacher_id,
-            'notes' => 'Absensi Mandiri Siswa - Mapel ' . $classSubject->subject->name,
+            'notes' => 'Presensi Mandiri Siswa - Mapel ' . $classSubject->subject->name,
         ]);
-
-        $allStudents = \App\Models\Student::where('class_id', $classSubject->class_id)->pluck('id');
-        if ($attendance->wasRecentlyCreated && $allStudents->isNotEmpty()) {
-            $bulkDetails = $allStudents->map(fn($sId) => [
-                'attendance_id' => $attendance->id,
-                'student_id' => $sId,
-                'status' => 'alfa',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ])->toArray();
-            \App\Models\AttendanceDetail::insertOrIgnore($bulkDetails);
-        }
 
         \App\Models\AttendanceDetail::updateOrCreate([
             'attendance_id' => $attendance->id,
             'student_id' => $student->id,
         ], [
-            'status' => 'hadir',
+            'status' => $newStatus,
             'check_in' => now()->format('H:i:s'),
+            'notes' => $isLate ? 'Presensi mandiri (terlambat)' : 'Presensi mandiri hadir',
         ]);
 
-        return back()->with('success', 'Berhasil! Kehadiran Anda untuk mata pelajaran ' . $classSubject->subject->name . ' telah dicatat.');
+        $statusMsg = $isLate ? 'Hadir (Terlambat)' : 'Hadir';
+        return back()->with('success', 'Berhasil! Kehadiran Anda untuk mata pelajaran ' . $classSubject->subject->name . ' telah dicatat sebagai ' . $statusMsg . '.');
     }
 
     private function resolveAttendanceWindow(ClassSubject $classSubject): array
@@ -266,10 +356,11 @@ class StudentAssignmentController extends Controller
             } elseif ($now->gt($endTime)) {
                 return [
                     'status' => 'ended',
-                    'can_check_in' => false,
+                    'can_check_in' => true,
+                    'is_late' => true,
                     'start_time' => $startTime->format('H:i'),
                     'end_time' => $endTime->format('H:i'),
-                    'message' => 'Sesi presensi untuk mata pelajaran ini telah berakhir pada pukul ' . $endTime->format('H:i') . ' WIB.',
+                    'message' => 'Sesi reguler telah berakhir pada pukul ' . $endTime->format('H:i') . ' WIB. Anda masih dapat melakukan presensi mandiri (tercatat Terlambat).',
                 ];
             } else {
                 return [

@@ -163,7 +163,9 @@
                                                     {{ $cs->subject?->name ?? '-' }}
                                                 </a>
                                             @else
-                                                {{ $cs->subject?->name ?? '-' }}
+                                                <a href="{{ route('teacher.class-subjects.show', $cs->id) }}" class="hover:underline">
+                                                    {{ $cs->subject?->name ?? '-' }}
+                                                </a>
                                             @endif
                                         </h5>
                                         @if(auth()->user()->isSiswa())
@@ -197,35 +199,45 @@
                                 </div>
 
                                 {{-- Action Buttons --}}
-                                <div class="grid grid-cols-3 gap-1.5 pt-2.5 border-t border-slate-200/60 mt-2">
-                                    @if(auth()->user()->isSiswa())
-                                        <a href="{{ route('materials.mine', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-emerald-600">{{ $cs->materials_count }}</span>
+                                @if(auth()->user()->isSiswa())
+                                    <div class="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-slate-200/60 mt-2">
+                                        <a href="{{ route('student.class-subjects.show', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80" title="Presensi & Kehadiran Mapel">
+                                            <span class="text-xs font-extrabold text-emerald-600"><i class="bi bi-person-check text-[11px]"></i></span>
+                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Absen</span>
+                                        </a>
+                                        <a href="{{ route('materials.mine', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
+                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->materials_count }}</span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Materi</span>
                                         </a>
-                                        <a href="{{ route('student.assignments.index', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->assignments_count }}</span>
+                                        <a href="{{ route('student.assignments.index', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-amber-50 hover:text-amber-700 ring-1 ring-slate-200/80">
+                                            <span class="text-xs font-extrabold text-amber-600">{{ $cs->assignments_count }}</span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Tugas</span>
                                         </a>
                                         <a href="{{ route('discussions.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-purple-50 hover:text-purple-700 ring-1 ring-slate-200/80">
                                             <span class="text-xs font-extrabold text-purple-600"><i class="bi bi-chat-left-text text-[10px]"></i></span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Forum</span>
                                         </a>
-                                    @else
-                                        <a href="{{ route('materials.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-emerald-600">{{ $cs->materials_count }}</span>
+                                    </div>
+                                @else
+                                    <div class="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-slate-200/60 mt-2">
+                                        <a href="{{ route('teacher.class-subjects.show', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80" title="Laporan Presensi Siswa">
+                                            <span class="text-xs font-extrabold text-emerald-600"><i class="bi bi-person-check text-[11px]"></i></span>
+                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Presensi</span>
+                                        </a>
+                                        <a href="{{ route('materials.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
+                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->materials_count }}</span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Materi</span>
                                         </a>
-                                        <a href="{{ route('assignments.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->assignments_count }}</span>
+                                        <a href="{{ route('assignments.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-amber-50 hover:text-amber-700 ring-1 ring-slate-200/80">
+                                            <span class="text-xs font-extrabold text-amber-600">{{ $cs->assignments_count }}</span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Tugas</span>
                                         </a>
                                         <a href="{{ route('discussions.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-purple-50 hover:text-purple-700 ring-1 ring-slate-200/80">
                                             <span class="text-xs font-extrabold text-purple-600"><i class="bi bi-chat-left-text text-[10px]"></i></span>
                                             <span class="text-[8px] font-bold text-slate-400 uppercase">Forum</span>
                                         </a>
-                                    @endif
-                                </div>
+                                    </div>
+                                @endif
                             </div>
                             @endforeach
                         </div>
