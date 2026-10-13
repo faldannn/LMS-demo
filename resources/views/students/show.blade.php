@@ -152,12 +152,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($student->attendanceDetails->take(10) as $detail)
+                            @forelse(($recentAttendance ?? $student->attendanceDetails)->take(10) as $detail)
                                 <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
                                     <td class="px-4 py-3 font-medium text-slate-900">{{ $detail->attendance->date->translatedFormat('d M Y') }}</td>
                                     <td class="px-4 py-3">
                                         <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                                            {{ ucfirst($detail->attendance->session) }}
+                                            {{ ucfirst(str_replace('_', ' ', $detail->attendance->session ?? '')) }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
@@ -165,7 +165,7 @@
                                             {{ ucfirst($detail->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 font-mono text-slate-600">{{ $detail->check_in ?? '-' }}</td>
+                                    <td class="px-4 py-3 font-mono text-slate-600">{{ $detail->check_in ? $detail->check_in->format('H:i') : '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>

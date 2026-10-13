@@ -33,7 +33,25 @@ class AttendanceDetail extends Model
     }
 
     // ── Helpers ─────────────────────────────────────────────
+    public function getFormattedCheckInAttribute(): string
+    {
+        if (!$this->check_in) {
+            return '-';
+        }
+
+        if ($this->check_in instanceof \DateTimeInterface) {
+            return $this->check_in->format('H:i');
+        }
+
+        try {
+            return \Carbon\Carbon::parse($this->check_in)->format('H:i');
+        } catch (\Throwable $e) {
+            return (string) $this->check_in;
+        }
+    }
+
     public function getStatusLabelAttribute(): string
+
     {
         return match ($this->status) {
             'hadir' => 'Hadir',

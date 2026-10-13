@@ -1196,12 +1196,12 @@ class AttendanceController extends Controller
 
         $history = $student->attendanceDetails()
             ->with('attendance')
-            ->whereHas(
-                'attendance',
-                fn($q) =>
-                $q->whereMonth('date', $month)->whereYear('date', $year)
-            )
-            ->orderByDesc('id')
+            ->join('attendance', 'attendance_details.attendance_id', '=', 'attendance.id')
+            ->whereMonth('attendance.date', $month)
+            ->whereYear('attendance.date', $year)
+            ->orderByDesc('attendance.date')
+            ->orderByDesc('attendance_details.id')
+            ->select('attendance_details.*')
             ->get();
 
         $stats = $history->groupBy('status')

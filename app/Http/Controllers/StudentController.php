@@ -95,7 +95,18 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['class.homeroomTeacher', 'attendanceDetails.attendance']);
+        $student->load(['class.homeroomTeacher']);
+
+        $recentAttendance = $student->attendanceDetails()
+            ->with('attendance')
+            ->join('attendance', 'attendance_details.attendance_id', '=', 'attendance.id')
+            ->orderByDesc('attendance.date')
+            ->orderByDesc('attendance_details.id')
+            ->select('attendance_details.*')
+            ->take(10)
+            ->get();
+
+        $student->setRelation('attendanceDetails', $recentAttendance);
 
         $monthlyStats = $student->attendanceDetails()
             ->selectRaw('status, COUNT(*) as total')
@@ -103,7 +114,7 @@ class StudentController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        return view('students.show', compact('student', 'monthlyStats'));
+        return view('students.show', compact('student', 'monthlyStats', 'recentAttendance'));
     }
 
     public function edit(Student $student)
@@ -158,8 +169,12 @@ class StudentController extends Controller
 
         $history = $student->attendanceDetails()
             ->with('attendance')
-            ->whereHas('attendance', fn ($q) => $q->whereMonth('date', $month)->whereYear('date', $year))
-            ->orderByDesc('id')
+            ->join('attendance', 'attendance_details.attendance_id', '=', 'attendance.id')
+            ->whereMonth('attendance.date', $month)
+            ->whereYear('attendance.date', $year)
+            ->orderByDesc('attendance.date')
+            ->orderByDesc('attendance_details.id')
+            ->select('attendance_details.*')
             ->get();
 
         return view('students.attendance-history', compact('student', 'history', 'month', 'year'));

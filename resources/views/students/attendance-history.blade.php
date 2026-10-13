@@ -99,7 +99,7 @@
                             {{ $detail->attendance->date->format('d/m/Y') }}
                         </td>
                         <td>{{ $detail->attendance->date->translatedFormat('l') }}</td>
-                        <td><span class="badge bg-secondary">{{ ucfirst($detail->attendance->session) }}</span></td>
+                        <td><span class="badge bg-secondary">{{ ucfirst(str_replace('_', ' ', $detail->attendance->session ?? '')) }}</span></td>
                         <td>
                             <span class="badge badge-status-{{ $detail->status }}">
                                 @switch($detail->status)
@@ -111,7 +111,7 @@
                                 @endswitch
                             </span>
                         </td>
-                        <td style="font-size:13px">{{ $detail->check_in ?? '-' }}</td>
+                        <td style="font-size:13px">{{ $detail->check_in ? $detail->check_in->format('H:i') : '-' }}</td>
                         <td style="font-size:12px;color:#64748b">{{ $detail->notes ?? '-' }}</td>
                     </tr>
                 @empty
