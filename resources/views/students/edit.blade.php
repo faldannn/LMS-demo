@@ -25,6 +25,10 @@
                     <x-form-input name="nisn" label="NISN" value="{{ old('nisn', $student->nisn) }}" required />
                     
                     <div class="sm:col-span-2">
+                        <x-form-input name="rfid" label="Nomor Kartu / UID RFID (Opsional)" value="{{ old('rfid', $student->rfid) }}" placeholder="Contoh: 10 digit UID kartu tap / scan langsung" />
+                    </div>
+                    
+                    <div class="sm:col-span-2">
                         <x-form-input name="name" label="Nama Lengkap" value="{{ old('name', $student->name) }}" required />
                     </div>
                     

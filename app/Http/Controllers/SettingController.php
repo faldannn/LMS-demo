@@ -54,6 +54,9 @@ class SettingController extends Controller
             'kartu_last_synced_at' => Setting::get('kartu_last_synced_at', '-'),
             'kartu_last_cursor'    => Setting::get('kartu_last_cursor', '-'),
             'webhook_url'          => preg_replace('/^http:/i', 'https:', url('/api/v1/kartu/webhook')),
+            'tap_attendance_api_key' => app(\App\Services\TapAttendanceService::class)->getApiKey(),
+            'tap_endpoint_url'       => url('/api/v1/attendance/tap'),
+            'tap_status_url'         => url('/api/v1/attendance/tap/status'),
             'feature_subject_attendance' => Setting::isFeatureEnabled('subject_attendance', true),
         ];
 
@@ -165,19 +168,34 @@ class SettingController extends Controller
         abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur Integrasi RFID Kartu hanya untuk Super Admin.');
 
         $data = $request->validate([
-            'kartu_enabled'        => 'nullable|boolean',
-            'kartu_api_key'        => 'nullable|string|max:255',
-            'kartu_webhook_secret' => 'nullable|string|max:255',
+            'kartu_enabled'          => 'nullable|boolean',
+            'kartu_api_key'          => 'nullable|string|max:255',
+            'kartu_webhook_secret'   => 'nullable|string|max:255',
+            'tap_attendance_api_key' => 'nullable|string|max:255',
         ]);
 
         Setting::set('kartu_enabled', $request->has('kartu_enabled') ? '1' : '0', 'kartu');
         Setting::set('kartu_api_key', trim($data['kartu_api_key'] ?? ''), 'kartu');
         Setting::set('kartu_webhook_secret', trim($data['kartu_webhook_secret'] ?? ''), 'kartu');
+        if (!empty($data['tap_attendance_api_key'])) {
+            Setting::set('tap_attendance_api_key', trim($data['tap_attendance_api_key']), 'tap');
+        }
 
         $this->activityLogService->logSettings('kartu', array_keys($data));
 
         return redirect()->route('settings.index')
-            ->with('success', 'Pengaturan Integrasi Kartu RFID Riansa berhasil disimpan.');
+            ->with('success', 'Pengaturan Integrasi Mesin Tap Kartu RFID berhasil disimpan.');
+    }
+
+    public function regenerateTapApiKey()
+    {
+        abort_unless(auth()->user()->isSuperAdmin(), 403, 'Akses ditolak. Fitur hanya untuk Super Admin.');
+
+        $newKey = 'tap_nexus_' . bin2hex(random_bytes(8));
+        Setting::set('tap_attendance_api_key', $newKey, 'tap');
+
+        return redirect()->route('settings.index')
+            ->with('success', 'API Key Mesin Tap baru berhasil dibuat: ' . $newKey);
     }
 
     public function syncKartuMembers(\App\Services\RiansaKartuService $kartuService)

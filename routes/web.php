@@ -145,6 +145,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             ->name('settings.kartu.sync-members');
         Route::post('settings/kartu-pull-attendance', [SettingController::class, 'pullKartuAttendance'])
             ->name('settings.kartu.pull-attendance');
+        Route::post('settings/tap-regenerate-key', [SettingController::class, 'regenerateTapApiKey'])
+            ->name('settings.tap.regenerate-key');
         Route::post('settings/cbt-sync', [SettingController::class, 'syncCbt'])
             ->name('settings.cbt.sync');
 
@@ -216,6 +218,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::get('attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
             Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
+            Route::get('attendance/tap-simulator', [AttendanceController::class, 'tapSimulator'])->name('attendance.tap-simulator');
 
             // Schedules management (Kepala Sekolah/Admin only)
             Route::middleware('can:manage-admin')->group(function () {

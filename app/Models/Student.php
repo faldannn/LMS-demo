@@ -13,6 +13,7 @@ class Student extends Model
     protected $fillable = [
         'nis',
         'nisn',
+        'rfid',
         'name',
         'gender',
         'dob',

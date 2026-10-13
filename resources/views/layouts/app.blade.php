@@ -16,10 +16,10 @@
     
     <!-- Dark mode removed -->
 
-    @stack('styles')
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
+    @stack('styles')
 </head>
 
 <body class="bg-slate-50 font-sans text-slate-800 antialiased selection:bg-brand-500 selection:text-white transition-colors duration-300">

@@ -65,6 +65,18 @@
                             <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $student->nisn ?? '-' }}</dd>
                         </div>
                         <div>
+                            <dt class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Kartu RFID / UID Tap</dt>
+                            <dd class="mt-1 text-sm font-semibold text-slate-900 font-mono">
+                                @if($student->rfid)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <i class="bi bi-credit-card-2-front"></i> {{ $student->rfid }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-400 font-sans text-xs">Belum di-assign</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div>
                             <dt class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tanggal Lahir</dt>
                             <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $student->dob?->translatedFormat('d F Y') ?? '-' }}</dd>
                         </div>

@@ -80,6 +80,9 @@
     <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-person-bounding-box @active('attendance.self-logs', 'text-emerald-400')"></i> Log Selfie & GPS Siswa
     </a>
+    <a href="{{ route('attendance.tap-simulator') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.tap-simulator', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-credit-card-2-front @active('attendance.tap-simulator', 'text-emerald-400')"></i> Simulator Tap Kartu RFID
+    </a>
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Detail Presensi Mapel

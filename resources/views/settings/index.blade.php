@@ -403,14 +403,85 @@
     <div id="kartu-pane" class="settings-pane">
         <div class="space-y-6">
             
-            {{-- Main Form Card --}}
+            {{-- Universal Tap Attendance API Card (Direct / IoT Machines) --}}
+            <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="border-b border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 text-white px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-sm font-bold flex items-center gap-2">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-white text-xs">
+                                <i class="bi bi-credit-card-2-front-fill"></i>
+                            </span>
+                            Universal API Mesin Tap Kartu RFID
+                        </h2>
+                        <p class="text-xs text-slate-300 mt-0.5">Integrasi langsung untuk mesin tap fisik, ESP32, Arduino, Android Kiosk, atau RFID Reader ke LMS</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ route('attendance.tap-simulator') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-1.5 text-xs shadow-sm transition">
+                            <i class="bi bi-play-circle-fill"></i> Buka Simulator Mesin Tap
+                        </a>
+                    </div>
+                </div>
+
+                <div class="p-5 sm:p-6 space-y-4">
+                    {{-- Endpoint URL --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Endpoint URL Mesin Tap (POST)</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="tap_endpoint_input" value="{{ $settings['tap_endpoint_url'] }}" readonly
+                                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-800 font-bold select-all">
+                            <button type="button" onclick="navigator.clipboard.writeText('{{ $settings['tap_endpoint_url'] }}'); alert('Endpoint URL disalin!');"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-bold text-slate-800 transition shrink-0">
+                                <i class="bi bi-clipboard"></i> Salin URL
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- API Key --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">API Key Autentikasi Mesin Tap</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="tap_api_key_input" value="{{ $settings['tap_attendance_api_key'] }}" readonly
+                                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs sm:text-sm font-mono text-slate-800 font-bold select-all">
+                            <button type="button" onclick="navigator.clipboard.writeText('{{ $settings['tap_attendance_api_key'] }}'); alert('API Key disalin!');"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-bold text-slate-800 transition shrink-0">
+                                <i class="bi bi-clipboard"></i> Salin Key
+                            </button>
+                            <form method="POST" action="{{ route('settings.tap.regenerate-key') }}" onsubmit="return confirm('Buat API Key baru? Mesin tap lama perlu diupdate dengan key baru.');">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800 transition shrink-0">
+                                    <i class="bi bi-arrow-repeat"></i> Generate Key Baru
+                                </button>
+                            </form>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Masukkan API Key ini pada header request mesin tap (<code class="font-mono text-slate-600">X-Api-Key</code> atau <code class="font-mono text-slate-600">Authorization: Bearer</code>).</p>
+                    </div>
+
+                    {{-- Format JSON Panduan --}}
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Format Payload JSON Mesin Tap:</span>
+                            <span class="text-[11px] font-mono text-emerald-600 font-bold">Mendukung UID RFID & NISN</span>
+                        </div>
+                        <div class="bg-slate-900 text-slate-200 p-3 rounded-lg font-mono text-xs overflow-x-auto leading-relaxed">
+                            <span class="text-cyan-400">// POST {{ $settings['tap_endpoint_url'] }}</span><br>
+                            <span class="text-amber-400">// Header: X-Api-Key: {{ substr($settings['tap_attendance_api_key'], 0, 15) }}...</span><br>
+                            {<br>
+                            &nbsp;&nbsp;<span class="text-emerald-400">"card_id"</span>: <span class="text-amber-300">"04A1B2C3D4"</span>, <span class="text-slate-400">// UID chip RFID atau NISN siswa</span><br>
+                            &nbsp;&nbsp;<span class="text-emerald-400">"device_id"</span>: <span class="text-amber-300">"GATE-01"</span> <span class="text-slate-400">// ID Mesin / Gerbang (opsional)</span><br>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Main Form Card (Riansa Kartu Cloud) --}}
             <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div class="border-b border-slate-200 bg-slate-50 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <i class="bi bi-credit-card-2-front text-amber-500"></i> Integrasi Mesin Tap Kartu RFID (Riansa Kartu)
+                            <i class="bi bi-cloud-arrow-up text-amber-500"></i> Integrasi Vendor Cloud Riansa Kartu (Opsional)
                         </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Menghubungkan mesin presensi tap kartu fisik Riansa ke LMS</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Menghubungkan mesin presensi tap kartu fisik via vendor cloud Riansa ke LMS</p>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shrink-0 {{ $settings['kartu_enabled'] ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $settings['kartu_enabled'] ? '● Integrasi Aktif' : '○ Nonaktif' }}

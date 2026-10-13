@@ -45,6 +45,12 @@ class StoreStudentRequest extends FormRequest
                 'max:20',
                 Rule::unique('students', 'nisn')->whereNull('deleted_at')->ignore($studentId),
             ],
+            'rfid' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('students', 'rfid')->whereNull('deleted_at')->ignore($studentId),
+            ],
             'name' => 'required|string|max:100',
             'gender' => 'required|in:L,P',
             'dob' => 'nullable|date|before:today',

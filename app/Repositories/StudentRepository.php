@@ -18,7 +18,8 @@ class StudentRepository extends BaseRepository
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
                 ->orWhere('nis', 'like', "%{$search}%")
-                ->orWhere('nisn', 'like', "%{$search}%");
+                ->orWhere('nisn', 'like', "%{$search}%")
+                ->orWhere('rfid', 'like', "%{$search}%");
         });
     }
 
