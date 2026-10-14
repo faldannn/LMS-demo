@@ -193,9 +193,9 @@
             <a href="{{ route('attendance.self-checkin') }}" class="card text-decoration-none border-0 shadow-sm h-100"
                 style="border-radius:1rem;background:linear-gradient(135deg,var(--color-brand-600),#3b82f6)">
                 <div class="card-body text-center py-4 text-white">
-                    <i class="bi bi-camera-video" style="font-size:2.5rem"></i>
-                    <h6 class="fw-bold mt-3 mb-1">Presensi Wajah & GPS</h6>
-                    <p class="mb-0 small" style="opacity:.8">Absen menggunakan kamera & lokasi</p>
+                    <i class="bi bi-qr-code-scan" style="font-size:2.5rem"></i>
+                    <h6 class="fw-bold mt-3 mb-1">Presensi Scan QR Code</h6>
+                    <p class="mb-0 small" style="opacity:.8">Absen cepat menggunakan scan QR Code</p>
                 </div>
             </a>
         </div>

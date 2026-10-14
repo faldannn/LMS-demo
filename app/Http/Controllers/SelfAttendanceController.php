@@ -21,14 +21,16 @@ class SelfAttendanceController extends Controller
             ? config('attendance.student_checkin_start_siang', '11:30:00')
             : config('attendance.student_checkin_start', '06:00:00');
 
-        return view('attendance.self-checkin', compact('student', 'todayLog', 'checkinStart', 'session'));
+        $sampleClassQr = 'QR-CLASS-' . ($student->class_id ?? 1) . '-' . today()->toDateString();
+
+        return view('attendance.self-checkin', compact('student', 'todayLog', 'checkinStart', 'session', 'sampleClassQr'));
     }
 
     public function logs()
     {
         $this->authorizeStaff();
 
-        $logs = SelfAttendanceLog::with(['student.class'])
+        $logs = SelfAttendanceLog::with(['student.class', 'attendanceDetail'])
             ->latest('checked_in_at')
             ->paginate(25);
 

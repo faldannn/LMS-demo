@@ -101,9 +101,8 @@ class SelfAttendanceApiController extends Controller
                 'date' => $log->attendance_date->format('Y-m-d'),
                 'checked_in_at' => $log->checked_in_at->toIso8601String(),
                 'mode' => $log->mode_label,
-                'within_radius' => $log->within_radius,
-                'face_matched' => $log->face_matched,
-                'distance_meters' => $log->distance_meters,
+                'status' => $log->attendanceDetail?->status ?? 'hadir',
+                'notes' => $log->notes ?: 'Scan QR Valid',
             ]);
 
         return response()->json(['history' => $logs]);

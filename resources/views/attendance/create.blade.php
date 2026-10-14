@@ -196,7 +196,7 @@
                         <th class="text-center">🤒 / 📄 Sakit / Izin</th>
                         <th class="text-center">⏰ Terlambat</th>
                         <th class="text-center">Total Sesi</th>
-                        <th class="text-center" style="width: 140px">Aksi</th>
+                        <th class="text-center" style="width: 170px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -218,9 +218,16 @@
                         <td class="text-center align-middle font-bold text-amber-500">{{ $recap['terlambat'] }}</td>
                         <td class="text-center align-middle font-bold text-slate-700">{{ $recap['total'] }}</td>
                         <td class="text-center align-middle">
-                            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition font-bold text-xs border border-slate-200" onclick="openRangeStudentModal('{{ addslashes($student->name) }}', {{ json_encode($recap['logs']) }})">
-                                <i class="bi bi-eye"></i> Detail Log
-                            </button>
+                            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                                <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 transition font-bold text-xs border border-amber-200 shadow-2xs" 
+                                        onclick="openEditFromRecap({{ $student->id }}, '{{ addslashes($student->name) }}', {{ json_encode($recap['logs']) }})">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
+                                <button type="button" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700 transition font-bold text-xs border border-slate-200" 
+                                        onclick="openRangeStudentModal('{{ addslashes($student->name) }}', {{ $student->id }}, {{ json_encode($recap['logs']) }})">
+                                    <i class="bi bi-eye"></i> Detail Log
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -336,6 +343,14 @@
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-600 text-white shadow-xs w-full justify-center">
                                     🔴 TIDAK HADIR
                                 </span>
+                            @elseif($savedStatus === 'sakit')
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-orange-500 text-white shadow-xs w-full justify-center">
+                                    🤒 SAKIT
+                                </span>
+                            @elseif($savedStatus === 'izin')
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-sky-500 text-white shadow-xs w-full justify-center">
+                                    📄 IZIN
+                                </span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 w-full justify-center">
                                     ⚪ Belum Diabsen
@@ -355,6 +370,17 @@
                                     class="btn-card-save flex items-center justify-center gap-1 rounded-xl py-2.5 px-2 text-xs font-black transition-all active:scale-95 min-h-[44px] {{ $savedStatus === 'alfa' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-600' : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100' }}"
                                     onclick="saveQuick('{{ $student->id }}', 'alfa', this)">
                                 🔴 ABSEN
+                            </button>
+                        </div>
+                        @endif
+
+                        {{-- TOMBOL EDIT untuk semua siswa yang sudah memiliki status --}}
+                        @if($savedStatus)
+                        <div class="mt-2">
+                            <button type="button"
+                                    onclick="openEditModal('{{ $student->id }}', '{{ addslashes($student->name) }}', '{{ $savedStatus }}', '{{ addslashes($studentExisting['notes'] ?? '') }}')"
+                                    class="w-full flex items-center justify-center gap-1.5 rounded-xl py-1.5 px-2 text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all">
+                                <i class="bi bi-pencil-square text-indigo-500"></i> Edit Keterangan
                             </button>
                         </div>
                         @endif
@@ -422,6 +448,13 @@
                                             🔴 Tidak Hadir
                                         </button>
                                     </div>
+                                @endif
+                                @if($savedStatus)
+                                <button type="button"
+                                        onclick="openEditModal('{{ $student->id }}', '{{ addslashes($student->name) }}', '{{ $savedStatus }}', '{{ addslashes($studentExisting['notes'] ?? '') }}')"
+                                        class="mt-1 inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
                                 @endif
                             </td>
                             <td class="align-middle">
@@ -517,12 +550,78 @@
 {{-- FLOATING TOAST NOTIFICATION CONTAINER --}}
 <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+{{-- ── MODAL EDIT ABSENSI SISWA ── --}}
+<div id="editAttModal" onclick="if(event.target===this)closeEditModal()" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50">
+            <div class="flex items-center gap-2.5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                    <i class="bi bi-pencil-square text-lg"></i>
+                </div>
+                <div>
+                    <h5 class="text-sm font-extrabold text-slate-900 mb-0">Edit Keterangan Absen</h5>
+                    <p id="editModalStudentName" class="text-xs text-slate-500 mb-0">–</p>
+                    <p id="editModalSubInfo" class="text-[11px] font-semibold text-brand-600 mb-0 hidden"></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="p-5 space-y-4">
+            <input type="hidden" id="editModalStudentId">
+            {{-- STATUS PICKER --}}
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">Status Kehadiran</label>
+                <div class="grid grid-cols-2 gap-2" id="editStatusPicker">
+                    <button type="button" data-status="hadir" onclick="selectEditStatus('hadir')"
+                        class="edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-emerald-400 hover:bg-emerald-50">
+                        🟢 Hadir
+                    </button>
+                    <button type="button" data-status="alfa" onclick="selectEditStatus('alfa')"
+                        class="edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-rose-400 hover:bg-rose-50">
+                        🔴 Tidak Hadir
+                    </button>
+                    <button type="button" data-status="sakit" onclick="selectEditStatus('sakit')"
+                        class="edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-orange-400 hover:bg-orange-50">
+                        🤒 Sakit
+                    </button>
+                    <button type="button" data-status="izin" onclick="selectEditStatus('izin')"
+                        class="edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50">
+                        📄 Izin
+                    </button>
+                    <button type="button" data-status="terlambat" onclick="selectEditStatus('terlambat')"
+                        class="edit-status-btn col-span-2 flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-amber-400 hover:bg-amber-50">
+                        ⏰ Terlambat
+                    </button>
+                </div>
+            </div>
+            {{-- CATATAN --}}
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-1.5" for="editModalNotes">Catatan / Keterangan <span class="text-slate-400 font-normal normal-case">(opsional)</span></label>
+                <input type="text" id="editModalNotes" placeholder="Contoh: Izin dokter gigi, surat dari orang tua..."
+                    class="form-control text-xs rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 transition-all">
+            </div>
+            {{-- ALERT --}}
+            <div id="editModalAlert" class="hidden rounded-xl px-4 py-2.5 text-xs font-medium"></div>
+        </div>
+        <div class="flex items-center justify-end gap-2.5 border-t border-slate-100 px-5 py-3.5 bg-slate-50">
+            <button type="button" onclick="closeEditModal()" class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition">Batal</button>
+            <button type="button" id="btnSaveEdit" onclick="submitEditAttendance()"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2 text-xs font-extrabold text-white shadow-sm transition active:scale-95">
+                <i class="bi bi-check-circle-fill"></i> Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 const CSRF_TOKEN = '{{ csrf_token() }}';
 const QUICK_SAVE_URL = '{{ route("attendance.quick-save") }}';
+const UPDATE_DETAIL_URL = '{{ route("attendance.update-detail") }}';
 const DATE_VAL = '{{ $startDate }}';
 const CLASS_ID_VAL = '{{ $classId }}';
 const SESSION_VAL = '{{ $session }}';
@@ -777,10 +876,12 @@ function setAllQuick(status) {
 }
 
 let currentModalStudentName = '';
+let currentModalStudentId = null;
 let currentModalLogs = [];
 
-function openRangeStudentModal(studentName, logs) {
+function openRangeStudentModal(studentName, studentId, logs) {
     currentModalStudentName = studentName;
+    currentModalStudentId = studentId;
     currentModalLogs = logs || [];
 
     const titleEl = document.getElementById('rslmTitle');
@@ -802,6 +903,7 @@ function openRangeStudentModal(studentName, logs) {
                         <th>Guru Pengampu</th>
                         <th class="text-center" style="width: 120px">Status</th>
                         <th>Catatan</th>
+                        <th class="text-center" style="width: 90px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -816,17 +918,31 @@ function openRangeStudentModal(studentName, logs) {
                 stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">🤒 Sakit</span>';
             } else if (log.status === 'izin') {
                 stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800">📄 Izin</span>';
+            } else if (log.status === 'terlambat') {
+                stBadge = '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">⏰ Terlambat</span>';
             } else {
                 stBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-700">${log.status}</span>`;
             }
 
+            const rawDate = log.raw_date || log.date || DATE_VAL;
+            const sessKey = log.session_key || 'mapel_1';
+            const safeNotes = (log.notes || '').replace(/'/g, "\\'");
+            const safeName = (studentName || '').replace(/'/g, "\\'");
+
             html += `
                 <tr>
-                    <td class="font-bold text-slate-700">${log.date_formatted || log.date}</td>
+                    <td class="font-bold text-slate-700">${log.date_formatted || log.day_date || log.date}</td>
                     <td class="font-bold text-brand-700">${log.subject_name || log.session}</td>
                     <td class="text-slate-600">${log.teacher_name || '-'}</td>
                     <td class="text-center">${stBadge}</td>
                     <td class="text-slate-500 italic">${log.notes || '-'}</td>
+                    <td class="text-center">
+                        <button type="button" 
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs border border-amber-200 transition"
+                            onclick="closeRangeStudentModal(); openEditModalForLog(${studentId}, '${safeName}', '${log.status}', '${safeNotes}', '${rawDate}', '${sessKey}')">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                    </td>
                 </tr>`;
         });
 
@@ -874,6 +990,191 @@ function onPeriodChange(val) {
 function onDateChange() {
     const periodSelect = document.getElementById('input-period');
     if (periodSelect) periodSelect.value = 'custom';
+}
+
+// ── EDIT ABSENSI MODAL FUNCTIONS ──────────────────────────────────────────
+let editModalSelectedStatus = null;
+let editOverrideDate = null;
+let editOverrideSession = null;
+let isEditingFromRecap = false;
+
+const STATUS_META = {
+    hadir:     { color: 'emerald', label: '🟢 Hadir',       border: 'border-emerald-500 bg-emerald-50 text-emerald-800' },
+    alfa:      { color: 'rose',    label: '🔴 Tidak Hadir', border: 'border-rose-500 bg-rose-50 text-rose-800' },
+    sakit:     { color: 'orange',  label: '🤒 Sakit',       border: 'border-orange-500 bg-orange-50 text-orange-800' },
+    izin:      { color: 'sky',     label: '📄 Izin',        border: 'border-sky-500 bg-sky-50 text-sky-800' },
+    terlambat: { color: 'amber',   label: '⏰ Terlambat',   border: 'border-amber-500 bg-amber-50 text-amber-800' },
+};
+
+function openEditModalForLog(studentId, studentName, currentStatus, currentNotes, logDate, logSession) {
+    editOverrideDate = logDate;
+    editOverrideSession = logSession;
+    isEditingFromRecap = true;
+
+    const subInfo = document.getElementById('editModalSubInfo');
+    if (subInfo) {
+        subInfo.textContent = `Tanggal: ${logDate} · Sesi: ${logSession}`;
+        subInfo.classList.remove('hidden');
+    }
+
+    openEditModal(studentId, studentName, currentStatus, currentNotes);
+}
+
+function openEditFromRecap(studentId, studentName, logs) {
+    if (!logs || logs.length === 0) {
+        openEditModalForLog(studentId, studentName, 'alfa', '', DATE_VAL, (SESSION_VAL === 'all' ? 'mapel_1' : SESSION_VAL));
+        return;
+    }
+
+    if (logs.length === 1) {
+        const l = logs[0];
+        openEditModalForLog(studentId, studentName, l.status, l.notes || '', l.raw_date || DATE_VAL, l.session_key || (SESSION_VAL === 'all' ? 'mapel_1' : SESSION_VAL));
+    } else {
+        openRangeStudentModal(studentName, studentId, logs);
+    }
+}
+
+function openEditModal(studentId, studentName, currentStatus, currentNotes) {
+    if (!isEditingFromRecap) {
+        editOverrideDate = null;
+        editOverrideSession = null;
+        const subInfo = document.getElementById('editModalSubInfo');
+        if (subInfo) subInfo.classList.add('hidden');
+    }
+
+    editModalSelectedStatus = currentStatus;
+    document.getElementById('editModalStudentId').value = studentId;
+    document.getElementById('editModalStudentName').textContent = studentName;
+    document.getElementById('editModalNotes').value = currentNotes || '';
+    document.getElementById('editModalAlert').classList.add('hidden');
+
+    const btn = document.getElementById('btnSaveEdit');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Simpan Perubahan'; }
+
+    // Reset & highlight current
+    selectEditStatus(currentStatus);
+
+    document.getElementById('editAttModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editAttModal').classList.add('hidden');
+    isEditingFromRecap = false;
+    editOverrideDate = null;
+    editOverrideSession = null;
+    const subInfo = document.getElementById('editModalSubInfo');
+    if (subInfo) subInfo.classList.add('hidden');
+}
+
+function selectEditStatus(status) {
+    editModalSelectedStatus = status;
+    document.querySelectorAll('.edit-status-btn').forEach(btn => {
+        const s = btn.dataset.status;
+        const meta = STATUS_META[s];
+        if (s === status) {
+            btn.className = `edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all ${meta ? meta.border : 'border-slate-400 bg-slate-100 text-slate-800'} col-span-${btn.classList.contains('col-span-2') ? '2' : '1'}`;
+        } else {
+            btn.className = `edit-status-btn flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-black border-2 transition-all border-slate-200 bg-white text-slate-700 hover:border-slate-300 col-span-${btn.classList.contains('col-span-2') ? '2' : '1'}`;
+        }
+    });
+}
+
+async function submitEditAttendance() {
+    if (!editModalSelectedStatus) {
+        showEditAlert('Pilih status kehadiran terlebih dahulu.', 'warning');
+        return;
+    }
+
+    const studentId = document.getElementById('editModalStudentId').value;
+    const notes     = document.getElementById('editModalNotes').value;
+    const btn       = document.getElementById('btnSaveEdit');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin 1s linear infinite;"></i> Menyimpan...';
+
+    const targetDate = editOverrideDate || DATE_VAL;
+    let targetSession = editOverrideSession || SESSION_VAL;
+    if (targetSession === 'all') {
+        targetSession = 'mapel_1';
+    }
+
+    try {
+        const res = await fetch(UPDATE_DETAIL_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF_TOKEN,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                date: targetDate,
+                class_id: CLASS_ID_VAL,
+                session: targetSession,
+                student_id: studentId,
+                status: editModalSelectedStatus,
+                notes: notes,
+            }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            const wasRecap = isEditingFromRecap;
+            closeEditModal();
+            showToast('Absen diperbarui: ' + (STATUS_META[editModalSelectedStatus]?.label || editModalSelectedStatus), 'success');
+
+            const isRecapMode = {{ ($isRangeMode || ($session ?? 'all') === 'all') ? 'true' : 'false' }};
+            if (wasRecap || isRecapMode) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+                return;
+            }
+
+            // Update card UI (single-day mode)
+            const cardEl        = document.getElementById(`card-student-${studentId}`);
+            const cardStatusInd = document.getElementById(`card-status-ind-${studentId}`);
+            const tableInd      = document.getElementById(`status-ind-${studentId}`);
+            const meta          = STATUS_META[editModalSelectedStatus];
+
+            const badgeClass = {
+                hadir:     'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-600 text-white shadow-xs w-full justify-center',
+                alfa:      'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-600 text-white shadow-xs w-full justify-center',
+                sakit:     'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-orange-500 text-white shadow-xs w-full justify-center',
+                izin:      'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-sky-500 text-white shadow-xs w-full justify-center',
+                terlambat: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-amber-500 text-white shadow-xs w-full justify-center',
+            };
+
+            if (cardStatusInd) {
+                cardStatusInd.innerHTML = `<span class="${badgeClass[editModalSelectedStatus] || ''}">${meta?.label || editModalSelectedStatus}</span>`;
+            }
+            if (cardEl) {
+                const borderMap = { hadir:'border-emerald-500 bg-emerald-50/40', alfa:'border-rose-500 bg-rose-50/40', sakit:'border-orange-400 bg-orange-50/40', izin:'border-sky-400 bg-sky-50/40', terlambat:'border-amber-400 bg-amber-50/40' };
+                cardEl.className = `student-att-card rounded-2xl border-2 p-3.5 transition-all flex flex-col justify-between ${borderMap[editModalSelectedStatus] || 'border-slate-200 bg-white'} shadow-sm`;
+            }
+            if (tableInd) {
+                const tColor = { hadir:'text-emerald-600', alfa:'text-rose-600', sakit:'text-orange-600', izin:'text-sky-600', terlambat:'text-amber-600' };
+                tableInd.innerHTML = `<span class="font-bold ${tColor[editModalSelectedStatus] || ''}">${meta?.label || editModalSelectedStatus}</span>`;
+            }
+            updateSummaryCounters();
+        } else {
+            showEditAlert(data.message || 'Gagal menyimpan perubahan.', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Simpan Perubahan';
+        }
+    } catch (e) {
+        showEditAlert('Terjadi kesalahan koneksi: ' + e.message, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Simpan Perubahan';
+    }
+}
+
+function showEditAlert(msg, type) {
+    const el = document.getElementById('editModalAlert');
+    const colorMap = { danger: 'rose', success: 'emerald', warning: 'amber' };
+    const c = colorMap[type] || 'slate';
+    el.className = `rounded-xl px-4 py-2.5 text-xs font-medium bg-${c}-100 text-${c}-800 border border-${c}-200`;
+    el.textContent = msg;
+    el.classList.remove('hidden');
 }
 </script>
 @endpush

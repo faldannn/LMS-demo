@@ -36,9 +36,7 @@
     <a href="{{ route('elearning.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('elearning.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('materials.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('assignments.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-laptop @active('elearning.*', 'text-emerald-400')"></i> Portal E-Learning
     </a>
-    <a href="{{ route('attendance.teacher-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.teacher-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-person-bounding-box @active('attendance.teacher-checkin', 'text-emerald-400')"></i> Presensi Saya (Guru)
-    </a>
+
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Input / Presensi Mapel
@@ -63,12 +61,7 @@
         <i class="bi bi-pencil-square text-white/60 group-hover:text-white"></i> Ujian CBT
     </a>
 </div>
-<div class="py-2">
-    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Log Presensi</div>
-    <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-geo-alt @active('attendance.self-logs', 'text-emerald-400')"></i> Log Presensi GPS
-    </a>
-</div>
+
 @endrole
 
 @role('kepala_sekolah')
@@ -78,7 +71,7 @@
         <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi(Guru dan Kelas)
     </a>
     <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-person-bounding-box @active('attendance.self-logs', 'text-emerald-400')"></i> Log Selfie & GPS Siswa
+        <i class="bi bi-qr-code-scan @active('attendance.self-logs', 'text-emerald-400')"></i> Log Presensi QR Siswa
     </a>
     <a href="{{ route('attendance.tap-simulator') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.tap-simulator', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-credit-card-2-front @active('attendance.tap-simulator', 'text-emerald-400')"></i> Simulator Tap Kartu RFID

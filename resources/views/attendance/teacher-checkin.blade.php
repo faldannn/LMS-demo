@@ -7,7 +7,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-extrabold text-slate-900">Presensi Mandiri Guru</h1>
-            <p class="text-sm text-slate-500">Presensi masuk & pulang menggunakan verifikasi foto wajah dan lokasi GPS.</p>
+            <p class="text-sm text-slate-500">Presensi masuk &amp; pulang harian untuk guru.</p>
         </div>
         <div class="text-right">
             <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 border border-brand-200">
@@ -39,13 +39,9 @@
 
             @if($todayAttendance && $todayAttendance->check_in_at)
                 <div class="flex items-center gap-4">
-                    @if($todayAttendance->check_in_photo)
-                        <img src="{{ asset('storage/' . $todayAttendance->check_in_photo) }}" class="h-16 w-16 rounded-xl object-cover ring-2 ring-emerald-400 shadow-sm" alt="Foto Masuk">
-                    @else
-                        <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                            <i class="bi bi-person text-2xl"></i>
-                        </div>
-                    @endif
+                    <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 ring-2 ring-emerald-300">
+                        <i class="bi bi-check-circle-fill text-2xl"></i>
+                    </div>
                     <div>
                         <p class="text-xs text-slate-500">Waktu Masuk:</p>
                         <p class="text-base font-extrabold text-slate-900">{{ $todayAttendance->check_in_at->format('H:i:s') }} WIB</p>
@@ -62,9 +58,11 @@
                             <i class="bi bi-clock-history text-amber-600 text-sm"></i> Belum Jam Masuk (Buka {{ substr($checkinStart, 0, 5) }})
                         </button>
                     @else
-                        <p class="text-xs text-slate-500 mb-3">Silakan ambil foto wajah dan lokasi GPS Anda untuk melakukan Absen Masuk.</p>
-                        <button type="button" onclick="openCameraModal('check_in')" class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2" style="background-color: #059669; color: #ffffff;">
-                            <i class="bi bi-camera-fill text-sm"></i> Presensi Masuk Sekarang
+                        <p class="text-xs text-slate-500 mb-3">Klik tombol di bawah untuk melakukan Absen Masuk.</p>
+                        <button type="button" onclick="confirmAttendance('check_in')"
+                            class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2"
+                            style="background-color: #059669;">
+                            <i class="bi bi-box-arrow-in-right text-sm"></i> Presensi Masuk Sekarang
                         </button>
                     @endif
                 </div>
@@ -92,13 +90,9 @@
 
             @if($todayAttendance && $todayAttendance->check_out_at)
                 <div class="flex items-center gap-4">
-                    @if($todayAttendance->check_out_photo)
-                        <img src="{{ asset('storage/' . $todayAttendance->check_out_photo) }}" class="h-16 w-16 rounded-xl object-cover ring-2 ring-sky-400 shadow-sm" alt="Foto Pulang">
-                    @else
-                        <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                            <i class="bi bi-person text-2xl"></i>
-                        </div>
-                    @endif
+                    <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-sky-50 text-sky-500 ring-2 ring-sky-300">
+                        <i class="bi bi-check-circle-fill text-2xl"></i>
+                    </div>
                     <div>
                         <p class="text-xs text-slate-500">Waktu Pulang:</p>
                         <p class="text-base font-extrabold text-slate-900">{{ $todayAttendance->check_out_at->format('H:i:s') }} WIB</p>
@@ -118,14 +112,16 @@
                             <i class="bi bi-clock-history text-amber-600 text-sm"></i> Belum Jam Pulang (Mulai {{ substr($checkoutStart, 0, 5) }})
                         </button>
                     @elseif(now()->format('H:i:s') > $checkoutEnd)
-                        <p class="text-xs text-rose-600 mb-3 font-bold">Waktu absen pulang telah berakhir (Batas: {{ substr($checkoutEnd, 0, 5) }} WIB). Anda sudah tidak dapat absen pulang hari ini.</p>
+                        <p class="text-xs text-rose-600 mb-3 font-bold">Waktu absen pulang telah berakhir (Batas: {{ substr($checkoutEnd, 0, 5) }} WIB).</p>
                         <button disabled class="w-full rounded-xl bg-rose-50 border-2 border-rose-300 py-3 text-xs font-extrabold text-rose-700 cursor-not-allowed flex items-center justify-center gap-2">
                             <i class="bi bi-exclamation-octagon-fill text-rose-600 text-sm"></i> Waktu Absen Pulang Telah Berakhir
                         </button>
                     @else
-                        <p class="text-xs text-slate-500 mb-3 font-medium">Silakan ambil foto wajah dan lokasi GPS Anda untuk Absen Pulang.</p>
-                        <button type="button" onclick="openCameraModal('check_out')" class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2" style="background-color: #0284c7; color: #ffffff;">
-                            <i class="bi bi-camera-fill text-sm"></i> Presensi Pulang Sekarang
+                        <p class="text-xs text-slate-500 mb-3 font-medium">Klik tombol di bawah untuk melakukan Absen Pulang.</p>
+                        <button type="button" onclick="confirmAttendance('check_out')"
+                            class="w-full rounded-xl py-3 text-xs font-bold text-white shadow-md transition hover:opacity-90 flex items-center justify-center gap-2"
+                            style="background-color: #0284c7;">
+                            <i class="bi bi-box-arrow-right text-sm"></i> Presensi Pulang Sekarang
                         </button>
                     @endif
                 </div>
@@ -133,57 +129,63 @@
         </div>
     </div>
 
-    {{-- Informasi Lokasi Geofence --}}
+    {{-- Info panel --}}
     <div class="rounded-2xl bg-slate-900 p-5 text-white shadow-sm">
         <div class="flex items-start gap-4">
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-brand-400">
-                <i class="bi bi-geo-alt-fill text-xl"></i>
+                <i class="bi bi-info-circle-fill text-xl"></i>
             </div>
             <div class="flex-1">
-                <h6 class="text-sm font-bold">Informasi Lokasi & Geofence Sekitar</h6>
-                <p class="text-xs text-slate-400 mt-1">Presensi guru hanya dapat dilakukan jika perangkat berada di area radius sekolah (Maks. {{ config('attendance.geofence.radius_meters', 150) }} meter).</p>
-                <div id="gpsStatusContainer" class="mt-3 flex items-center gap-2 text-xs font-medium text-amber-400">
-                    <div class="h-2 w-2 rounded-full bg-amber-400 animate-ping"></div>
-                    <span>Mengecek lokasi GPS perangkat Anda...</span>
+                <h6 class="text-sm font-bold">Informasi Presensi Guru</h6>
+                <p class="text-xs text-slate-400 mt-1">Presensi guru dilakukan secara mandiri. Pastikan Anda melakukan absen masuk dan pulang sesuai jadwal yang berlaku.</p>
+                <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                    <div class="rounded-xl bg-white/10 px-3 py-2">
+                        <p class="text-slate-400">Jam Masuk</p>
+                        <p class="font-bold text-white">{{ substr($checkinStart, 0, 5) }} WIB</p>
+                    </div>
+                    <div class="rounded-xl bg-white/10 px-3 py-2">
+                        <p class="text-slate-400">Batas Telat</p>
+                        <p class="font-bold text-amber-400">{{ substr($lateLimit, 0, 5) }} WIB</p>
+                    </div>
+                    <div class="rounded-xl bg-white/10 px-3 py-2">
+                        <p class="text-slate-400">Jam Pulang</p>
+                        <p class="font-bold text-white">{{ substr($checkoutStart, 0, 5) }} WIB</p>
+                    </div>
+                    <div class="rounded-xl bg-white/10 px-3 py-2">
+                        <p class="text-slate-400">Batas Pulang</p>
+                        <p class="font-bold text-white">{{ substr($checkoutEnd, 0, 5) }} WIB</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Modal Presensi Kamera & Wajah --}}
-<div id="cameraModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/80 backdrop-blur-sm p-4 flex items-center justify-center">
-    <div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+{{-- Confirmation Modal --}}
+<div id="confirmModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <h5 id="modalTitle" class="text-base font-bold text-slate-900">Presensi Wajah</h5>
-            <button type="button" onclick="closeCameraModal()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            <h5 id="confirmTitle" class="text-base font-bold text-slate-900">Konfirmasi Presensi</h5>
+            <button type="button" onclick="closeConfirmModal()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
         <div class="p-6 text-center">
-            <div class="relative mx-auto mb-4 overflow-hidden rounded-xl bg-slate-900" style="aspect-ratio:4/3; max-width: 440px;">
-                <video id="videoFeed" class="h-full w-full object-cover" playsinline muted autoplay style="transform: scaleX(-1);"></video>
-                <img id="photoPreview" class="hidden h-full w-full object-cover" alt="Preview">
-                <canvas id="canvasCapture" class="hidden"></canvas>
+            <div id="confirmIconWrap" class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <i id="confirmIcon" class="bi bi-box-arrow-in-right text-3xl"></i>
             </div>
+            <p id="confirmDesc" class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin melakukan Absen Masuk sekarang?</p>
 
-            <div id="modalAlert" class="mb-4 hidden rounded-xl px-4 py-2.5 text-xs font-medium"></div>
+            <div id="alertBox" class="mb-4 hidden rounded-xl px-4 py-2.5 text-xs font-medium"></div>
 
-            <div id="captureControls" class="flex justify-center gap-3">
-                <button type="button" onclick="closeCameraModal()" class="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+            <div class="flex gap-3 justify-center">
+                <button type="button" onclick="closeConfirmModal()" class="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     Batal
                 </button>
-                <button type="button" id="btnSnap" onclick="snapPhoto()" class="rounded-xl bg-brand-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700">
-                    <i class="bi bi-camera me-1"></i> Ambil Foto
-                </button>
-            </div>
-
-            <div id="confirmControls" class="hidden flex justify-center gap-3">
-                <button type="button" onclick="retakePhoto()" class="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Foto Ulang
-                </button>
-                <button type="button" id="btnSubmitAttendance" onclick="submitAttendance()" class="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700">
-                    <i class="bi bi-check-circle me-1"></i> Kirim Presensi
+                <button type="button" id="btnConfirmSubmit" onclick="submitAttendance()"
+                    class="rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition"
+                    style="background-color: #059669;">
+                    <i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang
                 </button>
             </div>
         </div>
@@ -192,11 +194,7 @@
 
 @push('scripts')
 <script>
-    let activeType = 'check_in'; // 'check_in' or 'check_out'
-    let currentStream = null;
-    let capturedBlob = null;
-    let currentLat = null;
-    let currentLng = null;
+    let activeType = 'check_in';
 
     function updateLiveClock() {
         const el = document.getElementById('clockDisplay');
@@ -205,112 +203,45 @@
     setInterval(updateLiveClock, 1000);
     updateLiveClock();
 
-    // Check GPS on load
-    function initGPS() {
-        const statusEl = document.getElementById('gpsStatusContainer');
-        if (!navigator.geolocation) {
-            statusEl.innerHTML = `<i class="bi bi-exclamation-triangle text-rose-400 me-1"></i> <span class="text-rose-400">GPS tidak didukung oleh browser Anda.</span>`;
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                currentLat = pos.coords.latitude;
-                currentLng = pos.coords.longitude;
-                statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-emerald-400 me-1"></i> <span class="text-emerald-400">GPS Aktif & Terhubung (${currentLat.toFixed(5)}, ${currentLng.toFixed(5)})</span>`;
-            },
-            (err) => {
-                statusEl.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-rose-400 me-1"></i> <span class="text-rose-400">Gagal mendapatkan lokasi GPS: ${err.message}. Harap izinkan akses lokasi.</span>`;
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    }
-    initGPS();
-
-    async function openCameraModal(type) {
+    function confirmAttendance(type) {
         activeType = type;
-        document.getElementById('modalTitle').textContent = type === 'check_in' ? 'Absen Masuk (Wajah + GPS)' : 'Absen Pulang (Wajah + GPS)';
-        document.getElementById('cameraModal').classList.remove('hidden');
-        document.getElementById('captureControls').classList.remove('hidden');
-        document.getElementById('confirmControls').classList.add('hidden');
-        document.getElementById('videoFeed').classList.remove('hidden');
-        document.getElementById('photoPreview').classList.add('hidden');
-        hideAlert();
+        const isCheckin = type === 'check_in';
+        document.getElementById('confirmTitle').textContent = isCheckin ? 'Konfirmasi Absen Masuk' : 'Konfirmasi Absen Pulang';
+        document.getElementById('confirmDesc').textContent = isCheckin
+            ? 'Apakah Anda yakin ingin melakukan Absen Masuk sekarang?'
+            : 'Apakah Anda yakin ingin melakukan Absen Pulang sekarang?';
 
-        try {
-            currentStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: false
-            });
-            document.getElementById('videoFeed').srcObject = currentStream;
-        } catch (e) {
-            showAlert('Gagal membuka kamera: ' + e.message, 'danger');
+        const iconWrap = document.getElementById('confirmIconWrap');
+        const icon = document.getElementById('confirmIcon');
+        const btn = document.getElementById('btnConfirmSubmit');
+
+        if (isCheckin) {
+            iconWrap.className = 'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600';
+            icon.className = 'bi bi-box-arrow-in-right text-3xl';
+            btn.style.backgroundColor = '#059669';
+        } else {
+            iconWrap.className = 'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-sky-600';
+            icon.className = 'bi bi-box-arrow-right text-3xl';
+            btn.style.backgroundColor = '#0284c7';
         }
-    }
 
-    function closeCameraModal() {
-        if (currentStream) {
-            currentStream.getTracks().forEach(track => track.stop());
-            currentStream = null;
-        }
-        document.getElementById('cameraModal').classList.add('hidden');
-    }
-
-    function snapPhoto() {
-        const video = document.getElementById('videoFeed');
-        const canvas = document.getElementById('canvasCapture');
-        const preview = document.getElementById('photoPreview');
-
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-
-        const ctx = canvas.getContext('2d');
-        // Mirror horizontally
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob((blob) => {
-            capturedBlob = blob;
-            preview.src = URL.createObjectURL(blob);
-            video.classList.add('hidden');
-            preview.classList.remove('hidden');
-            document.getElementById('captureControls').classList.add('hidden');
-            document.getElementById('confirmControls').classList.remove('hidden');
-        }, 'image/jpeg', 0.9);
-    }
-
-    function retakePhoto() {
-        document.getElementById('videoFeed').classList.remove('hidden');
-        document.getElementById('photoPreview').classList.add('hidden');
-        document.getElementById('captureControls').classList.remove('hidden');
-        document.getElementById('confirmControls').classList.add('hidden');
-        capturedBlob = null;
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
         hideAlert();
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
     }
 
     async function submitAttendance() {
-        if (!capturedBlob) {
-            showAlert('Harap ambil foto terlebih dahulu.', 'warning');
-            return;
-        }
-
-        if (currentLat === null || currentLng === null) {
-            showAlert('Koordinat GPS belum terdeteksi. Izinkan izin lokasi pada browser Anda.', 'warning');
-            return;
-        }
-
-        const btn = document.getElementById('btnSubmitAttendance');
+        const btn = document.getElementById('btnConfirmSubmit');
         btn.disabled = true;
-        btn.innerHTML = `<i class="bi bi-arrow-repeat animate-spin me-1"></i> Mengirim...`;
+        btn.innerHTML = `<i class="bi bi-arrow-repeat me-1" style="display:inline-block;animation:spin 1s linear infinite;"></i> Mengirim...`;
 
-        const formData = new FormData();
-        formData.append('latitude', currentLat);
-        formData.append('longitude', currentLng);
-        formData.append('photo', capturedBlob, 'teacher_attendance.jpg');
-
-        const endpoint = activeType === 'check_in' 
-            ? '{{ route("api.attendance.teacher.check-in") }}' 
+        const endpoint = activeType === 'check_in'
+            ? '{{ route("api.attendance.teacher.check-in") }}'
             : '{{ route("api.attendance.teacher.check-out") }}';
 
         try {
@@ -318,40 +249,46 @@
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                 },
-                body: formData
+                body: JSON.stringify({ check_in_mode: 'manual' }),
             });
 
             const data = await res.json();
             if (res.ok && data.success) {
                 showAlert(data.message, 'success');
                 setTimeout(() => {
-                    closeCameraModal();
+                    closeConfirmModal();
                     window.location.reload();
                 }, 1200);
             } else {
                 showAlert(data.message || 'Gagal menyimpan presensi.', 'danger');
                 btn.disabled = false;
-                btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Kirim Presensi`;
+                btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
             }
         } catch (e) {
             showAlert('Terjadi kesalahan koneksi: ' + e.message, 'danger');
             btn.disabled = false;
-            btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Kirim Presensi`;
+            btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
         }
     }
 
     function showAlert(msg, type) {
-        const el = document.getElementById('modalAlert');
-        el.className = `mb-4 rounded-xl px-4 py-2.5 text-xs font-medium bg-${type === 'danger' ? 'rose' : (type === 'success' ? 'emerald' : 'amber')}-100 text-${type === 'danger' ? 'rose' : (type === 'success' ? 'emerald' : 'amber')}-800 border border-${type === 'danger' ? 'rose' : (type === 'success' ? 'emerald' : 'amber')}-200`;
+        const el = document.getElementById('alertBox');
+        const colorMap = { danger: 'rose', success: 'emerald', warning: 'amber' };
+        const c = colorMap[type] || 'slate';
+        el.className = `mb-4 rounded-xl px-4 py-2.5 text-xs font-medium bg-${c}-100 text-${c}-800 border border-${c}-200`;
         el.textContent = msg;
         el.classList.remove('hidden');
     }
 
     function hideAlert() {
-        document.getElementById('modalAlert').classList.add('hidden');
+        document.getElementById('alertBox').classList.add('hidden');
     }
 </script>
+<style>
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
 @endpush
 @endsection

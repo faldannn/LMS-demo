@@ -61,11 +61,11 @@ class SelfAttendanceLog extends Model
     public function getModeLabelAttribute(): string
     {
         return match ($this->check_in_mode) {
-            'full' => 'Lengkap (Wajah + GPS)',
-            'gps_fallback' => 'Fallback GPS',
-            'camera_fallback' => 'Fallback Kamera',
-            'manual_fallback' => 'Fallback Manual',
-            default => $this->check_in_mode,
+            'qr_scan', 'qr_class', 'full' => 'Scan QR Kelas',
+            'qr_card', 'qr_student' => 'Scan QR Kartu',
+            'qr' => 'Scan QR Code',
+            'manual_fallback' => 'Input Manual',
+            default => 'Scan QR Code',
         };
     }
 }

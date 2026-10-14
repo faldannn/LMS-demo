@@ -212,6 +212,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::get('attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
             Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
             Route::post('attendance/quick-save', [AttendanceController::class, 'quickSave'])->name('attendance.quick-save');
+            Route::post('attendance/update-detail', [AttendanceController::class, 'updateDetail'])->name('attendance.update-detail');
             Route::post('attendance/save-session-notes', [AttendanceController::class, 'saveSessionNotes'])->name('attendance.save-session-notes');
             Route::get('attendance/homeroom/create', [AttendanceController::class, 'homeroomCreate'])->name('attendance.homeroom-create');
             Route::post('attendance/homeroom', [AttendanceController::class, 'homeroomStore'])->name('attendance.homeroom-store');
@@ -241,11 +242,6 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('attendance/self-checkin', [SelfAttendanceController::class, 'index'])->name('attendance.self-checkin');
     });
 
-    // Teacher Attendance Web Route
-    Route::middleware('can:access-staff')->group(function () {
-        Route::get('teacher/attendance/checkin', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkinView'])
-            ->name('attendance.teacher-checkin');
-    });
 
     Route::prefix('lms')->group(function () {
         Route::middleware('can:access-staff')->group(function () {
@@ -328,12 +324,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::get('history', [\App\Http\Controllers\Api\SelfAttendanceApiController::class, 'history'])->name('history');
     });
 
-    Route::middleware(['throttle:30,1'])
-        ->prefix('api/attendance/teacher')->name('api.attendance.teacher.')->group(function () {
-        Route::get('status', [\App\Http\Controllers\TeacherAttendanceController::class, 'status'])->name('status');
-        Route::post('check-in', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkIn'])->name('check-in');
-        Route::post('check-out', [\App\Http\Controllers\TeacherAttendanceController::class, 'checkOut'])->name('check-out');
-    });
+
 
 });
 

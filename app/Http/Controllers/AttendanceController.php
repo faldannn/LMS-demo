@@ -706,12 +706,16 @@ class AttendanceController extends Controller
 
                             return [
                                 'raw_date' => $dateStr,
+                                'date_formatted' => $dayDate,
                                 'sess_weight' => $sessWeight,
                                 'week_num' => $weekNum,
                                 'day_date' => $dayDate,
                                 'date' => $dayDate,
                                 'formatted_date' => $formattedDate,
                                 'session' => $sessionFormatted,
+                                'session_key' => $sessionKey,
+                                'teacher_name' => $d->attendance?->teacher?->name ?? '-',
+                                'subject_name' => $sessionFormatted,
                                 'status' => $d->status,
                                 'status_label' => match($d->status) {
                                      'hadir' => '🟢 Hadir',
@@ -722,7 +726,7 @@ class AttendanceController extends Controller
                                      default => ucfirst($d->status)
                                  },
                                 'check_in' => $d->check_in ? $d->check_in->format('H:i') . ' WIB' : '-',
-                                'notes' => $d->notes ?: 'Tidak ada keterangan',
+                                'notes' => $d->notes ?: '',
                             ];
                         })->values(),
                     ];
@@ -884,6 +888,64 @@ class AttendanceController extends Controller
             'message' => 'Presensi berhasil disimpan!',
         ]);
     }
+
+    /**
+     * Edit / override kehadiran siswa — guru bisa ubah status meski sudah dicatat Sakit/Izin.
+     */
+    public function updateDetail(Request $request)
+    {
+        if (!Setting::isFeatureEnabled('subject_attendance')) {
+            return response()->json(['success' => false, 'message' => 'Fitur Presensi Mata Pelajaran sedang dinonaktifkan.'], 403);
+        }
+
+        $request->validate([
+            'date'       => 'required|date',
+            'class_id'   => 'required|exists:classes,id',
+            'session'    => 'required|string|max:50',
+            'student_id' => 'required|exists:students,id',
+            'status'     => 'required|in:hadir,alfa,sakit,izin,terlambat',
+            'notes'      => 'nullable|string|max:255',
+        ]);
+
+        $date      = $request->date;
+        $classId   = $request->class_id;
+        $studentId = $request->student_id;
+        $status    = $request->status;
+        $notes     = $request->get('notes');
+        $session   = $request->session;
+
+        if (in_array($session, ['pagi', 'siang', 'harian'], true)) {
+            $session = 'mapel_1';
+        }
+
+        $teacher = auth()->user()->teacher;
+        if (!$teacher) {
+            $classObj = Classes::with('homeroomTeacher')->find($classId);
+            $teacher  = $classObj?->homeroomTeacher ?? Teacher::active()->first();
+        }
+
+        // Force update regardless of homeroom lock
+        $attendance = Attendance::firstOrCreate(
+            ['date' => $date, 'class_id' => $classId, 'session' => $session],
+            ['teacher_id' => $teacher?->id]
+        );
+
+        AttendanceDetail::updateOrCreate(
+            ['attendance_id' => $attendance->id, 'student_id' => $studentId],
+            [
+                'status'   => $status,
+                'check_in' => $status === 'hadir' ? now()->format('H:i') : null,
+                'notes'    => $notes,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status absen siswa berhasil diperbarui!',
+            'status'  => $status,
+        ]);
+    }
+
 
     public function saveSessionNotes(Request $request)
     {

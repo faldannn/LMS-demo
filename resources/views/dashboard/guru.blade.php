@@ -9,42 +9,27 @@
         'subtitle' => 'Kelola pembelajaran, pantau jadwal, tugas, materi, dan kehadiran kelas Anda.',
     ])
 
-    {{-- AKSI CEPAT PRESENSI GURU --}}
+    {{-- AKSI CEPAT GURU --}}
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-1">
                 <div class="inline-flex items-center gap-2 rounded-full bg-brand-50 border border-brand-200 px-3 py-1 text-xs font-extrabold text-brand-700">
-                    <i class="bi bi-camera-fill"></i> PRESENSI MANDIRI GURU
+                    <i class="bi bi-people-fill"></i> ABSENSI SISWA
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-0 flex items-center gap-2">
-                    <i class="bi bi-person-bounding-box text-brand-600"></i> Absen Masuk / Pulang Mengajar (Absen Muka Guru)
+                    <i class="bi bi-clipboard-check text-brand-600"></i> Presensi Kehadiran Siswa
                 </h3>
-                <p class="text-xs text-slate-500 max-w-xl mb-0">Lakukan presensi kehadiran Anda sebagai Guru hari ini menggunakan fitur Absen Muka / Swafoto.</p>
+                <p class="text-xs text-slate-500 max-w-xl mb-0">Input dan pantau kehadiran siswa di kelas Anda.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                <a href="{{ route('attendance.teacher-checkin') }}" class="inline-flex items-center gap-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition transform active:scale-95">
-                    <i class="bi bi-camera-fill text-lg"></i>
-                    <span>ABSEN MUKA GURU SEKARANG</span>
-                </a>
-            </div>
-        </div>
-
-        {{-- RINGKASAN SUB-AKSI PRESENSI SISWA --}}
-        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <i class="bi bi-people text-brand-600"></i>
-                <span>Presensi Kehadiran Siswa di Kelas:</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 shrink-0">
-                <a href="{{ route('attendance.create') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 px-3 py-1.5 text-xs font-semibold text-slate-700 transition">
-                    <i class="bi bi-pencil-square text-brand-600"></i> Input Absensi Siswa
-                </a>
-                <a href="{{ route('attendance.create', ['period' => '30_days']) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 px-3 py-1.5 text-xs font-semibold text-slate-700 transition">
-                    <i class="bi bi-calendar-range text-emerald-600"></i> Rekap Absensi Siswa
+                <a href="{{ route('attendance.create') }}" class="inline-flex items-center gap-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition transform active:scale-95">
+                    <i class="bi bi-pencil-square text-lg"></i>
+                    <span>Input Absensi Siswa</span>
                 </a>
                 @if(auth()->user()->teacher && auth()->user()->teacher->homeroomClasses()->exists())
-                <a href="{{ route('attendance.homeroom-create') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition">
-                    <i class="bi bi-star-fill text-amber-500"></i> Presensi Wali Kelas
+                <a href="{{ route('attendance.homeroom-create') }}" class="inline-flex items-center gap-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition transform active:scale-95">
+                    <i class="bi bi-star-fill text-lg"></i>
+                    <span>Presensi Wali Kelas</span>
                 </a>
                 @endif
             </div>

@@ -59,18 +59,22 @@ class SelfAttendanceService
             ];
         }
 
-        $geo = $this->resolveGeofence($payload, $mode);
-        $face = $this->resolveFaceValidation($payload, $mode);
+        $qrCode = $payload['qr_code'] ?? null;
+        $qrNote = 'Scan QR Kelas ' . ($student->class?->name ?? '');
 
-        if (!$face['valid']) {
-            return ['success' => false, 'message' => $face['message'], 'code' => 'face_failed'];
+        if (!empty($qrCode)) {
+            try {
+                $classPayload = $this->qrAttendance->parseClassQrPayload($qrCode);
+                if (!empty($classPayload['class_id']) && (int) $classPayload['class_id'] !== (int) $student->class_id) {
+                    return ['success' => false, 'message' => 'QR Code ini bukan untuk kelas Anda.', 'code' => 'invalid_class_qr'];
+                }
+                $qrNote = 'Scan QR Kelas: ' . ($student->class?->name ?? $classPayload['class_id']);
+            } catch (\Exception $e) {
+                $qrNote = 'Scan QR: ' . (strlen($qrCode) > 30 ? substr($qrCode, 0, 30) . '...' : $qrCode);
+            }
         }
 
-        if (!$geo['valid']) {
-            return ['success' => false, 'message' => $geo['message'], 'code' => 'gps_failed'];
-        }
-
-        return DB::transaction(function () use ($student, $payload, $photo, $meta, $date, $mode, $geo, $face) {
+        return DB::transaction(function () use ($student, $payload, $photo, $meta, $date, $mode, $qrNote) {
             $photoPath = null;
             if ($photo) {
                 $photoPath = $this->storage->upload($photo, 'attendance/self/' . $student->id)['file_path'];
@@ -92,66 +96,43 @@ class SelfAttendanceService
                 'user_id' => $meta['user_id'] ?? null,
                 'attendance_detail_id' => $detail?->id,
                 'attendance_date' => $date,
-                'latitude' => $payload['latitude'] ?? null,
-                'longitude' => $payload['longitude'] ?? null,
-                'distance_meters' => $geo['distance_meters'],
-                'within_radius' => $geo['within_radius'],
-                'face_detection_confidence' => $payload['face_detection_confidence'] ?? null,
-                'face_match_confidence' => $payload['face_match_confidence'] ?? null,
-                'face_matched' => (bool) ($payload['face_matched'] ?? false),
+                'latitude' => null,
+                'longitude' => null,
+                'distance_meters' => null,
+                'within_radius' => false,
+                'face_detection_confidence' => null,
+                'face_match_confidence' => null,
+                'face_matched' => false,
                 'photo_path' => $photoPath,
-                'device_type' => $meta['device_type'] ?? null,
-                'browser' => $meta['browser'] ?? null,
-                'ip_address' => $meta['ip_address'] ?? null,
+                'device_type' => $meta['device_type'] ?? 'Desktop',
+                'browser' => $meta['browser'] ?? 'Browser',
+                'ip_address' => $meta['ip_address'] ?? '127.0.0.1',
                 'user_agent' => $meta['user_agent'] ?? null,
-                'check_in_mode' => $mode,
+                'check_in_mode' => $mode ?: 'qr_scan',
                 'status' => 'success',
                 'fallback_reason' => $payload['fallback_reason'] ?? null,
-                'notes' => $payload['notes'] ?? null,
+                'notes' => $payload['notes'] ?? $qrNote,
                 'checked_in_at' => now(),
             ]);
 
+            $statusText = strtoupper($detail?->status ?? 'HADIR');
+
             return [
                 'success' => true,
-                'message' => 'Presensi berhasil dicatat.',
+                'message' => 'Presensi QR berhasil dicatat. Status: ' . $statusText,
+                'status' => $detail?->status ?? 'hadir',
                 'log' => $log,
-                'distance_meters' => $geo['distance_meters'],
-                'within_radius' => $geo['within_radius'],
-                'face_matched' => $log->face_matched,
-                'checked_in_at' => $log->checked_in_at->toIso8601String(),
+                'distance_meters' => null,
+                'within_radius' => false,
+                'face_matched' => false,
+                'checked_in_at' => $log->checked_in_at->format('H:i:s') . ' WIB',
             ];
         });
     }
 
     private function resolveGeofence(array $payload, string $mode): array
     {
-        if (in_array($mode, ['camera_fallback', 'manual_fallback'], true)) {
-            if (!config('attendance.self_checkin.allow_gps_fallback') && $mode !== 'manual_fallback') {
-                return ['valid' => false, 'message' => 'GPS tidak tersedia dan fallback tidak diizinkan.', 'distance_meters' => null, 'within_radius' => false];
-            }
-
-            if ($mode === 'manual_fallback') {
-                return ['valid' => (bool) config('attendance.self_checkin.allow_manual_fallback'), 'message' => 'Fallback manual tidak diizinkan.', 'distance_meters' => null, 'within_radius' => false];
-            }
-
-            return ['valid' => true, 'distance_meters' => null, 'within_radius' => false];
-        }
-
-        if (!isset($payload['latitude'], $payload['longitude'])) {
-            return ['valid' => false, 'message' => 'Koordinat GPS wajib diisi.', 'distance_meters' => null, 'within_radius' => false];
-        }
-
-        $result = $this->geofence->isWithinRadius((float) $payload['latitude'], (float) $payload['longitude']);
-
-        if (!$result['within_radius'] && $mode === 'gps_fallback') {
-            return array_merge(['valid' => (bool) config('attendance.self_checkin.allow_gps_fallback'), 'message' => 'Anda berada di luar radius sekolah.'], $result);
-        }
-
-        if (!$result['within_radius']) {
-            return array_merge(['valid' => false, 'message' => 'Anda berada di luar radius sekolah (' . round($result['distance_meters']) . ' m).'], $result);
-        }
-
-        return array_merge(['valid' => true], $result);
+        return ['valid' => true, 'within_radius' => false, 'distance_meters' => null];
     }
 
     private function resolveFaceValidation(array $payload, string $mode): array
