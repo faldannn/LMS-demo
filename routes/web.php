@@ -219,7 +219,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::get('attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
             Route::get('attendance/self-logs', [SelfAttendanceController::class, 'logs'])->name('attendance.self-logs');
-            Route::get('attendance/tap-simulator', [AttendanceController::class, 'tapSimulator'])->name('attendance.tap-simulator');
+            Route::get('attendance/scan-qr', [SelfAttendanceController::class, 'scanner'])->name('attendance.scan-qr');
+            Route::post('attendance/scan-student-qr', [SelfAttendanceController::class, 'processScanStudentQr'])->name('attendance.scan-student-qr');
 
             // Schedules management (Kepala Sekolah/Admin only)
             Route::middleware('can:manage-admin')->group(function () {
@@ -240,6 +241,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     // Attendance & schedules — read access
     Route::middleware('can:access-siswa')->prefix('siswa')->group(function () {
         Route::get('attendance/self-checkin', [SelfAttendanceController::class, 'index'])->name('attendance.self-checkin');
+        Route::get('attendance/status-poll', [SelfAttendanceController::class, 'checkStatusPoll'])->name('attendance.status-poll');
     });
 
 

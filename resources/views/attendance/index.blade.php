@@ -29,6 +29,9 @@
                         <i class="bi bi-file-earmark-excel text-base"></i> Export Excel Guru
                     </button>
                 </div>
+                <a href="{{ route('attendance.scan-qr') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition" title="Buka Scanner QR Siswa">
+                    <i class="bi bi-camera-fill text-sm"></i> Scan QR Siswa
+                </a>
                 <a href="{{ route('attendance.self-logs') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm" title="Lihat Log Presensi QR Code Siswa">
                     <i class="bi bi-qr-code-scan text-brand-600 text-sm"></i> Log Presensi QR
                 </a>

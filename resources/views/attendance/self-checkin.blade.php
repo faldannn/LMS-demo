@@ -1,55 +1,35 @@
 @extends('layouts.app')
-@section('title', 'Presensi Scan QR Code')
-@section('page-title', 'Presensi Scan QR Code Siswa')
+@section('title', 'Kartu QR Presensi Siswa')
+@section('page-title', 'Kartu QR Presensi Siswa')
 
 @push('styles')
 <style>
-    .scanner-viewport {
-        position: relative;
-        width: 100%;
-        max-width: 380px;
-        margin: 0 auto;
-        border-radius: 1.5rem;
-        overflow: hidden;
-        background: #020617;
-        aspect-ratio: 1 / 1;
-        border: 2px solid #1e293b;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    .qr-card-shadow {
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.9);
     }
-    .scanner-laser {
-        position: absolute;
-        left: 8%;
-        right: 8%;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #10b981, #06b6d4, transparent);
-        box-shadow: 0 0 15px #10b981, 0 0 25px #06b6d4;
-        animation: scanLaserAnim 2.2s infinite ease-in-out;
-        z-index: 20;
-        pointer-events: none;
+    .pulse-radar {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+        animation: pulseRadarAnim 2s infinite;
     }
-    @keyframes scanLaserAnim {
-        0%, 100% { top: 10%; }
-        50% { top: 88%; }
+    @keyframes pulseRadarAnim {
+        0% { transform: scale(0.97); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+        100% { transform: scale(0.97); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
     }
-    .scan-corner {
-        position: absolute;
-        width: 28px;
-        height: 28px;
-        border-color: #10b981;
-        z-index: 15;
-        pointer-events: none;
+    .spin-icon {
+        display: inline-block;
+        animation: spinAnim 2s linear infinite;
     }
-    .corner-tl { top: 20px; left: 20px; border-top: 3.5px solid; border-left: 3.5px solid; border-top-left-radius: 10px; }
-    .corner-tr { top: 20px; right: 20px; border-top: 3.5px solid; border-right: 3.5px solid; border-top-right-radius: 10px; }
-    .corner-bl { bottom: 20px; left: 20px; border-bottom: 3.5px solid; border-left: 3.5px solid; border-bottom-left-radius: 10px; }
-    .corner-br { bottom: 20px; right: 20px; border-bottom: 3.5px solid; border-right: 3.5px solid; border-bottom-right-radius: 10px; }
+    @keyframes spinAnim {
+        100% { transform: rotate(360deg); }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="mx-auto max-w-4xl space-y-6">
+<div class="mx-auto max-w-5xl space-y-6">
 
-    {{-- Breadcrumb & Title --}}
+    {{-- Header & Live Clock --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
             <div class="mb-1 flex items-center gap-2">
@@ -59,12 +39,12 @@
             </div>
             <h1 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
                 <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-500/20 shrink-0">
-                    <i class="bi bi-qr-code-scan text-xl"></i>
+                    <i class="bi bi-qr-code text-xl"></i>
                 </span>
-                Presensi Scan QR Code Siswa
+                Kartu QR Presensi Siswa
             </h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Pindai QR Code kelas menggunakan kamera perangkat untuk mencatat kehadiran hari ini.
+            <p class="text-xs sm:text-sm text-slate-500 mt-1 mb-0">
+                Tunjukkan Kode QR ini kepada Guru atau Petugas untuk dipindai saat absensi kelas.
             </p>
         </div>
         <div class="text-left sm:text-right shrink-0">
@@ -75,212 +55,175 @@
         </div>
     </div>
 
-    {{-- Main Grid: Profil & Status Presensi --}}
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-12">
+    {{-- Main Container (Flex Layout - Stabil & Tidak Terjepit) --}}
+    <div class="flex flex-col md:flex-row gap-6 items-start w-full">
 
-        {{-- Profil & Kartu QR Pelajar (4 Kolom) --}}
-        <div class="md:col-span-4 space-y-4">
-            <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 text-center">
-                <div class="relative mx-auto mb-3 h-20 w-20">
-                    <img src="{{ $student->photo_url }}" class="h-20 w-20 rounded-full object-cover shadow-sm ring-4 ring-brand-50" alt="{{ $student->name }}">
-                    <span class="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center text-[10px] text-white">
-                        <i class="bi bi-check"></i>
-                    </span>
-                </div>
-                <h6 class="text-base font-extrabold text-slate-900 leading-snug">{{ $student->name }}</h6>
-                <p class="text-xs text-slate-500 font-mono mt-0.5">NIS: {{ $student->nis }}</p>
+        {{-- KOLOM KIRI: KARTU DIGITAL & KODE QR SISWA --}}
+        <div class="w-full md:w-7/12" style="flex: 1 1 58%; min-width: 0;">
+            <div class="rounded-3xl bg-white border border-slate-200/90 qr-card-shadow overflow-hidden">
                 
-                <div class="mt-3 flex flex-wrap justify-center gap-1.5">
-                    <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 border border-brand-200">
-                        {{ $student->class?->name ?? 'Tanpa Kelas' }}
-                    </span>
-                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 uppercase">
-                        Sesi {{ $session }}
+                {{-- Header Kartu Pelajar Digital --}}
+                <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 18px 24px; color: white;" class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 border border-white/20">
+                            <i class="bi bi-mortarboard-fill text-xl text-amber-300"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-black uppercase tracking-wider text-white">SMA Islam Assyafiiyah 02</div>
+                            <div class="text-[10px] text-white/80 font-mono">KARTU DIGITAL PRESENSI SISWA</div>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-mono px-3 py-1 rounded-full bg-white/15 border border-white/25 text-white font-bold">
+                        {{ today()->translatedFormat('d M Y') }}
                     </span>
                 </div>
 
-                {{-- Digital QR Badge Siswa --}}
-                <div class="mt-5 pt-4 border-t border-slate-100">
-                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
-                        <i class="bi bi-person-badge text-brand-600"></i> Kartu QR Siswa
+                {{-- Body Kartu --}}
+                <div class="p-6 text-center space-y-4">
+                    
+                    {{-- Profil Siswa --}}
+                    <div class="flex flex-col items-center">
+                        <div class="relative mb-2.5 h-16 w-16">
+                            <img src="{{ $student->photo_url }}" class="h-16 w-16 rounded-full object-cover shadow-sm ring-4 ring-brand-50" alt="{{ $student->name }}">
+                            <span class="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center text-[8px] text-white">
+                                <i class="bi bi-check"></i>
+                            </span>
+                        </div>
+                        <h4 class="text-lg font-black text-slate-900 leading-snug mb-0">{{ $student->name }}</h4>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap justify-center">
+                            <span class="text-xs font-mono text-slate-500 font-semibold">NIS: {{ $student->nis }}</span>
+                            <span class="text-slate-300">•</span>
+                            <span class="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700 border border-brand-200">
+                                {{ $student->class?->name ?? 'Tanpa Kelas' }}
+                            </span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 uppercase">
+                                Sesi {{ ucfirst($session) }}
+                            </span>
+                        </div>
                     </div>
-                    <div class="mx-auto w-32 h-32 p-2 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center">
-                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(112)->generate('LMS-' . $student->nis) !!}
+
+                    {{-- QR CODE UTAMA SISWA (BESAR & SANGAT JELAS) --}}
+                    <div class="py-2 flex flex-col items-center justify-center">
+                        <div style="width: 220px; height: 220px; background: white; border-radius: 20px; border: 2px solid #e2e8f0; padding: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(196)->generate('LMS-' . $student->nis) !!}
+                        </div>
+                        <div class="mt-3">
+                            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-800 font-mono text-xs font-bold border border-slate-200">
+                                <i class="bi bi-upc-scan text-brand-600"></i> ID: LMS-{{ $student->nis }}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 mb-0">
+                            Arahkan layar ini ke kamera pemindai Guru / Admin
+                        </p>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-1.5 font-mono">Kode ID: LMS-{{ $student->nis }}</p>
+
                 </div>
+
+                {{-- Footer Kartu --}}
+                <div class="bg-slate-50 border-t border-slate-100 px-6 py-3.5 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center gap-1.5 font-semibold text-emerald-600">
+                        <i class="bi bi-shield-fill-check"></i> Terverifikasi Sistem
+                    </span>
+                    <span class="font-mono text-slate-400 text-[11px]">
+                        SMA Islam Assyafiiyah 02
+                    </span>
+                </div>
+
             </div>
         </div>
 
-        {{-- Card Status Presensi & Action Scan (8 Kolom) --}}
-        <div class="md:col-span-8 space-y-4">
+        {{-- KOLOM KANAN: STATUS KEHADIRAN & PANDUAN --}}
+        <div class="w-full md:w-5/12 space-y-5" style="flex: 1 1 42%; min-width: 0;">
 
-            {{-- Status Kehadiran Hari Ini --}}
-            <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/80">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 font-bold border border-emerald-100">
-                            <i class="bi bi-calendar-check text-xl"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-sm font-bold text-slate-900">Status Presensi Hari Ini</h6>
-                            <p class="text-xs text-slate-500 font-mono">Buka Presensi: {{ substr($checkinStart, 0, 5) }} WIB</p>
-                        </div>
+            {{-- Card Status Presensi --}}
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-calendar-check text-brand-600 text-base"></i>
+                        <h6 class="text-xs font-black text-slate-800 uppercase tracking-wider mb-0">Status Hari Ini</h6>
                     </div>
+                    <span class="text-[11px] text-slate-500 font-mono">Buka: {{ substr($checkinStart, 0, 5) }} WIB</span>
+                </div>
+
+                <div id="attendanceStatusArea">
                     @if($todayLog)
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-black text-emerald-800">
-                            <i class="bi bi-check-circle-fill"></i> Sudah Presensi
-                        </span>
+                        {{-- STATUS: SUDAH PRESENSI --}}
+                        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-5 text-center space-y-3">
+                            <div class="mx-auto h-12 w-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md shadow-emerald-600/30">
+                                <i class="bi bi-check-lg"></i>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 mb-1">
+                                    🟢 Kehadiran Terverifikasi
+                                </span>
+                                <h3 class="text-xl font-black text-slate-900 mt-1">
+                                    {{ is_string($todayLog->checked_in_at) ? $todayLog->checked_in_at : $todayLog->checked_in_at->format('H:i:s') }} WIB
+                                </h3>
+                                <p class="text-xs text-emerald-700 font-medium mb-0 mt-1">
+                                    {{ $todayLog->notes ?: 'Telah diverifikasi Hadir' }}
+                                </p>
+                            </div>
+                        </div>
                     @else
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1 text-xs font-black text-amber-800">
-                            <i class="bi bi-clock"></i> Belum Presensi
-                        </span>
+                        {{-- STATUS: BELUM PRESENSI --}}
+                        <div class="rounded-2xl bg-amber-50/70 border border-amber-200 p-5 text-center space-y-3">
+                            <div class="mx-auto h-12 w-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl shadow-md shadow-amber-500/20 pulse-radar">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 mb-1">
+                                    ⏳ Menunggu Scan Guru
+                                </span>
+                                <h4 class="text-base font-bold text-slate-800 mt-1">Belum Melakukan Absensi</h4>
+                                <p class="text-xs text-slate-500 mb-0 mt-1">
+                                    Tunjukkan QR Code di samping ke Guru Anda di kelas.
+                                </p>
+                            </div>
+                        </div>
                     @endif
                 </div>
 
-                @if($todayLog)
-                    {{-- Tampilan Ketika Sudah Presensi --}}
-                    <div class="rounded-2xl bg-emerald-50/70 border border-emerald-200/80 p-5 space-y-3">
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <div class="flex items-center gap-3">
-                                <div class="h-12 w-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md shadow-emerald-600/20">
-                                    <i class="bi bi-check-lg"></i>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Kehadiran Terverifikasi</span>
-                                    <h4 class="text-xl font-black text-slate-900">{{ $todayLog->checked_in_at->format('H:i:s') }} WIB</h4>
-                                </div>
-                            </div>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200 shadow-2xs">
-                                <i class="bi bi-qr-code"></i> {{ $todayLog->mode_label }}
-                            </span>
-                        </div>
-                        
-                        <div class="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-xs text-slate-600">
-                            <span class="font-mono text-slate-500"><i class="bi bi-upc-scan me-1"></i>{{ $todayLog->notes ?: 'Scan QR Valid' }}</span>
-                            <span class="font-semibold text-slate-700">{{ $todayLog->attendance_date->translatedFormat('l, d F Y') }}</span>
-                        </div>
-                    </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-400 font-mono text-[11px]" id="livePollIndicator">
+                        <i class="bi bi-arrow-repeat spin-icon"></i> Auto-check aktif
+                    </span>
+                    <a href="{{ route('attendance.mine') }}" class="font-bold text-brand-600 hover:text-brand-700">
+                        Lihat Riwayat &rarr;
+                    </a>
+                </div>
 
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                        <a href="{{ route('attendance.mine') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700">
-                            <i class="bi bi-calendar-week"></i> Lihat Seluruh Riwayat Absensi &rarr;
-                        </a>
-                    </div>
-                @else
-                    {{-- Tampilan Ketika Belum Presensi --}}
-                    <div class="space-y-4 py-2">
-                        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                            <div class="flex items-start gap-3">
-                                <span class="h-8 w-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
-                                <div class="text-xs text-slate-600 space-y-1">
-                                    <p class="font-bold text-slate-800">Petunjuk Presensi QR:</p>
-                                    <p>1. Klik tombol <strong>Buka Scanner QR</strong> di bawah.</p>
-                                    <p>2. Arahkan kamera ke QR Code kelas yang ditampilkan guru di layar proyektor / meja.</p>
-                                    <p>3. Kehadiran Anda akan langsung terverifikasi seketika.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                            <button type="button" onclick="openQrModal()" class="w-full rounded-xl bg-emerald-600 py-3.5 px-4 text-xs font-extrabold text-white shadow-md hover:bg-emerald-500 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-                                <i class="bi bi-camera-fill text-base"></i> Buka Scanner Kamera QR
-                            </button>
-                            <button type="button" onclick="quickSimulateQr('{{ $sampleClassQr ?? 'QR-CLASS-1-' . today()->toDateString() }}')" class="w-full rounded-xl bg-slate-900 py-3.5 px-4 text-xs font-extrabold text-white shadow-md hover:bg-slate-800 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-                                <i class="bi bi-lightning-charge-fill text-amber-400"></i> Uji Coba Cepat (1-Klik)
-                            </button>
-                        </div>
-                    </div>
-                @endif
             </div>
 
-            {{-- Informasi Keamanan & Kemudahan --}}
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-2">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
-                    <i class="bi bi-shield-check text-brand-600 text-sm"></i> Presensi Cepat Tanpa GPS & Bebas Kendala
+            {{-- Petunjuk Penggunaan Singkat --}}
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                <h6 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
+                    <i class="bi bi-info-circle-fill text-brand-600"></i> Cara Absensi Menggunakan QR
+                </h6>
+                <div class="space-y-2.5 text-xs text-slate-600 pt-1">
+                    <div class="flex items-start gap-2.5">
+                        <span class="h-5 w-5 rounded-full bg-brand-50 text-brand-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <p class="mb-0">Buka halaman ini dan pastikan kecerahan layar ponsel Anda mencukupi.</p>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="h-5 w-5 rounded-full bg-brand-50 text-brand-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <p class="mb-0">Arahkan Kode QR kepada <strong>Guru / Admin</strong> di kelas atau gerbang.</p>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="h-5 w-5 rounded-full bg-brand-50 text-brand-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <p class="mb-0">Setelah Guru memindai QR, status di layar ini akan <strong>otomatis berubah menjadi Hadir</strong>.</p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-500 leading-relaxed">
-                    Sistem presensi QR Code bekerja langsung di browser tanpa memerlukan izin lokasi GPS atau foto wajah. Cukup pastikan kamera aktif saat memindai kode QR kelas.
-                </p>
             </div>
 
         </div>
 
     </div>
 
-</div>
-
-{{-- MODAL SCANNER QR CODE --}}
-<div id="qrScannerModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-md p-4 flex items-center justify-center">
-    <div class="w-full max-w-md overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-white">
-        
-        {{-- Header Modal --}}
-        <div class="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-            <div class="flex items-center gap-2.5">
-                <span class="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]"></span>
-                <h5 class="text-sm font-black text-white uppercase tracking-wider">Pemindai QR Code</h5>
-            </div>
-            <button type="button" onclick="closeQrModal()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer">
-                <i class="bi bi-x-lg text-lg"></i>
-            </button>
-        </div>
-
-        {{-- Body Scanner --}}
-        <div class="p-6 text-center space-y-4">
-            
-            {{-- Viewfinder Container --}}
-            <div class="scanner-viewport">
-                <div class="scanner-laser" id="scannerLaser"></div>
-                <div class="scan-corner corner-tl"></div>
-                <div class="scan-corner corner-tr"></div>
-                <div class="scan-corner corner-bl"></div>
-                <div class="scan-corner corner-br"></div>
-                
-                {{-- HTML5 QR Code Mount / Video Feed --}}
-                <div id="qrReader" class="h-full w-full object-cover"></div>
-                <video id="qrVideoFeed" class="h-full w-full object-cover" playsinline muted autoplay></video>
-                <canvas id="qrCanvas" class="hidden"></canvas>
-            </div>
-
-            <p class="text-xs text-slate-400 font-mono">
-                Arahkan kamera ke QR Code Presensi Kelas
-            </p>
-
-            <div id="scannerAlert" class="hidden rounded-xl p-3 text-xs font-bold text-center"></div>
-
-            {{-- Input Manual / Fallback --}}
-            <div class="pt-2 border-t border-slate-800 space-y-2">
-                <label class="text-[11px] text-slate-400 font-semibold block text-left">Atau masukkan kode QR secara manual:</label>
-                <div class="flex gap-2">
-                    <input type="text" id="manualQrInput" placeholder="Contoh: QR-CLASS-1-..." class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none uppercase">
-                    <button type="button" onclick="submitManualQr()" class="rounded-xl bg-brand-600 px-4 text-xs font-bold text-white hover:bg-brand-500 transition cursor-pointer shrink-0">
-                        Kirim
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex justify-center gap-2 pt-1">
-                <button type="button" onclick="quickSimulateQr('{{ $sampleClassQr ?? 'QR-CLASS-1-' . today()->toDateString() }}')" class="rounded-xl bg-slate-800 border border-slate-700 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white transition">
-                    <i class="bi bi-lightning text-amber-400"></i> Tes Scan Otomatis
-                </button>
-                <button type="button" onclick="closeQrModal()" class="rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition">
-                    Tutup
-                </button>
-            </div>
-
-        </div>
-
-    </div>
 </div>
 
 @push('scripts')
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
-    let html5QrCode = null;
-    let isProcessing = false;
-
     // Live Digital Clock
     function updateClock() {
         const el = document.getElementById('clockDisplay');
@@ -289,156 +232,61 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Audio Buzzer Synthesizer
-    let audioCtx = null;
-    function playBeep(success = true) {
-        try {
-            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(success ? 1400 : 350, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (success ? 0.2 : 0.35));
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + (success ? 0.2 : 0.35));
-        } catch(e) {}
-    }
+    // Polling status presensi real-time
+    let isAlreadyCheckedIn = {{ $todayLog ? 'true' : 'false' }};
+    const pollUrl = '{{ route("attendance.status-poll") }}';
 
-    // Modal Control
-    function openQrModal() {
-        document.getElementById('qrScannerModal').classList.remove('hidden');
-        document.getElementById('scannerAlert').classList.add('hidden');
-        isProcessing = false;
-        startCameraScanner();
-    }
+    function checkAttendanceStatus() {
+        if (isAlreadyCheckedIn) return;
 
-    function closeQrModal() {
-        stopCameraScanner();
-        document.getElementById('qrScannerModal').classList.add('hidden');
-    }
-
-    async function startCameraScanner() {
-        const qrReaderDiv = document.getElementById('qrReader');
-        const videoFeed = document.getElementById('qrVideoFeed');
-
-        if (typeof Html5Qrcode !== 'undefined') {
-            try {
-                videoFeed.classList.add('hidden');
-                qrReaderDiv.classList.remove('hidden');
-
-                if (!html5QrCode) {
-                    html5QrCode = new Html5Qrcode("qrReader");
-                }
-
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    { fps: 15, qrbox: { width: 250, height: 250 } },
-                    (decodedText) => {
-                        if (!isProcessing) {
-                            handleQrScanned(decodedText);
-                        }
-                    },
-                    (errorMessage) => {
-                        // scanning frame loop
-                    }
-                );
-                return;
-            } catch (err) {
-                console.warn('Html5Qrcode error, falling back to direct video stream:', err);
+        fetch(pollUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }
-
-        // Fallback Native WebRTC
-        try {
-            qrReaderDiv.classList.add('hidden');
-            videoFeed.classList.remove('hidden');
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 640 } },
-                audio: false
-            });
-            videoFeed.srcObject = stream;
-        } catch (e) {
-            showScannerAlert('Kamera tidak dapat diakses: ' + e.message + '. Gunakan opsi input kode manual di bawah.', 'danger');
-        }
-    }
-
-    function stopCameraScanner() {
-        if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().catch(() => {});
-        }
-        const video = document.getElementById('qrVideoFeed');
-        if (video && video.srcObject) {
-            video.srcObject.getTracks().forEach(t => t.stop());
-            video.srcObject = null;
-        }
-    }
-
-    function showScannerAlert(msg, type = 'info') {
-        const el = document.getElementById('scannerAlert');
-        el.className = `rounded-xl p-3 text-xs font-bold text-center ${type === 'danger' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'}`;
-        el.textContent = msg;
-        el.classList.remove('hidden');
-    }
-
-    function submitManualQr() {
-        const val = document.getElementById('manualQrInput').value.trim();
-        if (!val) {
-            alert('Silakan masukkan kode QR terlebih dahulu.');
-            return;
-        }
-        handleQrScanned(val);
-    }
-
-    function quickSimulateQr(code) {
-        handleQrScanned(code);
-    }
-
-    async function handleQrScanned(qrPayload) {
-        if (isProcessing) return;
-        isProcessing = true;
-        playBeep(true);
-
-        showScannerAlert('Memproses QR Code...', 'info');
-
-        try {
-            const res = await fetch('{{ route("api.attendance.self.check-in") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    qr_code: qrPayload,
-                    check_in_mode: 'qr_scan',
-                    device_type: /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-                    browser: 'Browser'
-                })
-            });
-
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                showScannerAlert(data.message || 'Presensi berhasil dicatat!', 'success');
-                setTimeout(() => {
-                    closeQrModal();
-                    window.location.reload();
-                }, 1200);
-            } else {
-                playBeep(false);
-                showScannerAlert(data.message || 'Gagal melakukan presensi.', 'danger');
-                setTimeout(() => { isProcessing = false; }, 2000);
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.checked_in) {
+                isAlreadyCheckedIn = true;
+                renderSuccessStatus(data.time, data.notes);
             }
-        } catch (e) {
-            playBeep(false);
-            showScannerAlert('Kesalahan koneksi: ' + e.message, 'danger');
-            setTimeout(() => { isProcessing = false; }, 2000);
+        })
+        .catch(err => {
+            console.log('Polling status check:', err);
+        });
+    }
+
+    function renderSuccessStatus(timeStr, notesStr) {
+        const area = document.getElementById('attendanceStatusArea');
+        if (!area) return;
+
+        area.innerHTML = `
+            <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-5 text-center space-y-3">
+                <div class="mx-auto h-12 w-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md shadow-emerald-600/30">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800 mb-1">
+                        🟢 Kehadiran Terverifikasi
+                    </span>
+                    <h3 class="text-xl font-black text-slate-900 mt-1">${timeStr || 'Baru Saja'}</h3>
+                    <p class="text-xs text-emerald-700 font-medium mb-0 mt-1">
+                        ${notesStr || 'Telah diverifikasi oleh Guru / Admin'}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        const indicator = document.getElementById('livePollIndicator');
+        if (indicator) {
+            indicator.innerHTML = '<span class="text-emerald-600 font-bold"><i class="bi bi-check-circle-fill"></i> Terkonfirmasi</span>';
         }
+    }
+
+    // Jalankan auto-check tiap 3.5 detik jika belum hadir
+    if (!isAlreadyCheckedIn) {
+        setInterval(checkAttendanceStatus, 3500);
     }
 </script>
 @endpush

@@ -18,6 +18,9 @@
             <span class="badge bg-brand-50 text-brand-700 border border-brand-200 px-3 py-1.5 rounded-pill font-mono">
                 <i class="bi bi-database-check me-1"></i>{{ $logs->total() }} Log Presensi
             </span>
+            <a href="{{ route('attendance.scan-qr') }}" class="btn btn-sm btn-success rounded-xl px-3 font-bold">
+                <i class="bi bi-camera-fill me-1"></i>Buka Scanner QR
+            </a>
             <a href="{{ route('attendance.index') }}" class="btn btn-sm btn-outline-secondary rounded-xl px-3">
                 <i class="bi bi-arrow-left me-1"></i>Kembali ke Rekap
             </a>

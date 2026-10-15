@@ -41,13 +41,20 @@
             <p class="text-xs text-slate-500 font-medium mb-0">Klik tombol 🟢 <strong>HADIR</strong> atau 🔴 <strong>ABSEN</strong>. Perubahan tersimpan **secara instan**.</p>
         </div>
 
-        <button type="button" 
-                onclick="toggleScheduleBlock()" 
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 border border-slate-300 transition-all shrink-0">
-            <i class="bi bi-calendar-week text-brand-600 text-sm"></i>
-            <span>⚡ Ganti Jadwal / Filter Kelas</span>
-            <i class="bi bi-chevron-down text-xs transition-transform" id="sched-toggle-icon"></i>
-        </button>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="{{ route('attendance.scan-qr') }}" 
+               class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2.5 shadow-sm transition-all shrink-0">
+                <i class="bi bi-camera-fill text-sm"></i>
+                <span>Scan QR Siswa</span>
+            </a>
+            <button type="button" 
+                    onclick="toggleScheduleBlock()" 
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 border border-slate-300 transition-all shrink-0">
+                <i class="bi bi-calendar-week text-brand-600 text-sm"></i>
+                <span>⚡ Ganti Jadwal / Filter Kelas</span>
+                <i class="bi bi-chevron-down text-xs transition-transform" id="sched-toggle-icon"></i>
+            </button>
+        </div>
     </div>
 </div>
 

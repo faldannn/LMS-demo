@@ -42,6 +42,9 @@
         <i class="bi bi-check2-square @active('attendance.create', 'text-emerald-400')"></i> Input / Presensi Mapel
     </a>
     @endif
+    <a href="{{ route('attendance.scan-qr') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.scan-qr', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-camera-fill @active('attendance.scan-qr', 'text-emerald-400')"></i> Scan QR Siswa
+    </a>
     @php
         $teacherModel = auth()->user()->teacher;
         $homeroomClasses = $teacherModel ? $teacherModel->homeroomClasses()->get() : collect();
@@ -67,14 +70,14 @@
 @role('kepala_sekolah')
 <div class="py-2">
     <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Monitoring & Presensi</div>
+    <a href="{{ route('attendance.scan-qr') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.scan-qr', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-camera-fill @active('attendance.scan-qr', 'text-emerald-400')"></i> Scan QR Siswa
+    </a>
     <a href="{{ route('attendance.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.index', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('attendance.show', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi(Guru dan Kelas)
     </a>
     <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-qr-code-scan @active('attendance.self-logs', 'text-emerald-400')"></i> Log Presensi QR Siswa
-    </a>
-    <a href="{{ route('attendance.tap-simulator') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.tap-simulator', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-credit-card-2-front @active('attendance.tap-simulator', 'text-emerald-400')"></i> Simulator Tap Kartu RFID
     </a>
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">

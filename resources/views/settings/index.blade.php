@@ -415,11 +415,6 @@
                         </h2>
                         <p class="text-xs text-slate-300 mt-0.5">Integrasi langsung untuk mesin tap fisik, ESP32, Arduino, Android Kiosk, atau RFID Reader ke LMS</p>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <a href="{{ route('attendance.tap-simulator') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-1.5 text-xs shadow-sm transition">
-                            <i class="bi bi-play-circle-fill"></i> Buka Simulator Mesin Tap
-                        </a>
-                    </div>
                 </div>
 
                 <div class="p-5 sm:p-6 space-y-4">

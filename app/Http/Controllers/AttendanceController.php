@@ -1383,15 +1383,4 @@ class AttendanceController extends Controller
 
         return "Jam Mapel {$mapelNum}";
     }
-
-    public function tapSimulator(Request $request)
-    {
-        abort_unless(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin() || auth()->user()->isGuru(), 403);
-
-        $students = Student::with('class')->orderBy('name')->take(100)->get();
-        $apiKey = app(\App\Services\TapAttendanceService::class)->getApiKey();
-        $endpointUrl = url('/api/v1/attendance/tap');
-
-        return view('attendance.tap-simulator', compact('students', 'apiKey', 'endpointUrl'));
-    }
 }
