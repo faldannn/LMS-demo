@@ -68,12 +68,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 'line' => $e->getLine(),
             ]);
 
-            return response()->view('errors.500', [], 500);
+            return response()->view('errors.500', [
+                'exception' => $e,
+                'message' => $e->getMessage(),
+            ], 500);
         });
     })
     ->create();
 
-if (isset($_SERVER['VERCEL']) || isset($_ENV['VERCEL']) || env('VERCEL')) {
+if (isset($_SERVER['VERCEL']) || isset($_ENV['VERCEL']) || env('VERCEL') || is_dir('/tmp')) {
     $app->useStoragePath('/tmp/storage');
 }
 

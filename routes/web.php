@@ -48,6 +48,27 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
+Route::get('/ping', function () {
+    return response()->json([
+        'status' => 'ok',
+        'php' => PHP_VERSION,
+        'app_env' => app()->environment(),
+        'app_key' => config('app.key') ? 'set' : 'missing',
+        'storage_path' => storage_path(),
+        'storage_writable' => is_writable(storage_path()),
+        'views_path' => config('view.compiled'),
+        'views_writable' => is_writable(config('view.compiled')),
+        'db' => (function () {
+            try {
+                \Illuminate\Support\Facades\DB::connection()->getPdo();
+                return 'connected (' . \Illuminate\Support\Facades\DB::connection()->getDatabaseName() . ')';
+            } catch (\Throwable $e) {
+                return 'error: ' . $e->getMessage();
+            }
+        })(),
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated Application

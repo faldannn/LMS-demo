@@ -7,6 +7,7 @@ $storageDirs = [
     '/tmp/storage/framework/sessions',
     '/tmp/storage/logs',
     '/tmp/storage/app/public',
+    '/tmp/storage/bootstrap/cache',
 ];
 
 foreach ($storageDirs as $dir) {
@@ -15,13 +16,27 @@ foreach ($storageDirs as $dir) {
     }
 }
 
+// Copy pre-compiled package manifests to writable /tmp
+foreach (['packages.php', 'services.php'] as $file) {
+    $src = __DIR__ . '/../bootstrap/cache/' . $file;
+    $dst = '/tmp/storage/bootstrap/cache/' . $file;
+    if (!file_exists($dst) && file_exists($src)) {
+        copy($src, $dst);
+    }
+}
+
+putenv('VERCEL=1');
+$_ENV['VERCEL'] = '1';
+$_SERVER['VERCEL'] = '1';
+
 // Fallback environment variables untuk Vercel Serverless
 $defaults = [
     'APP_NAME' => 'LMS Sekolah Digital',
     'APP_ENV' => 'production',
     'APP_DEBUG' => 'true',
     'APP_KEY' => 'base64:biqCuYXu4iPsb4IKWrlvFxV5cy6odGJV2AwAyk9+rAU=',
-    'APP_STORAGE' => '/tmp/storage',
+    'APP_PACKAGES_CACHE' => '/tmp/storage/bootstrap/cache/packages.php',
+    'APP_SERVICES_CACHE' => '/tmp/storage/bootstrap/cache/services.php',
     'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',
     'DB_CONNECTION' => 'mysql',
     'DB_HOST' => 'gateway01.ap-northeast-1.prod.aws.tidbcloud.com',
@@ -37,7 +52,8 @@ $defaults = [
 ];
 
 foreach ($defaults as $key => $value) {
-    if (empty(getenv($key)) && empty($_ENV[$key]) && empty($_SERVER[$key])) {
+    $existing = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+    if ($existing === false || $existing === null || $existing === '') {
         putenv("{$key}={$value}");
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;

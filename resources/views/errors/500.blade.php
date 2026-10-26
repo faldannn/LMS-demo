@@ -10,6 +10,16 @@
     <div class="container text-center">
         <h1 class="display-4 text-danger">500</h1>
         <p class="lead">Terjadi kesalahan pada server. Silakan coba lagi atau hubungi administrator.</p>
+        @if(!empty($message) || isset($exception))
+            <div class="alert alert-danger text-start mx-auto mt-3" style="max-width: 800px; font-family: monospace; font-size: 13px; white-space: pre-wrap;">
+<strong>Pesan Kesalahan:</strong>
+{{ $message ?? (isset($exception) ? $exception->getMessage() : '') }}
+@if(isset($exception) && (config('app.debug') || request()->has('debug')))
+<hr>
+<strong>Lokasi:</strong> {{ $exception->getFile() }}:{{ $exception->getLine() }}
+@endif
+            </div>
+        @endif
         <a href="{{ url('/') }}" class="btn btn-primary mt-3">Kembali ke Dashboard</a>
     </div>
 </body>
