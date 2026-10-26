@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+node_modules
+tests
+storage
+scratch
+*.sql
+*.xlsx
+*.bat
+README.md
+AGENTS.md
+phpunit.xml
