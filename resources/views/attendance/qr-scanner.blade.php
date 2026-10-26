@@ -57,25 +57,31 @@
                     <i class="bi bi-arrow-left"></i> Presensi Kelas
                 </a>
                 <span class="text-slate-300">•</span>
-                <span class="text-xs font-bold text-slate-400">Scanner Guru & Admin</span>
+                <span class="text-xs font-bold text-slate-400">Scanner Multi-Metode</span>
             </div>
             <h1 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
                 <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
-                    <i class="bi bi-camera-fill text-xl"></i>
+                    <i class="bi bi-upc-scan text-xl"></i>
                 </span>
-                Scanner QR Code Presensi Siswa
+                Scanner Barcode, QR &amp; Kartu Siswa
             </h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Arahkan kamera ke Kartu QR Siswa untuk memverifikasi kehadiran secara cepat dan otomatis.
+                Mendukung Scanner Laser USB, Alat Pink Tap Kartu, serta Kamera HP/Webcam untuk QR &amp; Barcode Code128.
             </p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="{{ route('attendance.tap-station') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
+                <i class="bi bi-broadcast-pin"></i> Tap Kartu Pink
+            </a>
+            <a href="{{ route('attendance.barcode-center') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition">
+                <i class="bi bi-printer"></i> Pusat Barcode
+            </a>
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                 <i class="bi bi-person-check-fill text-emerald-600"></i>
-                <span id="todayCountDisplay">{{ $todayCount }}</span> Siswa Hadir Hari Ini
+                <span id="todayCountDisplay">{{ $todayCount }}</span> Hadir
             </span>
             <a href="{{ route('attendance.self-logs') }}" class="btn btn-sm btn-outline-secondary rounded-xl font-bold px-3 py-1.5 text-xs">
-                <i class="bi bi-clock-history me-1"></i> Log Lengkap
+                <i class="bi bi-clock-history me-1"></i> Log
             </a>
         </div>
     </div>

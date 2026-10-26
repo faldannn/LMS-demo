@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ config('school.system_name') }} — Masuk ke sistem pembelajaran digital">
     <link rel="icon" type="image/png" href="{{ config('school.brand.favicon', '/images/logo.png') }}">
-    <title>Login – {{ config('school.system_short', 'LMS Assyafiiyah') }}</title>
+    <title>Login – {{ config('school.system_short', 'Sekolah Digital') }}</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

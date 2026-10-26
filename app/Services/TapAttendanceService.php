@@ -211,4 +211,40 @@ class TapAttendanceService
             'code' => 200,
         ];
     }
+
+    /**
+     * Get recent tap records for today.
+     */
+    public function getRecentTaps(int $limit = 20): array
+    {
+        $today = today()->toDateString();
+
+        $details = AttendanceDetail::with(['student.class'])
+            ->whereHas('attendance', fn ($q) => $q->where('date', $today))
+            ->where(function ($q) {
+                $q->where('notes', 'like', '%Tap%')
+                  ->orWhere('notes', 'like', '%Kartu%')
+                  ->orWhere('notes', 'like', '%GATE%')
+                  ->orWhereNotNull('check_in');
+            })
+            ->latest('id')
+            ->limit($limit)
+            ->get();
+
+        return $details->map(function ($detail) {
+            $student = $detail->student;
+            return [
+                'id' => $detail->id,
+                'student_id' => $student?->id,
+                'name' => $student?->name ?? 'Siswa',
+                'nis' => $student?->nis ?? '-',
+                'class' => $student?->class?->name ?? 'Kelas',
+                'status' => $detail->status,
+                'status_label' => $detail->status_label,
+                'check_in' => $detail->check_in ? substr($detail->check_in, 0, 5) . ' WIB' : '-',
+                'notes' => $detail->notes,
+                'photo_url' => $student?->photo_url,
+            ];
+        })->toArray();
+    }
 }

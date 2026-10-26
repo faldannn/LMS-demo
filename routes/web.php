@@ -15,6 +15,8 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\MajorController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\SelfAttendanceController;
+use App\Http\Controllers\AttendanceBarcodeController;
+use App\Http\Controllers\TeacherAttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\SecurityController;
@@ -53,8 +55,34 @@ Route::post('/logout', [AuthController::class, 'logout'])
 */
 Route::middleware(['auth', 'check.active'])->group(function () {
 
-    // SSO CBT Redirect
+    // SSO CBT Redirect (Fallback compatibility)
     Route::get('/sso/to-cbt', [\App\Http\Controllers\SsoController::class, 'redirectToCbt'])->name('sso.cbt');
+
+    // CBT Internal System - Admin & Guru Management
+    Route::middleware('can:access-staff')->prefix('cbt')->name('cbt.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CbtController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\CbtController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\CbtController::class, 'store'])->name('store');
+        Route::get('/detail/{id}', [\App\Http\Controllers\CbtController::class, 'show'])->name('show');
+        Route::post('/detail/{id}/questions', [\App\Http\Controllers\CbtController::class, 'storeQuestion'])->name('questions.store');
+        Route::delete('/detail/{quizId}/questions/{questionId}', [\App\Http\Controllers\CbtController::class, 'destroyQuestion'])->name('questions.destroy');
+        Route::post('/detail/{id}/import', [\App\Http\Controllers\CbtController::class, 'importQuestions'])->name('questions.import');
+        Route::get('/template/{format?}', [\App\Http\Controllers\CbtController::class, 'downloadTemplate'])->name('template.download');
+        Route::get('/detail/{id}/results', [\App\Http\Controllers\CbtController::class, 'results'])->name('results');
+        Route::delete('/detail/{id}', [\App\Http\Controllers\CbtController::class, 'destroy'])->name('destroy');
+        Route::get('/token/poll', [\App\Http\Controllers\CbtController::class, 'tokenPoll'])->name('token.poll');
+        Route::post('/token/refresh', [\App\Http\Controllers\CbtController::class, 'forceRefreshToken'])->name('token.refresh');
+    });
+
+    // CBT Internal System - Siswa Exam Portal & Room
+    Route::middleware('can:access-siswa')->prefix('cbt/student')->name('cbt.student.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CbtStudentController::class, 'index'])->name('index');
+        Route::post('/start/{quizId}', [\App\Http\Controllers\CbtStudentController::class, 'start'])->name('start');
+        Route::get('/exam/{attemptId}', [\App\Http\Controllers\CbtStudentController::class, 'examRoom'])->name('exam');
+        Route::post('/exam/{attemptId}/save', [\App\Http\Controllers\CbtStudentController::class, 'saveAnswer'])->name('save');
+        Route::post('/exam/{attemptId}/finish', [\App\Http\Controllers\CbtStudentController::class, 'finish'])->name('finish');
+        Route::get('/result/{attemptId}', [\App\Http\Controllers\CbtStudentController::class, 'result'])->name('result');
+    });
 
     // Dashboard & analytics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -222,6 +250,21 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::get('attendance/scan-qr', [SelfAttendanceController::class, 'scanner'])->name('attendance.scan-qr');
             Route::post('attendance/scan-student-qr', [SelfAttendanceController::class, 'processScanStudentQr'])->name('attendance.scan-student-qr');
 
+            // Stasiun Tap Kartu / Pink RFID Reader Gate
+            Route::get('attendance/tap-station', [SelfAttendanceController::class, 'tapStation'])->name('attendance.tap-station');
+            Route::post('attendance/update-student-rfid', [SelfAttendanceController::class, 'updateStudentRfid'])->name('attendance.update-student-rfid');
+
+            // Pusat Generator Barcode & Kartu Siswa / Guru
+            Route::get('attendance/barcode-center', [AttendanceBarcodeController::class, 'index'])->name('attendance.barcode-center');
+            Route::get('attendance/barcode-print-sheet', [AttendanceBarcodeController::class, 'printSheet'])->name('attendance.barcode-print-sheet');
+            Route::get('attendance/barcode-print-cards', [AttendanceBarcodeController::class, 'printCards'])->name('attendance.barcode-print-cards');
+
+            // Presensi Mandiri Guru (Selfie + GPS)
+            Route::get('attendance/teacher-checkin', [TeacherAttendanceController::class, 'checkinView'])->name('attendance.teacher-checkin');
+            Route::post('attendance/teacher-checkin', [TeacherAttendanceController::class, 'checkIn'])->name('api.attendance.teacher.check-in');
+            Route::post('attendance/teacher-checkout', [TeacherAttendanceController::class, 'checkOut'])->name('api.attendance.teacher.check-out');
+            Route::get('attendance/teacher-status', [TeacherAttendanceController::class, 'status'])->name('api.attendance.teacher.status');
+
             // Schedules management (Kepala Sekolah/Admin only)
             Route::middleware('can:manage-admin')->group(function () {
                 Route::get('schedules/batch', [ScheduleController::class, 'batchCreate'])->name('schedules.batch');
@@ -241,6 +284,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     // Attendance & schedules — read access
     Route::middleware('can:access-siswa')->prefix('siswa')->group(function () {
         Route::get('attendance/self-checkin', [SelfAttendanceController::class, 'index'])->name('attendance.self-checkin');
+        Route::post('attendance/self-checkin/face-gps', [SelfAttendanceController::class, 'processFaceGpsCheckIn'])->name('attendance.self-checkin.face-gps');
         Route::get('attendance/status-poll', [SelfAttendanceController::class, 'checkStatusPoll'])->name('attendance.status-poll');
     });
 

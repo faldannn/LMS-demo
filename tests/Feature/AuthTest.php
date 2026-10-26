@@ -12,7 +12,7 @@ class AuthTest extends TestCase
 
     public function test_login_page_accessible(): void
     {
-        $this->get('/login')->assertStatus(200)->assertSee('LMS SMA Islam Assyafiiyah 02 Bekasi');
+        $this->get('/login')->assertStatus(200)->assertSee('Sekolah Digital');
     }
 
     public function test_user_can_login_with_correct_credentials(): void

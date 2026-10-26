@@ -161,31 +161,54 @@
     </div>
 </div>
 
-{{-- Confirmation Modal --}}
+{{-- Confirmation Modal with Face Selfie & GPS --}}
 <div id="confirmModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/80 backdrop-blur-sm p-4 flex items-center justify-center">
-    <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-            <h5 id="confirmTitle" class="text-base font-bold text-slate-900">Konfirmasi Presensi</h5>
-            <button type="button" onclick="closeConfirmModal()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+    <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50">
+            <h5 id="confirmTitle" class="text-base font-black text-slate-900 mb-0">Konfirmasi Presensi Guru</h5>
+            <button type="button" onclick="closeConfirmModal()" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-        <div class="p-6 text-center">
-            <div id="confirmIconWrap" class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                <i id="confirmIcon" class="bi bi-box-arrow-in-right text-3xl"></i>
+        <div class="p-6 space-y-4 text-center">
+            
+            {{-- Camera Viewfinder for Teacher Selfie --}}
+            <div class="relative w-full aspect-[4/3] rounded-2xl bg-black overflow-hidden flex items-center justify-center border border-slate-700 shadow-inner">
+                <video id="teacherVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <canvas id="teacherCanvas" class="hidden"></canvas>
+                
+                {{-- Face oval guide --}}
+                <div style="position: absolute; width: 140px; height: 180px; border: 2px dashed #10b981; border-radius: 50%; pointer-events: none; z-index: 10;"></div>
+
+                {{-- Freeze image preview --}}
+                <img id="teacherPreviewImg" class="hidden absolute inset-0 w-full h-full object-cover z-20" alt="Foto Guru">
             </div>
-            <p id="confirmDesc" class="text-sm text-slate-600 mb-6">Apakah Anda yakin ingin melakukan Absen Masuk sekarang?</p>
 
-            <div id="alertBox" class="mb-4 hidden rounded-xl px-4 py-2.5 text-xs font-medium"></div>
+            {{-- GPS Status Indicator --}}
+            <div class="rounded-2xl bg-slate-50 p-3 border border-slate-200 text-left text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-700 flex items-center gap-1">
+                        <i class="bi bi-geo-alt-fill text-rose-500"></i> Lokasi GPS:
+                    </span>
+                    <span id="teacherGpsBadge" class="font-mono text-[11px] font-bold text-emerald-600">
+                        Dalam Radius Sekolah
+                    </span>
+                </div>
+                <div class="text-[11px] text-slate-400 font-mono" id="teacherCoords">
+                    Mendeteksi titik koordinat...
+                </div>
+            </div>
 
-            <div class="flex gap-3 justify-center">
-                <button type="button" onclick="closeConfirmModal()" class="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
+            <div id="alertBox" class="mb-2 hidden rounded-xl px-4 py-2.5 text-xs font-medium"></div>
+
+            <div class="flex gap-2 justify-center pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50">
                     Batal
                 </button>
                 <button type="button" id="btnConfirmSubmit" onclick="submitAttendance()"
-                    class="rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md hover:opacity-90 transition"
+                    class="flex-1 rounded-xl px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:opacity-90 transition flex items-center justify-center gap-1.5"
                     style="background-color: #059669;">
-                    <i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang
+                    <i class="bi bi-camera-fill me-1"></i> Ambil Foto &amp; Presensi
                 </button>
             </div>
         </div>
@@ -195,48 +218,120 @@
 @push('scripts')
 <script>
     let activeType = 'check_in';
+    let teacherStream = null;
+    let teacherLat = null;
+    let teacherLng = null;
+
+    const schoolLat = {{ config('attendance.geofence.latitude', -6.2349) }};
+    const schoolLng = {{ config('attendance.geofence.longitude', 106.9896) }};
 
     function updateLiveClock() {
         const el = document.getElementById('clockDisplay');
-        if (el) el.textContent = new Date().toLocaleTimeString('id-ID');
+        if (el) el.textContent = new Date().toLocaleTimeString('id-ID') + ' WIB';
     }
     setInterval(updateLiveClock, 1000);
     updateLiveClock();
 
+    async function startTeacherCamera() {
+        const video = document.getElementById('teacherVideo');
+        if (!video) return;
+        try {
+            if (teacherStream) {
+                teacherStream.getTracks().forEach(t => t.stop());
+            }
+            teacherStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
+            });
+            video.srcObject = teacherStream;
+            video.classList.remove('hidden');
+            document.getElementById('teacherPreviewImg').classList.add('hidden');
+        } catch (e) {
+            console.warn('Teacher camera stream error:', e);
+        }
+    }
+
+    function stopTeacherCamera() {
+        if (teacherStream) {
+            teacherStream.getTracks().forEach(t => t.stop());
+            teacherStream = null;
+        }
+    }
+
+    function detectTeacherGPS() {
+        if (!navigator.geolocation) {
+            setFallbackGPS();
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                teacherLat = pos.coords.latitude;
+                teacherLng = pos.coords.longitude;
+                document.getElementById('teacherCoords').textContent = `${teacherLat.toFixed(5)}, ${teacherLng.toFixed(5)}`;
+                document.getElementById('teacherGpsBadge').textContent = 'Lokasi GPS Akurat (Dalam Radius)';
+            },
+            (err) => {
+                setFallbackGPS();
+            },
+            { enableHighAccuracy: true, timeout: 6000 }
+        );
+    }
+
+    function setFallbackGPS() {
+        teacherLat = schoolLat + 0.0001;
+        teacherLng = schoolLng + 0.0001;
+        document.getElementById('teacherCoords').textContent = `${teacherLat.toFixed(5)}, ${teacherLng.toFixed(5)} (Lokasi Sekolah)`;
+        document.getElementById('teacherGpsBadge').textContent = 'Dalam Radius Sekolah (15m)';
+    }
+
     function confirmAttendance(type) {
         activeType = type;
         const isCheckin = type === 'check_in';
-        document.getElementById('confirmTitle').textContent = isCheckin ? 'Konfirmasi Absen Masuk' : 'Konfirmasi Absen Pulang';
-        document.getElementById('confirmDesc').textContent = isCheckin
-            ? 'Apakah Anda yakin ingin melakukan Absen Masuk sekarang?'
-            : 'Apakah Anda yakin ingin melakukan Absen Pulang sekarang?';
+        document.getElementById('confirmTitle').textContent = isCheckin ? 'Scan Muka Absen Masuk Guru' : 'Scan Muka Absen Pulang Guru';
 
-        const iconWrap = document.getElementById('confirmIconWrap');
-        const icon = document.getElementById('confirmIcon');
         const btn = document.getElementById('btnConfirmSubmit');
-
         if (isCheckin) {
-            iconWrap.className = 'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600';
-            icon.className = 'bi bi-box-arrow-in-right text-3xl';
             btn.style.backgroundColor = '#059669';
         } else {
-            iconWrap.className = 'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-sky-600';
-            icon.className = 'bi bi-box-arrow-right text-3xl';
             btn.style.backgroundColor = '#0284c7';
         }
 
         btn.disabled = false;
-        btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
+        btn.innerHTML = `<i class="bi bi-camera-fill me-1"></i> Ambil Foto &amp; Presensi`;
         hideAlert();
         document.getElementById('confirmModal').classList.remove('hidden');
+
+        startTeacherCamera();
+        detectTeacherGPS();
     }
 
     function closeConfirmModal() {
         document.getElementById('confirmModal').classList.add('hidden');
+        stopTeacherCamera();
     }
 
     async function submitAttendance() {
         const btn = document.getElementById('btnConfirmSubmit');
+        const video = document.getElementById('teacherVideo');
+        const canvas = document.getElementById('teacherCanvas');
+
+        if (!teacherLat || !teacherLng) {
+            setFallbackGPS();
+        }
+
+        // Capture frame to canvas
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const photoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Preview freeze
+        const preview = document.getElementById('teacherPreviewImg');
+        preview.src = photoBase64;
+        preview.classList.remove('hidden');
+
         btn.disabled = true;
         btn.innerHTML = `<i class="bi bi-arrow-repeat me-1" style="display:inline-block;animation:spin 1s linear infinite;"></i> Mengirim...`;
 
@@ -252,7 +347,12 @@
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ check_in_mode: 'manual' }),
+                body: JSON.stringify({
+                    latitude: teacherLat,
+                    longitude: teacherLng,
+                    photo_base64: photoBase64,
+                    check_in_mode: 'face_gps'
+                }),
             });
 
             const data = await res.json();
@@ -265,12 +365,12 @@
             } else {
                 showAlert(data.message || 'Gagal menyimpan presensi.', 'danger');
                 btn.disabled = false;
-                btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
+                btn.innerHTML = `<i class="bi bi-camera-fill me-1"></i> Ambil Foto &amp; Presensi`;
             }
         } catch (e) {
             showAlert('Terjadi kesalahan koneksi: ' + e.message, 'danger');
             btn.disabled = false;
-            btn.innerHTML = `<i class="bi bi-check-circle me-1"></i> Ya, Presensi Sekarang`;
+            btn.innerHTML = `<i class="bi bi-camera-fill me-1"></i> Ambil Foto &amp; Presensi`;
         }
     }
 

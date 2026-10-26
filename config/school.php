@@ -6,17 +6,17 @@ return [
     | Identitas Sekolah & Sistem
     |--------------------------------------------------------------------------
     */
-    'system_name' => env('SYSTEM_NAME', 'SMA Islam Assyafiiyah 02 Bekasi'),
-    'system_short' => env('SYSTEM_SHORT', 'E-Learning'),
+    'system_name' => env('SYSTEM_NAME', 'Sekolah Digital'),
+    'system_short' => env('SYSTEM_SHORT', 'Sekolah Digital'),
     'system_version' => env('SYSTEM_VERSION', 'v.1.0'),
 
-    'name' => env('SCHOOL_NAME', 'SMA Islam Assyafiiyah 02 Bekasi'),
+    'name' => env('SCHOOL_NAME', 'Sekolah Digital'),
     'npsn' => env('SCHOOL_NPSN', ''),
     'address' => env('SCHOOL_ADDRESS', 'Jl. Raya Bekasi, Bekasi, Jawa Barat'),
     'phone' => env('SCHOOL_PHONE', ''),
-    'email' => env('SCHOOL_EMAIL', 'info@assyafiiyah02bekasi.sch.id'),
+    'email' => env('SCHOOL_EMAIL', 'info@sekolahdigital.sch.id'),
     'principal' => env('SCHOOL_PRINCIPAL', 'Kepala Sekolah'),
-    'type' => env('SCHOOL_TYPE', 'SMA Islam'),
+    'type' => env('SCHOOL_TYPE', 'Sekolah Digital'),
 
     /*
     |--------------------------------------------------------------------------

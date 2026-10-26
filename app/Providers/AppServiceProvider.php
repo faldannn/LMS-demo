@@ -106,6 +106,8 @@ class AppServiceProvider extends ServiceProvider
 
             config([
                 'school.name' => $settings['school_name'] ?? config('school.name'),
+                'school.system_name' => $settings['school_name'] ?? config('school.system_name'),
+                'school.system_short' => $settings['school_name'] ?? config('school.system_short'),
                 'school.address' => $settings['school_address'] ?? config('school.address'),
                 'school.phone' => $settings['school_phone'] ?? config('school.phone'),
                 'school.email' => $settings['school_email'] ?? config('school.email'),

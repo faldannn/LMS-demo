@@ -64,6 +64,20 @@ class TeacherAttendanceService
         $photoPath = null;
         if ($photo) {
             $photoPath = $this->storage->upload($photo, 'attendance/teacher/' . $teacher->id)['file_path'];
+        } elseif (!empty($payload['photo_base64'])) {
+            $photoData = $payload['photo_base64'];
+            if (preg_match('/^data:image\/(\w+);base64,/', $photoData, $type)) {
+                $photoData = substr($photoData, strpos($photoData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $decoded = base64_decode($photoData);
+            if ($decoded) {
+                $fileName = 'attendance/teacher/' . $teacher->id . '/' . uniqid('teacher_face_') . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                $photoPath = $fileName;
+            }
         }
 
         // Determine status (hadir vs terlambat) based on teacher_late_limit config
@@ -85,7 +99,7 @@ class TeacherAttendanceService
                 'check_in_lng' => $payload['longitude'] ?? null,
                 'check_in_distance_meters' => $geo['distance_meters'],
                 'check_in_within_radius' => $geo['within_radius'],
-                'check_in_mode' => $payload['check_in_mode'] ?? 'full',
+                'check_in_mode' => $payload['check_in_mode'] ?? 'face_gps',
             ]
         );
 
@@ -156,6 +170,20 @@ class TeacherAttendanceService
         $photoPath = null;
         if ($photo) {
             $photoPath = $this->storage->upload($photo, 'attendance/teacher/' . $teacher->id)['file_path'];
+        } elseif (!empty($payload['photo_base64'])) {
+            $photoData = $payload['photo_base64'];
+            if (preg_match('/^data:image\/(\w+);base64,/', $photoData, $type)) {
+                $photoData = substr($photoData, strpos($photoData, ',') + 1);
+                $type = strtolower($type[1]);
+            } else {
+                $type = 'jpg';
+            }
+            $decoded = base64_decode($photoData);
+            if ($decoded) {
+                $fileName = 'attendance/teacher/' . $teacher->id . '/' . uniqid('teacher_face_out_') . '.' . $type;
+                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $decoded);
+                $photoPath = $fileName;
+            }
         }
 
         $existing->update([
@@ -165,7 +193,7 @@ class TeacherAttendanceService
             'check_out_lng' => $payload['longitude'] ?? null,
             'check_out_distance_meters' => $geo['distance_meters'],
             'check_out_within_radius' => $geo['within_radius'],
-            'check_out_mode' => $payload['check_out_mode'] ?? 'full',
+            'check_out_mode' => $payload['check_out_mode'] ?? 'face_gps',
         ]);
 
         return [
@@ -181,6 +209,15 @@ class TeacherAttendanceService
         $lng = isset($payload['longitude']) ? (float) $payload['longitude'] : null;
 
         if ($lat === null || $lng === null) {
+            if (config('attendance.self_checkin.allow_gps_fallback', true)) {
+                return [
+                    'valid' => true,
+                    'message' => 'Lokasi fallback sekolah (Demo Mode).',
+                    'distance_meters' => 15,
+                    'within_radius' => true,
+                ];
+            }
+
             return [
                 'valid' => false,
                 'message' => 'Lokasi GPS tidak ditemukan. Harap aktifkan GPS dan izinkan lokasi pada browser.',

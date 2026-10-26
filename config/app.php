@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'LMS SMA Islam Assyafiiyah 02 Bekasi'),
+    'name' => env('APP_NAME', 'LMS Sekolah Digital'),
 
     /*
     |--------------------------------------------------------------------------

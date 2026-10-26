@@ -85,7 +85,7 @@ class TapAttendanceController extends Controller
      */
     public function status(Request $request): JsonResponse
     {
-        $schoolName = Setting::get('school_name', config('app.name', 'LMS Assyafiiyah'));
+        $schoolName = Setting::get('school_name', config('app.name', 'Sekolah Digital'));
         $lateLimit = Setting::get('late_threshold', config('attendance.late_limit', '07:15'));
 
         return response()->json([
@@ -96,6 +96,23 @@ class TapAttendanceController extends Controller
             'late_threshold' => $lateLimit,
             'supported_identifiers' => ['rfid_uid', 'nisn', 'nis'],
             'endpoint' => url('/api/v1/attendance/tap'),
+        ]);
+    }
+
+    /**
+     * Endpoint: GET /api/v1/attendance/tap/latest
+     * Polling log tap terkini untuk layar Stasiun Tap Kartu / Pink Gate.
+     */
+    public function latestTaps(Request $request): JsonResponse
+    {
+        $limit = (int) $request->input('limit', 20);
+        $recent = $this->tapService->getRecentTaps($limit);
+
+        return response()->json([
+            'success' => true,
+            'count' => count($recent),
+            'taps' => $recent,
+            'server_time' => now()->format('H:i:s'),
         ]);
     }
 }

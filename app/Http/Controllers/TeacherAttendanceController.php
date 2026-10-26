@@ -79,15 +79,16 @@ class TeacherAttendanceController extends Controller
         }
 
         $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'photo' => 'required|image|max:10240', // max 10MB
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'photo' => 'nullable|image|max:10240',
+            'photo_base64' => 'nullable|string',
             'check_in_mode' => 'nullable|string',
         ]);
 
         $result = $this->attendanceService->processCheckIn(
             $teacher,
-            $request->only(['latitude', 'longitude', 'check_in_mode']),
+            $request->only(['latitude', 'longitude', 'check_in_mode', 'photo_base64']),
             $request->file('photo'),
             [
                 'user_id' => $user->id,
@@ -109,15 +110,16 @@ class TeacherAttendanceController extends Controller
         }
 
         $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'photo' => 'required|image|max:10240', // max 10MB
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'photo' => 'nullable|image|max:10240',
+            'photo_base64' => 'nullable|string',
             'check_out_mode' => 'nullable|string',
         ]);
 
         $result = $this->attendanceService->processCheckOut(
             $teacher,
-            $request->only(['latitude', 'longitude', 'check_out_mode']),
+            $request->only(['latitude', 'longitude', 'check_out_mode', 'photo_base64']),
             $request->file('photo'),
             [
                 'user_id' => $user->id,

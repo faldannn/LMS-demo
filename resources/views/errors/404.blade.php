@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halaman Tidak Ditemukan — {{ config('school.system_short', 'LMS Assyafiiyah') }}</title>
+    <title>Halaman Tidak Ditemukan — {{ config('school.system_short', 'Sekolah Digital') }}</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

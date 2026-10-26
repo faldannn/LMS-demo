@@ -10,11 +10,11 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
-            ['school_name', 'SMA Islam Assyafiiyah 02 Bekasi', 'school'],
+            ['school_name', 'Sekolah Digital', 'school'],
             ['school_npsn', '', 'school'],
             ['school_address', 'Jl. Raya Bekasi, Bekasi, Jawa Barat', 'school'],
             ['school_phone', '', 'school'],
-            ['school_email', 'info@assyafiiyah02bekasi.sch.id', 'school'],
+            ['school_email', 'info@sekolahdigital.sch.id', 'school'],
             ['school_principal', 'Kepala Sekolah', 'school'],
             ['att_start_time', '07:00', 'attendance'],
             ['att_late_limit', '07:15', 'attendance'],

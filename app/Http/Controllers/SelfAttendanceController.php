@@ -6,15 +6,26 @@ use App\Models\Attendance;
 use App\Models\AttendanceDetail;
 use App\Models\Classes;
 use App\Models\SelfAttendanceLog;
+use App\Models\Setting;
 use App\Models\Student;
+use App\Services\GeofenceService;
 use App\Services\QrAttendanceService;
+use App\Services\SelfAttendanceService;
+use App\Services\TapAttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SelfAttendanceController extends Controller
 {
+    public function __construct(
+        private readonly SelfAttendanceService $selfAttendanceService,
+        private readonly TapAttendanceService $tapService,
+        private readonly GeofenceService $geofence,
+    ) {
+    }
+
     /**
-     * Tampilan Kartu QR Siswa (Hanya menampilkan Kode QR siswa)
+     * Tampilan Presensi Mandiri Siswa (Scan Muka, GPS, Kartu Pelajar, Barcode & QR)
      */
     public function index()
     {
@@ -37,9 +48,10 @@ class SelfAttendanceController extends Controller
             if ($todayDetail) {
                 $todayLog = (object) [
                     'checked_in_at' => $todayDetail->check_in ? \Carbon\Carbon::parse($todayDetail->check_in) : now(),
-                    'mode_label' => 'Scan QR Guru',
+                    'mode_label' => 'Scan Presensi',
                     'notes' => $todayDetail->notes ?: 'Tercatat Hadir',
                     'attendance_date' => today(),
+                    'photo_path' => null,
                 ];
             }
         }
@@ -49,7 +61,10 @@ class SelfAttendanceController extends Controller
             ? config('attendance.student_checkin_start_siang', '11:30:00')
             : config('attendance.student_checkin_start', '06:00:00');
 
-        return view('attendance.self-checkin', compact('student', 'todayLog', 'checkinStart', 'session'));
+        $geofenceConfig = $this->geofence->getConfig();
+        $schoolName = Setting::get('school_name', config('school.name', 'Sekolah Digital'));
+
+        return view('attendance.self-checkin', compact('student', 'todayLog', 'checkinStart', 'session', 'geofenceConfig', 'schoolName'));
     }
 
     /**
@@ -143,6 +158,14 @@ class SelfAttendanceController extends Controller
         // Cek langsung berdasarkan NIS
         if (!$student) {
             $student = Student::with('class')->where('nis', $rawCode)->first();
+        }
+
+        // Cek berdasarkan RFID atau NISN (alat pink / barcode RFID)
+        if (!$student) {
+            $student = Student::with('class')
+                ->where('rfid', $rawCode)
+                ->orWhere('nisn', $rawCode)
+                ->first();
         }
 
         // Cek via helper QrAttendanceService
@@ -249,6 +272,140 @@ class SelfAttendanceController extends Controller
             ->paginate(25);
 
         return view('attendance.self-logs', compact('logs'));
+    }
+
+    /**
+     * Proses Presensi Mandiri Siswa via Scan Wajah & GPS (Selfie + Geolocation)
+     */
+    public function processFaceGpsCheckIn(Request $request): JsonResponse
+    {
+        $student = auth()->user()->student;
+        abort_unless($student, 403, 'Hanya siswa yang dapat melakukan presensi mandiri.');
+
+        $request->validate([
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'accuracy' => 'nullable|numeric',
+            'photo' => 'nullable|image|max:8192',
+            'photo_base64' => 'nullable|string',
+            'fallback_reason' => 'nullable|string|max:500',
+        ]);
+
+        $meta = [
+            'user_id' => auth()->id(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'device_type' => $request->input('device_type', 'Browser / Mobile'),
+            'browser' => $request->input('browser', 'Browser'),
+        ];
+
+        $payload = [
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
+            'check_in_mode' => 'face_gps',
+            'photo_base64' => $request->input('photo_base64'),
+            'fallback_reason' => $request->input('fallback_reason'),
+        ];
+
+        $result = $this->selfAttendanceService->processCheckIn(
+            $student,
+            $payload,
+            $request->file('photo'),
+            $meta
+        );
+
+        if (!$result['success']) {
+            return response()->json($result, 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'],
+            'status' => $result['status'],
+            'checked_in_at' => $result['checked_in_at'],
+            'distance_meters' => $result['distance_meters'],
+            'within_radius' => $result['within_radius'],
+            'photo_url' => $result['photo_url'],
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'nis' => $student->nis,
+                'class' => $student->class?->name ?? 'Kelas',
+            ],
+        ]);
+    }
+
+    /**
+     * Tampilan Stasiun Tap Kartu RFID / Pink Reader Gate (Kiosk / Gate Display)
+     */
+    public function tapStation(Request $request)
+    {
+        $this->authorizeStaff();
+
+        $today = today()->toDateString();
+        $recentTaps = $this->tapService->getRecentTaps(25);
+        $todayCount = AttendanceDetail::whereHas('attendance', fn ($q) => $q->where('date', $today))->count();
+
+        // Sample siswa untuk fitur simulasi tap kartu
+        $students = Student::with('class')
+            ->where('status', true)
+            ->orderBy('name')
+            ->take(100)
+            ->get();
+
+        $classes = Classes::orderBy('name')->get();
+        $apiKey = $this->tapService->getApiKey();
+        $lateLimit = Setting::get('late_threshold', config('attendance.late_limit', '07:15'));
+        $schoolName = Setting::get('school_name', config('school.name', 'Sekolah Digital'));
+
+        return view('attendance.tap-station', compact(
+            'recentTaps',
+            'todayCount',
+            'students',
+            'classes',
+            'apiKey',
+            'lateLimit',
+            'schoolName'
+        ));
+    }
+
+    /**
+     * Daftarkan nomor kartu RFID siswa secara cepat
+     */
+    public function updateStudentRfid(Request $request): JsonResponse
+    {
+        $this->authorizeStaff();
+
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'rfid' => 'required|string|max:100',
+        ]);
+
+        $rfid = trim($request->input('rfid'));
+
+        // Cek jika nomor RFID sudah dipakai siswa lain
+        $existing = Student::where('rfid', $rfid)->where('id', '!=', $request->student_id)->first();
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => "Kartu RFID '{$rfid}' sudah digunakan oleh siswa {$existing->name} ({$existing->nis}).",
+            ], 422);
+        }
+
+        $student = Student::with('class')->findOrFail($request->student_id);
+        $student->update(['rfid' => $rfid]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Kartu RFID '{$rfid}' berhasil ditautkan ke {$student->name}.",
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'nis' => $student->nis,
+                'rfid' => $student->rfid,
+                'class' => $student->class?->name ?? 'Kelas',
+            ],
+        ]);
     }
 
     private function authorizeStaff(): void

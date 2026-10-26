@@ -12,8 +12,11 @@
     <a href="{{ route('elearning.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('elearning.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-laptop @active('elearning.*', 'text-emerald-400')"></i> Portal E-Learning
     </a>
-    <a href="{{ route('attendance.mine') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.mine', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('attendance.self-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-calendar-check @active('attendance.mine', 'text-emerald-400') @active('attendance.self-checkin', 'text-emerald-400')"></i> Absensi
+    <a href="{{ route('attendance.self-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-person-bounding-box @active('attendance.self-checkin', 'text-emerald-400')"></i> Presensi Muka &amp; Barcode
+    </a>
+    <a href="{{ route('attendance.mine') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.mine', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-calendar-check @active('attendance.mine', 'text-emerald-400')"></i> Riwayat Absensi
     </a>
     <a href="{{ route('schedules.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('schedules.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-calendar3 @active('schedules.*', 'text-emerald-400')"></i> Jadwal Pelajaran
@@ -24,8 +27,8 @@
     <a href="{{ route('student.assignments.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('student.assignments.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-journal-check @active('student.assignments.*', 'text-emerald-400')"></i> Tugas Saya
     </a>
-    <a href="{{ route('sso.cbt') }}" target="_blank" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-white/60 hover:bg-white/5 hover:text-white">
-        <i class="bi bi-pencil-square text-white/60 group-hover:text-white"></i> Ujian CBT
+    <a href="{{ route('cbt.student.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('cbt.student.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-pencil-square @active('cbt.student.*', 'text-emerald-400', 'text-white/60 group-hover:text-white')"></i> Ujian CBT
     </a>
 </div>
 @endrole
@@ -35,6 +38,16 @@
     <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Akademik</div>
     <a href="{{ route('elearning.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('elearning.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('materials.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('assignments.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-laptop @active('elearning.*', 'text-emerald-400')"></i> Portal E-Learning
+    </a>
+
+    <a href="{{ route('attendance.teacher-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.teacher-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-person-bounding-box @active('attendance.teacher-checkin', 'text-emerald-400')"></i> Presensi Muka Guru (GPS)
+    </a>
+    <a href="{{ route('attendance.tap-station') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.tap-station', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-credit-card-2-front-fill @active('attendance.tap-station', 'text-rose-400')"></i> Tap Kartu / Alat Pink
+    </a>
+    <a href="{{ route('attendance.barcode-center') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.barcode-center', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-upc-scan @active('attendance.barcode-center', 'text-emerald-400')"></i> Pusat Barcode &amp; Kartu
     </a>
 
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
@@ -60,8 +73,8 @@
     <a href="{{ route('schedules.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('schedules.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-calendar3 @active('schedules.*', 'text-emerald-400')"></i> Jadwal Pelajaran
     </a>
-    <a href="{{ route('sso.cbt') }}" target="_blank" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-white/60 hover:bg-white/5 hover:text-white">
-        <i class="bi bi-pencil-square text-white/60 group-hover:text-white"></i> Ujian CBT
+    <a href="{{ route('cbt.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('cbt.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-pencil-square @active('cbt.*', 'text-emerald-400', 'text-white/60 group-hover:text-white')"></i> Ujian CBT &amp; Token
     </a>
 </div>
 
@@ -69,15 +82,24 @@
 
 @role('kepala_sekolah')
 <div class="py-2">
-    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Monitoring & Presensi</div>
+    <div class="px-5 py-2 text-[10px] font-bold uppercase tracking-wider text-white/30">Presensi &amp; Perangkat Pintar</div>
+    <a href="{{ route('attendance.tap-station') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.tap-station', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-credit-card-2-front-fill @active('attendance.tap-station', 'text-rose-400')"></i> Tap Kartu / Alat Pink
+    </a>
+    <a href="{{ route('attendance.barcode-center') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.barcode-center', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-upc-scan @active('attendance.barcode-center', 'text-emerald-400')"></i> Pusat Barcode &amp; Kartu
+    </a>
     <a href="{{ route('attendance.scan-qr') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.scan-qr', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-camera-fill @active('attendance.scan-qr', 'text-emerald-400')"></i> Scan QR Siswa
+        <i class="bi bi-camera-fill @active('attendance.scan-qr', 'text-emerald-400')"></i> Scanner Presensi Multi-Alat
     </a>
     <a href="{{ route('attendance.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.index', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white') @active('attendance.show', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi(Guru dan Kelas)
+        <i class="bi bi-clipboard-check @active('attendance.index', 'text-emerald-400') @active('attendance.show', 'text-emerald-400')"></i> Rekap Presensi (Guru &amp; Kelas)
     </a>
     <a href="{{ route('attendance.self-logs') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.self-logs', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
-        <i class="bi bi-qr-code-scan @active('attendance.self-logs', 'text-emerald-400')"></i> Log Presensi QR Siswa
+        <i class="bi bi-qr-code-scan @active('attendance.self-logs', 'text-emerald-400')"></i> Log Presensi Mandiri
+    </a>
+    <a href="{{ route('attendance.teacher-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.teacher-checkin', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-person-bounding-box @active('attendance.teacher-checkin', 'text-emerald-400')"></i> Presensi Mandiri Guru (GPS)
     </a>
     @if(\App\Models\Setting::isFeatureEnabled('subject_attendance'))
     <a href="{{ route('attendance.create') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('attendance.create', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
@@ -87,8 +109,8 @@
     <a href="{{ route('elearning.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('elearning.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
         <i class="bi bi-laptop @active('elearning.*', 'text-emerald-400')"></i> Portal E-Learning
     </a>
-    <a href="{{ route('sso.cbt') }}" target="_blank" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-white/60 hover:bg-white/5 hover:text-white">
-        <i class="bi bi-pencil-square text-white/60 group-hover:text-white"></i> Ujian CBT
+    <a href="{{ route('cbt.index') }}" class="group mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors @active('cbt.*', 'bg-white/15 text-white font-bold shadow-sm', 'text-white/60 hover:bg-white/5 hover:text-white')">
+        <i class="bi bi-pencil-square @active('cbt.*', 'text-emerald-400', 'text-white/60 group-hover:text-white')"></i> Ujian CBT &amp; Token
     </a>
 </div>
 <div class="py-2">

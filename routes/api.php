@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Route;
 // Universal Tap Attendance API
 Route::post('/v1/attendance/tap', [TapAttendanceController::class, 'handle'])->name('api.v1.attendance.tap');
 Route::get('/v1/attendance/tap/status', [TapAttendanceController::class, 'status'])->name('api.v1.attendance.tap.status');
+Route::get('/v1/attendance/tap/latest', [TapAttendanceController::class, 'latestTaps'])->name('api.v1.attendance.tap.latest');
 
 // Alias routes for convenience
 Route::post('/attendance/tap', [TapAttendanceController::class, 'handle'])->name('api.attendance.tap');
 Route::get('/attendance/tap/status', [TapAttendanceController::class, 'status'])->name('api.attendance.tap.status');
+Route::get('/attendance/tap/latest', [TapAttendanceController::class, 'latestTaps'])->name('api.attendance.tap.latest');
 
 // Riansa Kartu RFID Attendance Webhook Route
 Route::post('/v1/kartu/webhook', [RiansaKartuWebhookController::class, 'handle'])->name('api.v1.kartu.webhook');
