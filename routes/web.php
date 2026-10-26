@@ -107,6 +107,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
 
     // Dashboard & analytics
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/index', [DashboardController::class, 'index'])->name('dashboard.index');
 
     // Laporan Analitik (Kepala Sekolah)
     Route::middleware('role:kepala_sekolah')->prefix('reports')->name('reports.')->group(function () {

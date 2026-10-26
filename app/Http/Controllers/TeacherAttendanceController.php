@@ -19,7 +19,7 @@ class TeacherAttendanceController extends Controller
         $teacher = $user->teacher;
 
         if (!$teacher) {
-            return redirect()->route('dashboard.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Data guru Anda tidak ditemukan.');
         }
 
