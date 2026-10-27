@@ -72,7 +72,7 @@
     "MYSQL_ATTR_SSL_CA": "true",
     "MYSQL_ATTR_SSL_VERIFY_SERVER_CERT": "false",
     "CACHE_STORE": "file",
-    "SESSION_DRIVER": "cookie",
+    "SESSION_DRIVER": "database",
     "LOG_CHANNEL": "stderr"
   }
 }

@@ -201,9 +201,36 @@ class CbtController extends Controller
 
             return 'uploads/questions/' . $filename;
         } catch (\Throwable $e) {
-            // Serverless fallback: convert to base64
+            // Serverless fallback: compress and encode as base64 data URI
+            $realPath = $file->getRealPath();
             $mime = $file->getMimeType() ?: 'image/jpeg';
-            $data = base64_encode(file_get_contents($file->getRealPath()));
+
+            if (function_exists('imagecreatefromstring')) {
+                try {
+                    $raw = file_get_contents($realPath);
+                    $src = @imagecreatefromstring($raw);
+                    if ($src !== false) {
+                        $w = imagesx($src);
+                        $h = imagesy($src);
+                        $maxW = 1000;
+                        if ($w > $maxW) {
+                            $newW = $maxW;
+                            $newH = (int) ($h * ($maxW / $w));
+                            $dst = imagecreatetruecolor($newW, $newH);
+                            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $w, $h);
+                            ob_start();
+                            imagejpeg($dst, null, 75);
+                            $compressed = ob_get_clean();
+                            imagedestroy($dst);
+                            imagedestroy($src);
+                            return 'data:image/jpeg;base64,' . base64_encode($compressed);
+                        }
+                        imagedestroy($src);
+                    }
+                } catch (\Throwable $ignored) {}
+            }
+
+            $data = base64_encode(file_get_contents($realPath));
             return "data:{$mime};base64,{$data}";
         }
     }
@@ -282,7 +309,8 @@ class CbtController extends Controller
                 ->with('success', 'Soal berhasil ditambahkan ke ujian.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Gagal menambahkan soal: ' . $e->getMessage());
+            return redirect()->route('cbt.show', $quiz->id)
+                ->with('error', 'Gagal menambahkan soal: ' . Str::limit($e->getMessage(), 180));
         }
     }
 
@@ -359,7 +387,8 @@ class CbtController extends Controller
                 ->with('success', 'Butir soal berhasil diperbarui.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui soal: ' . $e->getMessage());
+            return redirect()->route('cbt.show', $quiz->id)
+                ->with('error', 'Gagal memperbarui soal: ' . Str::limit($e->getMessage(), 180));
         }
     }
 
