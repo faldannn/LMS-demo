@@ -29,12 +29,19 @@ putenv('VERCEL=1');
 $_ENV['VERCEL'] = '1';
 $_SERVER['VERCEL'] = '1';
 
+putenv('LARAVEL_STORAGE_PATH=/tmp/storage');
+$_ENV['LARAVEL_STORAGE_PATH'] = '/tmp/storage';
+$_SERVER['LARAVEL_STORAGE_PATH'] = '/tmp/storage';
+
 // Fallback environment variables untuk Vercel Serverless
 $defaults = [
     'APP_NAME' => 'LMS Sekolah Digital',
     'APP_ENV' => 'production',
     'APP_DEBUG' => 'false',
     'APP_KEY' => 'base64:biqCuYXu4iPsb4IKWrlvFxV5cy6odGJV2AwAyk9+rAU=',
+    'LARAVEL_STORAGE_PATH' => '/tmp/storage',
+    'CACHE_FILE_PATH' => '/tmp/storage/framework/cache/data',
+    'SESSION_FILE_PATH' => '/tmp/storage/framework/sessions',
     'APP_PACKAGES_CACHE' => '/tmp/storage/bootstrap/cache/packages.php',
     'APP_SERVICES_CACHE' => '/tmp/storage/bootstrap/cache/services.php',
     'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',

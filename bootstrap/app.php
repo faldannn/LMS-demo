@@ -76,7 +76,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->create();
 
-if (isset($_SERVER['VERCEL']) || isset($_ENV['VERCEL']) || env('VERCEL') || is_dir('/tmp')) {
+if (isset($_ENV['LARAVEL_STORAGE_PATH']) || isset($_SERVER['LARAVEL_STORAGE_PATH'])) {
+    $app->useStoragePath($_ENV['LARAVEL_STORAGE_PATH'] ?? $_SERVER['LARAVEL_STORAGE_PATH']);
+} elseif (isset($_SERVER['VERCEL']) || isset($_ENV['VERCEL']) || env('VERCEL') || is_dir('/tmp')) {
     $app->useStoragePath('/tmp/storage');
 }
 
