@@ -27,7 +27,7 @@
         <div class="relative z-10 w-full max-w-[420px] rounded-2xl border border-white/10 bg-white/10 backdrop-blur-2xl shadow-2xl shadow-brand-800/40 p-6 sm:p-8" style="max-width: 420px;">
         <div class="mb-8 text-center">
             <div class="mx-auto mb-5 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/20 shadow-lg shadow-brand-500/20 p-1">
-                <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo Sekolah" class="h-full w-full rounded-full object-contain p-1 bg-white">
+                <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo Sekolah" class="h-full w-full rounded-full object-cover">
             </div>
             <h1 class="text-lg sm:text-xl md:text-2xl font-extrabold text-white text-center leading-snug">{{ config('school.name') }}</h1>
             <p class="mt-2 text-xs sm:text-sm text-white/70">Sistem Pembelajaran Digital</p>

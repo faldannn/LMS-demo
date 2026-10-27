@@ -31,7 +31,7 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col overflow-y-auto text-white shadow-2xl transition-transform duration-300 lg:translate-x-0" style="background: linear-gradient(180deg, var(--color-brand-800), var(--color-brand-700));">
         
         <div class="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-            <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo" class="h-10 w-10 shrink-0 rounded-full object-cover p-1 bg-white ring-1 ring-white/20">
+            <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo" class="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-white/20">
             <div>
                 <div class="text-sm font-bold text-white">{{ config('school.system_name') }}</div>
             </div>
