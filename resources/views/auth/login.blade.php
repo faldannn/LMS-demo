@@ -63,19 +63,23 @@
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        body {
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+            overflow: hidden;
+        }
+
+        body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-base);
             color: var(--text-body);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            overflow-x: hidden;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
         /* Ambient floating neumorphic spheres & rings */
@@ -130,49 +134,6 @@
             opacity: 0.7;
         }
 
-        .ambient-bottom-right-panel {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 200px;
-            height: 180px;
-            pointer-events: none;
-            z-index: 1;
-            overflow: hidden;
-        }
-
-        .ambient-bottom-right-arc {
-            position: absolute;
-            bottom: -80px;
-            right: -80px;
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            border: 16px solid var(--neu-shadow-light);
-            box-shadow: -10px -10px 25px var(--neu-shadow-dark-subtle);
-        }
-
-        .ambient-bottom-tagline {
-            position: absolute;
-            bottom: 30px;
-            right: 32px;
-            text-align: right;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            line-height: 1.5;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .ambient-bottom-tagline span {
-            display: block;
-            width: 18px;
-            height: 2px;
-            background: var(--text-muted);
-            margin: 6px 0 0 auto;
-        }
-
         /* Theme Toggle Button (Top Right) */
         .theme-toggle-btn {
             position: fixed;
@@ -209,10 +170,10 @@
             position: relative;
             z-index: 10;
             width: 100%;
-            max-width: 420px;
-            padding: 36px 28px 28px;
-            margin: 20px auto;
-            border-radius: 40px;
+            max-width: 390px;
+            padding: 24px 26px 18px;
+            margin: auto;
+            border-radius: 36px;
             background: var(--bg-card);
             border: 1.5px solid var(--border-glass);
             box-shadow: 18px 18px 40px var(--neu-shadow-dark),
@@ -222,20 +183,20 @@
 
         /* 3D Neumorphic Logo Badge */
         .logo-squircle {
-            width: 110px;
-            height: 110px;
-            margin: 0 auto 24px;
-            border-radius: 32px;
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 12px;
+            border-radius: 26px;
             background: var(--bg-card);
             border: 1.5px solid var(--border-glass);
-            box-shadow: 10px 10px 24px var(--neu-shadow-dark),
-                        -10px -10px 24px var(--neu-shadow-light),
+            box-shadow: 8px 8px 20px var(--neu-shadow-dark),
+                        -8px -8px 20px var(--neu-shadow-light),
                         inset 2px 2px 4px rgba(255, 255, 255, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 14px;
+            padding: 10px;
         }
 
         .logo-squircle img {
@@ -248,19 +209,19 @@
 
         /* Headings */
         .login-title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             color: var(--text-title);
-            margin: 0 0 6px;
+            margin: 0 0 2px;
             letter-spacing: -0.5px;
         }
 
         .login-subtitle {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: var(--text-subtitle);
-            margin: 0 0 28px;
-            letter-spacing: 1px;
+            margin: 0 0 16px;
+            letter-spacing: 0.5px;
         }
 
         /* Alert Box */
@@ -286,17 +247,17 @@
         /* Neumorphic Input Group */
         .input-pill {
             position: relative;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
             width: 100%;
-            height: 56px;
-            border-radius: 24px;
+            height: 50px;
+            border-radius: 20px;
             background: var(--input-bg);
             border: 1px solid var(--border-glass);
-            box-shadow: 6px 6px 16px var(--neu-shadow-dark-subtle),
-                        -6px -6px 16px var(--neu-shadow-light);
+            box-shadow: 5px 5px 12px var(--neu-shadow-dark-subtle),
+                        -5px -5px 12px var(--neu-shadow-light);
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 18px;
             transition: all 0.25s ease;
         }
 
@@ -308,9 +269,9 @@
         }
 
         .input-pill .input-icon {
-            font-size: 18px;
+            font-size: 17px;
             color: var(--text-subtitle);
-            margin-right: 14px;
+            margin-right: 12px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -322,7 +283,7 @@
             outline: none;
             background: transparent;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 500;
             color: var(--input-text);
         }
@@ -339,7 +300,7 @@
             color: var(--text-subtitle);
             cursor: pointer;
             padding: 4px;
-            font-size: 18px;
+            font-size: 17px;
             display: flex;
             align-items: center;
         }
@@ -353,9 +314,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             padding: 0 4px;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .checkbox-label {
@@ -371,9 +332,9 @@
         .checkbox-label input[type="checkbox"] {
             appearance: none;
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 6px;
+            width: 17px;
+            height: 17px;
+            border-radius: 5px;
             background: var(--input-bg);
             border: 1px solid var(--border-glass);
             box-shadow: 2px 2px 5px var(--neu-shadow-dark-subtle),
@@ -406,7 +367,7 @@
             color: #2563eb;
             text-decoration: none;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12.5px;
             cursor: pointer;
             transition: color 0.2s ease;
         }
@@ -419,8 +380,8 @@
         /* Glowing Blue Pill Button */
         .btn-login {
             width: 100%;
-            height: 56px;
-            border-radius: 28px;
+            height: 50px;
+            border-radius: 25px;
             border: none;
             outline: none;
             background: linear-gradient(135deg, var(--btn-gradient-from) 0%, var(--btn-gradient-mid) 50%, var(--btn-gradient-to) 100%);
@@ -428,7 +389,7 @@
                         0 4px 10px -2px var(--btn-shadow);
             color: #ffffff;
             font-family: inherit;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: 0.5px;
             display: flex;
@@ -436,7 +397,7 @@
             justify-content: center;
             cursor: pointer;
             position: relative;
-            padding: 0 10px 0 24px;
+            padding: 0 8px 0 24px;
             transition: all 0.25s ease;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
@@ -456,12 +417,12 @@
         .btn-login .btn-text {
             flex-grow: 1;
             text-align: center;
-            padding-left: 36px;
+            padding-left: 30px;
         }
 
         .btn-login .btn-arrow-badge {
-            width: 38px;
-            height: 38px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(4px);
@@ -469,7 +430,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 15px;
             color: #ffffff;
             transition: transform 0.25s ease;
             flex-shrink: 0;
@@ -485,7 +446,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 28px 0 20px;
+            margin: 16px 0 12px;
             position: relative;
         }
 
@@ -497,7 +458,7 @@
 
         .divider-text {
             padding: 0 14px;
-            font-size: 10px;
+            font-size: 9.5px;
             font-weight: 700;
             letter-spacing: 2px;
             color: var(--text-muted);
@@ -509,18 +470,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 18px;
-            margin-bottom: 28px;
+            gap: 14px;
+            margin-bottom: 14px;
         }
 
         .social-btn {
-            width: 54px;
-            height: 54px;
-            border-radius: 18px;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
             background: var(--bg-card);
             border: 1.5px solid var(--border-glass);
-            box-shadow: 6px 6px 14px var(--neu-shadow-dark-subtle),
-                        -6px -6px 14px var(--neu-shadow-light);
+            box-shadow: 5px 5px 12px var(--neu-shadow-dark-subtle),
+                        -5px -5px 12px var(--neu-shadow-light);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -532,8 +493,8 @@
 
         .social-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 8px 8px 18px var(--neu-shadow-dark-subtle),
-                        -8px -8px 18px var(--neu-shadow-light);
+            box-shadow: 7px 7px 16px var(--neu-shadow-dark-subtle),
+                        -7px -7px 16px var(--neu-shadow-light);
         }
 
         .social-btn:active {
@@ -543,15 +504,15 @@
         }
 
         .social-btn svg {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
         }
 
         /* Bottom Footer */
         .footer-tagline {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             color: var(--text-muted);
             text-transform: uppercase;
         }
@@ -606,12 +567,21 @@
             transform: translateY(-1px);
         }
 
+        @media (max-height: 600px) {
+            body {
+                overflow-y: auto;
+            }
+        }
+
         @media (max-width: 480px) {
+            body {
+                overflow-y: auto;
+            }
             .login-wrapper {
                 box-shadow: none;
                 border: none;
                 background: transparent;
-                padding: 20px 16px;
+                padding: 16px 12px;
             }
             .ambient-top-left-ring, .ambient-top-right-sphere, .ambient-bottom-left-sphere {
                 opacity: 0.4;
@@ -626,14 +596,6 @@
     <div class="ambient-sphere ambient-top-left-glow"></div>
     <div class="ambient-sphere ambient-top-right-sphere"></div>
     <div class="ambient-sphere ambient-bottom-left-sphere"></div>
-
-    <div class="ambient-bottom-right-panel">
-        <div class="ambient-bottom-right-arc"></div>
-        <div class="ambient-bottom-tagline">
-            More<br>Than<br>A System
-            <span></span>
-        </div>
-    </div>
 
     <!-- Dark Mode Toggle Button (Top Right) -->
     <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Ganti Tema (Light/Dark)">
