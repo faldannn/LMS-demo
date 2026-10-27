@@ -655,11 +655,107 @@ TEXT;
         $quiz = Quiz::with([
             'classSubject.class',
             'classSubject.subject',
+            'targetClasses',
             'attempts.student.user',
+            'attempts.student.class',
             'attempts.answers',
         ])->findOrFail($id);
 
         return view('cbt.results', compact('quiz'));
+    }
+
+    /**
+     * Detail Lembar Jawaban Siswa & Kunci Soal (Modal AJAX & Full Page)
+     */
+    public function attemptDetail(Request $request, int $attemptId): View|JsonResponse
+    {
+        $attempt = QuizAttempt::with([
+            'quiz.classSubject.subject',
+            'quiz.classSubject.teacher.user',
+            'student.user',
+            'student.class',
+            'answers.option',
+        ])->findOrFail($attemptId);
+
+        $quiz = $attempt->quiz;
+        $questions = Question::with('options')
+            ->where('quiz_id', $quiz->id)
+            ->orderBy('order_number')
+            ->get();
+
+        $answersByQuestion = $attempt->answers->keyBy('question_id');
+
+        // Statistik benar, salah, dan tidak dijawab
+        $correctCount = 0;
+        $incorrectCount = 0;
+        $unansweredCount = 0;
+
+        foreach ($questions as $q) {
+            $ans = $answersByQuestion->get($q->id);
+            if (!$ans || (!$ans->question_option_id && empty($ans->essay_answer) && empty($ans->matching_answer))) {
+                $unansweredCount++;
+            } elseif ($ans->is_correct) {
+                $correctCount++;
+            } else {
+                $incorrectCount++;
+            }
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'attempt' => [
+                    'id' => $attempt->id,
+                    'student_name' => $attempt->student?->user?->name ?? 'Siswa',
+                    'student_nisn' => $attempt->student?->nisn ?? '-',
+                    'class_name' => $attempt->student?->class?->name ?? ($quiz->classSubject?->class?->name ?? '-'),
+                    'score' => $attempt->score,
+                    'pass_score' => $quiz->pass_score,
+                    'status' => $attempt->status,
+                    'is_passed' => $attempt->score >= $quiz->pass_score,
+                    'start_time' => $attempt->start_time ? $attempt->start_time->format('d/m/Y H:i') : '-',
+                    'end_time' => $attempt->end_time ? $attempt->end_time->format('d/m/Y H:i') : '-',
+                    'correct_count' => $correctCount,
+                    'incorrect_count' => $incorrectCount,
+                    'unanswered_count' => $unansweredCount,
+                    'total_questions' => $questions->count(),
+                ],
+                'quiz' => [
+                    'id' => $quiz->id,
+                    'title' => $quiz->title,
+                    'subject' => $quiz->classSubject?->subject?->name ?? 'Mapel',
+                ],
+                'questions' => $questions->map(function ($q) use ($answersByQuestion) {
+                    $ans = $answersByQuestion->get($q->id);
+                    $hasAnswered = $ans && ($ans->question_option_id || !empty($ans->essay_answer) || !empty($ans->matching_answer));
+
+                    return [
+                        'id' => $q->id,
+                        'order_number' => $q->order_number,
+                        'type' => $q->type,
+                        'points' => $q->points,
+                        'question_text' => $q->question_text,
+                        'image_path' => $q->image_path,
+                        'has_answered' => $hasAnswered,
+                        'student_option_id' => $ans?->question_option_id,
+                        'student_essay' => $ans?->essay_answer,
+                        'student_matching' => $ans?->matching_answer,
+                        'is_correct' => $ans ? (bool) $ans->is_correct : false,
+                        'score_earned' => $ans?->score ?? 0,
+                        'options' => $q->options->map(function ($opt) {
+                            return [
+                                'id' => $opt->id,
+                                'option_text' => $opt->option_text,
+                                'is_correct' => (bool) $opt->is_correct,
+                                'order_number' => $opt->order_number,
+                            ];
+                        }),
+                    ];
+                }),
+            ]);
+        }
+
+        return view('cbt.attempt-detail', compact('attempt', 'quiz', 'questions', 'answersByQuestion', 'correctCount', 'incorrectCount', 'unansweredCount'));
     }
 
     /**

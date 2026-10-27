@@ -90,6 +90,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('/detail/{id}/import', [\App\Http\Controllers\CbtController::class, 'importQuestions'])->name('questions.import');
         Route::get('/template/{format?}', [\App\Http\Controllers\CbtController::class, 'downloadTemplate'])->name('template.download');
         Route::get('/detail/{id}/results', [\App\Http\Controllers\CbtController::class, 'results'])->name('results');
+        Route::get('/attempts/{attemptId}', [\App\Http\Controllers\CbtController::class, 'attemptDetail'])->name('attempts.show');
         Route::delete('/detail/{id}', [\App\Http\Controllers\CbtController::class, 'destroy'])->name('destroy');
         Route::get('/token/poll', [\App\Http\Controllers\CbtController::class, 'tokenPoll'])->name('token.poll');
         Route::post('/token/refresh', [\App\Http\Controllers\CbtController::class, 'forceRefreshToken'])->name('token.refresh');
