@@ -10,24 +10,24 @@
     ])
 
     {{-- AKSI CEPAT GURU --}}
-    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70">
+    <div class="glass-panel p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-1">
-                <div class="inline-flex items-center gap-2 rounded-full bg-brand-50 border border-brand-200 px-3 py-1 text-xs font-extrabold text-brand-700">
+                <div class="inline-flex items-center gap-2 rounded-full bg-indigo-500/15 border border-indigo-500/25 px-3 py-1 text-xs font-extrabold text-indigo-700">
                     <i class="bi bi-people-fill"></i> ABSENSI SISWA
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-0 flex items-center gap-2">
-                    <i class="bi bi-clipboard-check text-brand-600"></i> Presensi Kehadiran Siswa
+                <h3 class="text-lg font-black text-slate-900 mb-0 flex items-center gap-2 tracking-tight">
+                    <i class="bi bi-clipboard-check text-indigo-600"></i> Presensi Kehadiran Siswa
                 </h3>
-                <p class="text-xs text-slate-500 max-w-xl mb-0">Input dan pantau kehadiran siswa di kelas Anda.</p>
+                <p class="text-xs text-slate-500 max-w-xl mb-0 font-medium">Input dan pantau kehadiran siswa di kelas Anda secara langsung.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                <a href="{{ route('attendance.create') }}" class="inline-flex items-center gap-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition transform active:scale-95">
+                <a href="{{ route('attendance.create') }}" class="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-3 text-sm font-extrabold shadow-md shadow-blue-500/25 transition transform active:scale-95">
                     <i class="bi bi-pencil-square text-lg"></i>
                     <span>Input Absensi Siswa</span>
                 </a>
                 @if(auth()->user()->teacher && auth()->user()->teacher->homeroomClasses()->exists())
-                <a href="{{ route('attendance.homeroom-create') }}" class="inline-flex items-center gap-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 text-sm font-extrabold shadow-sm transition transform active:scale-95">
+                <a href="{{ route('attendance.homeroom-create') }}" class="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-5 py-3 text-sm font-extrabold shadow-md shadow-amber-500/25 transition transform active:scale-95">
                     <i class="bi bi-star-fill text-lg"></i>
                     <span>Presensi Wali Kelas</span>
                 </a>

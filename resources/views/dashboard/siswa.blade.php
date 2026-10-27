@@ -11,34 +11,34 @@
 
     {{-- Quick actions --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <a href="{{ route('attendance.self-checkin') }}" class="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md hover:ring-brand-200">
-            <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
+        <a href="{{ route('attendance.self-checkin') }}" class="group flex flex-col glass-card p-5 transition hover:shadow-lg">
+            <div class="mb-3 w-fit rounded-2xl bg-indigo-500/15 p-3 text-indigo-600 border border-indigo-500/25 shadow-sm">
                 <i class="bi bi-camera-video text-xl"></i>
             </div>
-            <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Presensi Siswa (Foto & GPS)</p>
-            <p class="mt-1 text-xs text-slate-500">Ambil foto selfie cepat dan catat lokasi GPS sekolah</p>
+            <p class="font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">Presensi Siswa (Foto &amp; GPS)</p>
+            <p class="mt-1 text-xs font-medium text-slate-500">Ambil foto selfie cepat dan catat lokasi GPS sekolah</p>
         </a>
-        <a href="{{ route('attendance.mine') }}" class="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 transition hover:shadow-md hover:ring-brand-200">
-            <div class="mb-3 w-fit rounded-xl bg-brand-50 p-2.5 text-brand-600 ring-1 ring-brand-100/50">
+        <a href="{{ route('attendance.mine') }}" class="group flex flex-col glass-card p-5 transition hover:shadow-lg">
+            <div class="mb-3 w-fit rounded-2xl bg-blue-500/15 p-3 text-blue-600 border border-blue-500/25 shadow-sm">
                 <i class="bi bi-calendar-check text-xl"></i>
             </div>
-            <p class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">Riwayat Absensi</p>
-            <p class="mt-1 text-xs text-slate-500">Lihat rekap kehadiran</p>
+            <p class="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">Riwayat Absensi</p>
+            <p class="mt-1 text-xs font-medium text-slate-500">Lihat rekap dan statistik kehadiran harian</p>
         </a>
     </div>
 
     {{-- Kehadiran --}}
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        @include('dashboard.partials.stat-card', ['label' => 'Hadir', 'value' => $attendance_stats['hadir'], 'icon' => 'bi-check-circle', 'tone' => 'brand', 'hint' => 'Bulan ini'])
-        @include('dashboard.partials.stat-card', ['label' => 'Terlambat', 'value' => $attendance_stats['terlambat'], 'icon' => 'bi-clock', 'tone' => 'amber'])
-        @include('dashboard.partials.stat-card', ['label' => 'Alfa', 'value' => $attendance_stats['alfa'], 'icon' => 'bi-x-circle', 'tone' => 'rose'])
-        @include('dashboard.partials.stat-card', ['label' => 'Kehadiran', 'value' => $attendance_stats['percentage'] . '%', 'icon' => 'bi-percent', 'tone' => $attendance_stats['percentage'] >= 75 ? 'brand' : 'rose', 'hint' => 'Bulan ini'])
+        @include('dashboard.partials.stat-card', ['label' => 'Hadir', 'value' => $attendance_stats['hadir'], 'icon' => 'bi-check-circle', 'tone' => 'emerald', 'hint' => 'Bulan ini', 'badge' => 'Presensi'])
+        @include('dashboard.partials.stat-card', ['label' => 'Terlambat', 'value' => $attendance_stats['terlambat'], 'icon' => 'bi-clock', 'tone' => 'amber', 'badge' => 'Waktu'])
+        @include('dashboard.partials.stat-card', ['label' => 'Alfa', 'value' => $attendance_stats['alfa'], 'icon' => 'bi-x-circle', 'tone' => 'rose', 'badge' => 'Absen'])
+        @include('dashboard.partials.stat-card', ['label' => 'Kehadiran', 'value' => $attendance_stats['percentage'] . '%', 'icon' => 'bi-percent', 'tone' => $attendance_stats['percentage'] >= 75 ? 'cyan-gradient' : 'rose', 'hint' => 'Bulan ini', 'badge' => 'Tingkat'])
     </div>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {{-- Jadwal --}}
-        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 xl:col-span-2">
-            <h2 class="mb-4 text-base font-bold text-slate-900"><i class="bi bi-calendar-event mr-2 text-brand-600"></i>Jadwal Hari Ini</h2>
+        <div class="glass-panel p-6 xl:col-span-2">
+            <h2 class="mb-4 text-base font-black text-slate-900 flex items-center gap-2"><i class="bi bi-calendar-event text-indigo-600"></i>Jadwal Hari Ini</h2>
             @if($today_schedules->isNotEmpty())
             <div class="grid gap-3 sm:grid-cols-2">
                 @foreach($today_schedules as $jadwal)
