@@ -32,12 +32,16 @@ class CbtStudentController extends Controller
             abort(403, 'Akun Anda tidak terhubung dengan profil siswa.');
         }
 
-        // Ambil semua ujian yang ditujukan untuk kelas siswa
-        $quizzes = Quiz::whereHas('classSubject', function ($q) use ($student) {
-            $q->where('class_id', $student->class_id);
+        // Ambil semua ujian yang ditujukan untuk kelas siswa (baik lewat targetClasses multi-select maupun classSubject)
+        $quizzes = Quiz::where(function ($query) use ($student) {
+            $query->whereHas('targetClasses', function ($q) use ($student) {
+                $q->where('classes.id', $student->class_id);
+            })->orWhereHas('classSubject', function ($q) use ($student) {
+                $q->where('class_id', $student->class_id);
+            });
         })
         ->where('is_published', true)
-        ->with(['classSubject.subject', 'classSubject.teacher.user'])
+        ->with(['classSubject.subject', 'classSubject.teacher.user', 'targetClasses'])
         ->withCount('questions')
         ->latest()
         ->get();
@@ -67,10 +71,13 @@ class CbtStudentController extends Controller
             'token' => 'required|string|min:4|max:10',
         ]);
 
-        $quiz = Quiz::with('classSubject')->findOrFail($quizId);
+        $quiz = Quiz::with(['classSubject', 'targetClasses'])->findOrFail($quizId);
 
-        // Pastikan kelas siswa cocok
-        if ($quiz->classSubject->class_id !== $student->class_id) {
+        // Pastikan kelas siswa cocok (bisa melalui targetClasses multi-select atau classSubject base)
+        $isEligible = $quiz->targetClasses()->where('classes.id', $student->class_id)->exists()
+            || ($quiz->classSubject && $quiz->classSubject->class_id === $student->class_id);
+
+        if (!$isEligible) {
             return redirect()->back()->with('error', 'Ujian ini bukan untuk kelas Anda.');
         }
 

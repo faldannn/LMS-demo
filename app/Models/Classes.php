@@ -60,6 +60,11 @@ class Classes extends Model
         return $this->hasMany(ClassSubject::class, 'class_id');
     }
 
+    public function quizzes(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_classes', 'class_id', 'quiz_id')->withTimestamps();
+    }
+
     // ── Helpers ─────────────────────────────────────────────
     public function getStudentCountAttribute(): int
     {

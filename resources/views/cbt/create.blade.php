@@ -34,23 +34,112 @@
     @endif
 
     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <form method="POST" action="{{ route('cbt.store') }}" class="space-y-6">
+        <form id="cbtCreateForm" method="POST" action="{{ route('cbt.store') }}" onsubmit="return validateCbtForm(event)" class="space-y-6">
             @csrf
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {{-- Kelas & Mata Pelajaran --}}
+                {{-- Mata Pelajaran & Guru Pengampu --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                        Target Kelas &amp; Mata Pelajaran <span class="text-rose-500">*</span>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Mata Pelajaran &amp; Guru Pengampu <span class="text-rose-500">*</span>
                     </label>
-                    <select name="class_subject_id" required class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                        <option value="">-- Pilih Kelas &amp; Mata Pelajaran --</option>
+                    <p class="text-[11px] text-slate-500 mb-2">Pilih mata pelajaran kurikulum dan guru yang mengampu ujian ini.</p>
+                    <select name="class_subject_id" id="classSubjectSelect" required onchange="handleClassSubjectChange(this)" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        <option value="">-- Pilih Mata Pelajaran &amp; Guru --</option>
                         @foreach($classSubjects as $cs)
-                            <option value="{{ $cs->id }}" @selected(old('class_subject_id') == $cs->id)>
-                                {{ $cs->class?->name ?? 'Kelas' }} &mdash; {{ $cs->subject?->name ?? 'Mapel' }} ({{ $cs->teacher?->user?->name ?? $cs->teacher?->name ?? 'Guru Pengampu' }})
+                            <option value="{{ $cs->id }}" data-class-id="{{ $cs->class_id }}" data-grade="{{ $cs->class?->grade }}" @selected(old('class_subject_id') == $cs->id)>
+                                {{ $cs->subject?->name ?? 'Mapel' }} &mdash; {{ $cs->teacher?->user?->name ?? $cs->teacher?->name ?? 'Guru Pengampu' }} (Basis Referensi: {{ $cs->class?->name ?? 'Kelas' }})
                             </option>
                         @endforeach
                     </select>
+                </div>
+
+                {{-- MULTI-SELECT TARGET KELAS (CHECKBOX DENGAN FITUR SEARCH & SELECT ALL PER TINGKAT) --}}
+                <div class="sm:col-span-2 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                Target Kelas yang Mengikuti Ujian <span class="text-rose-500">*</span>
+                            </label>
+                            <p class="text-[11px] text-slate-500">Centang satu atau beberapa kelas (contoh: seluruh kelas di tingkat 10). Siswa dari kelas terpilih akan dapat mengerjakan ujian dengan token CBT yang sama.</p>
+                        </div>
+                        <div id="selectionSummaryBadge" class="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 transition">
+                            <i class="bi bi-check2-circle text-emerald-600"></i>
+                            <span id="selectedCountText">0 Kelas Dipilih</span>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 space-y-4">
+                        {{-- Toolbar: Search & Action Buttons --}}
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                            {{-- Search Box --}}
+                            <div class="relative flex-1">
+                                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="classSearchInput" placeholder="Cari nama kelas (misal: X MIPA, IPS, dll)..." oninput="filterClasses(this.value)" class="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+
+                            {{-- Global Toggle Buttons --}}
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button type="button" onclick="selectAllClasses(true)" class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-emerald-700 transition shadow-2xs">
+                                    <i class="bi bi-check-all text-emerald-600 text-sm"></i>
+                                    <span>Pilih Semua Kelas</span>
+                                </button>
+                                <button type="button" onclick="selectAllClasses(false)" class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-rose-600 transition shadow-2xs">
+                                    <i class="bi bi-x-circle text-rose-500"></i>
+                                    <span>Kosongkan</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Grouped by Grade --}}
+                        <div class="space-y-3.5" id="classGroupsContainer">
+                            @foreach($allClasses as $grade => $classesInGrade)
+                            <div class="grade-group rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-2xs transition" data-grade="{{ $grade }}">
+                                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                                            Tingkat {{ $grade }} (Kelas {{ match((int)$grade) { 10 => 'X', 11 => 'XI', 12 => 'XII', default => (string)$grade } }})
+                                        </span>
+                                        <span class="text-xs text-slate-400 font-medium">({{ $classesInGrade->count() }} Kelas Tersedia)</span>
+                                    </div>
+                                    <button type="button" onclick="toggleGradeClasses({{ $grade }})" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100/70 border border-slate-200 transition">
+                                        <i class="bi bi-check2-square"></i>
+                                        <span>Pilih Semua Tingkat {{ $grade }}</span>
+                                    </button>
+                                </div>
+
+                                {{-- Grid Card Kelas --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                                    @foreach($classesInGrade as $class)
+                                    <label class="class-card relative flex items-center gap-3 rounded-xl border border-slate-200 p-2.5 cursor-pointer hover:border-emerald-300 transition select-none has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/40 has-[:checked]:shadow-2xs" data-name="{{ strtolower($class->name) }}" data-grade="{{ $grade }}">
+                                        <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" @checked(is_array(old('class_ids')) ? in_array($class->id, old('class_ids')) : false) class="class-checkbox h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" onchange="updateSelectedCount()">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-xs font-bold text-slate-800">{{ $class->name }}</div>
+                                            <div class="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                                <span>{{ ucfirst($class->session) }}</span>
+                                                <span>&bull;</span>
+                                                <span>{{ $class->room ?: 'Ruang -' }}</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Alert Jika Tidak Ada Hasil Pencarian --}}
+                        <div id="noSearchMatchAlert" class="hidden text-center py-6 text-xs text-slate-500">
+                            <i class="bi bi-search text-lg text-slate-400 block mb-1"></i>
+                            Tidak ada kelas yang cocok dengan kata kunci pencarian.
+                        </div>
+
+                        {{-- Alert Validasi Checkbox Minimal 1 --}}
+                        <div id="noClassWarning" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 flex items-center gap-2">
+                            <i class="bi bi-exclamation-triangle-fill text-rose-600"></i>
+                            <span>Harap centang minimal satu target kelas untuk ujian CBT ini.</span>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Judul Ujian --}}
@@ -159,3 +248,130 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('input.class-checkbox:checked');
+        const count = checkboxes.length;
+        const countText = document.getElementById('selectedCountText');
+        const badge = document.getElementById('selectionSummaryBadge');
+        const warning = document.getElementById('noClassWarning');
+
+        if (countText) {
+            countText.innerText = count + (count === 1 ? ' Kelas Dipilih' : ' Kelas Dipilih');
+        }
+
+        if (badge) {
+            if (count > 0) {
+                badge.className = 'self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 transition';
+                if (warning) warning.classList.add('hidden');
+            } else {
+                badge.className = 'self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 border border-slate-200 transition';
+            }
+        }
+    }
+
+    function selectAllClasses(checked) {
+        const cards = document.querySelectorAll('.class-card');
+        cards.forEach(card => {
+            if (!card.classList.contains('hidden')) {
+                const cb = card.querySelector('input.class-checkbox');
+                if (cb) cb.checked = checked;
+            }
+        });
+        updateSelectedCount();
+    }
+
+    function toggleGradeClasses(grade) {
+        const group = document.querySelector(`.grade-group[data-grade="${grade}"]`);
+        if (!group) return;
+
+        const visibleCheckboxes = Array.from(group.querySelectorAll('.class-card:not(.hidden) input.class-checkbox'));
+        if (visibleCheckboxes.length === 0) return;
+
+        // Jika sebagian besar belum dicentang, centang semua. Jika sudah semua dicentang, kosongkan.
+        const allChecked = visibleCheckboxes.every(cb => cb.checked);
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+
+        updateSelectedCount();
+    }
+
+    function filterClasses(rawQuery) {
+        const query = (rawQuery || '').toLowerCase().trim();
+        const groups = document.querySelectorAll('.grade-group');
+        let totalVisible = 0;
+
+        groups.forEach(group => {
+            const cards = group.querySelectorAll('.class-card');
+            let groupVisibleCount = 0;
+
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                if (!query || name.includes(query)) {
+                    card.classList.remove('hidden');
+                    groupVisibleCount++;
+                    totalVisible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (groupVisibleCount > 0) {
+                group.classList.remove('hidden');
+            } else {
+                group.classList.add('hidden');
+            }
+        });
+
+        const alertEl = document.getElementById('noSearchMatchAlert');
+        if (alertEl) {
+            if (totalVisible === 0) {
+                alertEl.classList.remove('hidden');
+            } else {
+                alertEl.classList.add('hidden');
+            }
+        }
+    }
+
+    function handleClassSubjectChange(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) return;
+
+        const classId = selectedOption.getAttribute('data-class-id');
+        if (classId) {
+            const checkbox = document.querySelector(`input.class-checkbox[value="${classId}"]`);
+            // Jika belum ada kelas yang terpilih sama sekali, centang kelas basis referensi
+            const anyChecked = document.querySelectorAll('input.class-checkbox:checked').length > 0;
+            if (!anyChecked && checkbox) {
+                checkbox.checked = true;
+                updateSelectedCount();
+            }
+        }
+    }
+
+    function validateCbtForm(e) {
+        const checked = document.querySelectorAll('input.class-checkbox:checked');
+        const warning = document.getElementById('noClassWarning');
+
+        if (checked.length === 0) {
+            if (warning) {
+                warning.classList.remove('hidden');
+                warning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            alert('Harap centang minimal satu target kelas yang akan mengikuti ujian CBT.');
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        return true;
+    }
+
+    // Jalankan kalkulasi jumlah saat halaman selesai dimuat
+    document.addEventListener('DOMContentLoaded', function () {
+        updateSelectedCount();
+    });
+</script>
+@endpush

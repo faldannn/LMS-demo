@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -50,6 +51,29 @@ class Quiz extends Model
     public function classSubject(): BelongsTo
     {
         return $this->belongsTo(ClassSubject::class, 'class_subject_id');
+    }
+
+    public function targetClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(Classes::class, 'quiz_classes', 'quiz_id', 'class_id')->withTimestamps();
+    }
+
+    public function getAllTargetClassesAttribute()
+    {
+        if ($this->relationLoaded('targetClasses') && $this->targetClasses->isNotEmpty()) {
+            return $this->targetClasses;
+        }
+
+        $classes = $this->targetClasses()->get();
+        if ($classes->isNotEmpty()) {
+            return $classes;
+        }
+
+        if ($this->classSubject && $this->classSubject->class) {
+            return collect([$this->classSubject->class]);
+        }
+
+        return collect();
     }
 
     public function questionBank(): BelongsTo

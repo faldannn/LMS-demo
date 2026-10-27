@@ -243,8 +243,30 @@
                             </div>
                         </td>
                         <td class="py-4 px-3">
-                            <div class="font-semibold text-slate-800">{{ $quiz->classSubject?->class?->name ?? 'Semua Kelas' }}</div>
-                            <div class="text-[11px] text-slate-500">{{ $quiz->classSubject?->teacher?->user?->name ?? '-' }}</div>
+                            @php
+                                $assignedClasses = $quiz->all_target_classes;
+                            @endphp
+                            @if($assignedClasses->isNotEmpty())
+                                <div class="flex flex-wrap items-center gap-1.5 max-w-xs">
+                                    @foreach($assignedClasses->take(3) as $cl)
+                                        <span class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+                                            <i class="bi bi-mortarboard-fill text-[9px] text-emerald-600"></i>
+                                            {{ $cl->name }}
+                                        </span>
+                                    @endforeach
+                                    @if($assignedClasses->count() > 3)
+                                        <span class="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200" title="{{ $assignedClasses->pluck('name')->join(', ') }}">
+                                            +{{ $assignedClasses->count() - 3 }} lainnya
+                                        </span>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="font-semibold text-slate-800">{{ $quiz->classSubject?->class?->name ?? 'Semua Kelas' }}</div>
+                            @endif
+                            <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                                <i class="bi bi-person text-slate-400"></i>
+                                <span>{{ $quiz->classSubject?->teacher?->user?->name ?? '-' }}</span>
+                            </div>
                         </td>
                         <td class="py-4 px-3 text-center">
                             <div class="font-bold text-slate-800">{{ $quiz->duration }} Menit</div>

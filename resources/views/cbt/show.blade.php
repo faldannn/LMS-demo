@@ -47,9 +47,24 @@
     {{-- HEADER UJIAN --}}
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-            <div class="flex items-center gap-2">
-                <span class="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-                    {{ $quiz->classSubject?->class?->name ?? 'Kelas' }} &bull; {{ $quiz->classSubject?->subject?->name ?? 'Mapel' }}
+            <div class="flex flex-wrap items-center gap-2">
+                @php
+                    $targetClasses = $quiz->all_target_classes;
+                @endphp
+                @if($targetClasses->isNotEmpty())
+                    @foreach($targetClasses as $tc)
+                        <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                            <i class="bi bi-mortarboard-fill text-[10px] text-emerald-600"></i>
+                            {{ $tc->name }}
+                        </span>
+                    @endforeach
+                @else
+                    <span class="rounded-lg bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                        {{ $quiz->classSubject?->class?->name ?? 'Kelas' }}
+                    </span>
+                @endif
+                <span class="rounded-lg bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-800">
+                    {{ $quiz->classSubject?->subject?->name ?? 'Mapel' }}
                 </span>
                 @if($quiz->is_published)
                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">

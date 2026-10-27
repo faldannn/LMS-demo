@@ -31,7 +31,7 @@ class CbtController extends Controller
     public function index(Request $request): View
     {
         $user = Auth::user();
-        $query = Quiz::with(['classSubject.class', 'classSubject.subject', 'classSubject.teacher.user'])
+        $query = Quiz::with(['classSubject.class', 'classSubject.subject', 'classSubject.teacher.user', 'targetClasses'])
             ->withCount(['questions', 'attempts'])
             ->latest();
 
@@ -46,8 +46,13 @@ class CbtController extends Controller
         }
 
         if ($request->filled('class_id')) {
-            $query->whereHas('classSubject', function ($q) use ($request) {
-                $q->where('class_id', $request->class_id);
+            $classId = (int) $request->class_id;
+            $query->where(function ($q) use ($classId) {
+                $q->whereHas('targetClasses', function ($tq) use ($classId) {
+                    $tq->where('classes.id', $classId);
+                })->orWhereHas('classSubject', function ($cq) use ($classId) {
+                    $cq->where('class_id', $classId);
+                });
             });
         }
 
@@ -56,7 +61,7 @@ class CbtController extends Controller
         }
 
         $quizzes = $query->paginate(15)->withQueryString();
-        $classes = Classes::orderBy('name')->get();
+        $classes = Classes::orderBy('grade')->orderBy('name')->get();
 
         // Token Ujian 5-Menitan untuk sesi aktif / global
         $tokenInfo = $this->cbtService->getTokenInfo(0);
@@ -106,8 +111,9 @@ class CbtController extends Controller
         }
 
         $classSubjects = $classSubjectsQuery->get();
+        $allClasses = Classes::with(['major'])->orderBy('grade')->orderBy('name')->get()->groupBy('grade');
 
-        return view('cbt.create', compact('classSubjects'));
+        return view('cbt.create', compact('classSubjects', 'allClasses'));
     }
 
     /**
@@ -117,6 +123,8 @@ class CbtController extends Controller
     {
         $request->validate([
             'class_subject_id' => 'required|exists:class_subject,id',
+            'class_ids' => 'required|array|min:1',
+            'class_ids.*' => 'exists:classes,id',
             'title' => 'required|string|max:200',
             'description' => 'nullable|string',
             'duration' => 'required|integer|min:5|max:300',
@@ -127,6 +135,9 @@ class CbtController extends Controller
             'shuffle_answers' => 'nullable|boolean',
             'show_results' => 'nullable|boolean',
             'is_published' => 'nullable|boolean',
+        ], [
+            'class_ids.required' => 'Pilih minimal satu target kelas untuk ujian CBT.',
+            'class_ids.min' => 'Pilih minimal satu target kelas untuk ujian CBT.',
         ]);
 
         $quiz = Quiz::create([
@@ -146,8 +157,16 @@ class CbtController extends Controller
             'auto_submit_on_timeout' => true,
         ]);
 
+        $classIds = array_unique(array_map('intval', (array) $request->input('class_ids', [])));
+        $primaryCs = ClassSubject::find($request->class_subject_id);
+        if ($primaryCs && $primaryCs->class_id && !in_array((int) $primaryCs->class_id, $classIds)) {
+            $classIds[] = (int) $primaryCs->class_id;
+        }
+
+        $quiz->targetClasses()->sync($classIds);
+
         return redirect()->route('cbt.show', $quiz->id)
-            ->with('success', 'Ujian CBT "' . $quiz->title . '" berhasil dibuat! Silakan tambahkan soal atau import file template.');
+            ->with('success', 'Ujian CBT "' . $quiz->title . '" berhasil dibuat untuk ' . count($classIds) . ' kelas! Silakan tambahkan soal atau import file template.');
     }
 
     /**
@@ -159,6 +178,7 @@ class CbtController extends Controller
             'classSubject.class',
             'classSubject.subject',
             'classSubject.teacher.user',
+            'targetClasses',
             'questions.options',
             'attempts.student.user',
         ])->findOrFail($id);
