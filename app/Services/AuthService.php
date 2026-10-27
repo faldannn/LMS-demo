@@ -128,12 +128,18 @@ class AuthService
     {
         $user = Auth::user();
 
-        $this->activityLogService->logLogout($user, $request);
+        if ($user) {
+            $this->activityLogService->logLogout($user, $request);
+        }
 
         Auth::logout();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        try {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        } catch (\Throwable $e) {
+            // Ignore session invalidation errors
+        }
     }
 
     public function resolveRedirectPath(User $user): string

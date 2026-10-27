@@ -44,9 +44,8 @@ Route::middleware('guest')->group(function () {
         ->name('login.post');
 });
 
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->name('logout')
-    ->middleware('auth');
+Route::match(['GET', 'POST'], '/logout', [AuthController::class, 'logout'])
+    ->name('logout');
 
 Route::get('/ping', function () {
     return response()->json([

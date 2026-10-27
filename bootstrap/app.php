@@ -27,8 +27,29 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'check.active' => CheckActiveUser::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'logout',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Sesi Anda telah berakhir. Silakan login kembali.'], 419);
+            }
+            return redirect()->route('login')->with('warning', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
+            if ($e->getStatusCode() === 419) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Sesi Anda telah berakhir. Silakan login kembali.'], 419);
+                }
+                return redirect()->route('login')->with('warning', 'Sesi Anda telah berakhir. Silakan login kembali.');
+            }
+            return null;
+        });
+
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e) {
             return response()->view('errors.403', ['message' => $e->getMessage()], 403);
         });
