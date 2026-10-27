@@ -174,7 +174,7 @@ class CbtService
     /**
      * Simpan jawaban siswa secara instan (Auto-save)
      */
-    public function saveAnswer(QuizAttempt $attempt, int $questionId, ?int $optionId = null, ?string $essay = null): StudentAnswer
+    public function saveAnswer(QuizAttempt $attempt, int $questionId, ?int $optionId = null, ?string $essay = null, ?array $matchingAnswer = null): StudentAnswer
     {
         if (!$attempt->isOngoing()) {
             throw new \RuntimeException('Sesi ujian telah berakhir.');
@@ -188,6 +188,19 @@ class CbtService
             $selectedOption = $question->options->firstWhere('id', $optionId);
             $isCorrect = $selectedOption ? (bool) $selectedOption->is_correct : false;
             $score = $isCorrect ? (float) $question->points : 0.0;
+        } elseif ($question->type === 'complex_true_false' && is_array($matchingAnswer) && $question->options->isNotEmpty()) {
+            $totalStatements = $question->options->count();
+            $correctCount = 0;
+            foreach ($question->options as $opt) {
+                if (isset($matchingAnswer[$opt->id])) {
+                    $studentChoice = filter_var($matchingAnswer[$opt->id], FILTER_VALIDATE_BOOLEAN);
+                    if ($studentChoice === (bool) $opt->is_correct) {
+                        $correctCount++;
+                    }
+                }
+            }
+            $isCorrect = ($correctCount === $totalStatements);
+            $score = round(($correctCount / $totalStatements) * (float) $question->points, 2);
         }
 
         return StudentAnswer::updateOrCreate(
@@ -198,6 +211,7 @@ class CbtService
             [
                 'question_option_id' => $optionId,
                 'essay_answer' => $essay,
+                'matching_answer' => $matchingAnswer,
                 'is_correct' => $isCorrect,
                 'score' => $score,
             ]
@@ -240,6 +254,24 @@ class CbtService
                         'score' => 0.0,
                     ]);
                 }
+            } elseif ($question->type === 'complex_true_false' && $answer && is_array($answer->matching_answer) && $question->options->isNotEmpty()) {
+                $totalStatements = $question->options->count();
+                $correctCount = 0;
+                foreach ($question->options as $opt) {
+                    if (isset($answer->matching_answer[$opt->id])) {
+                        $studentChoice = filter_var($answer->matching_answer[$opt->id], FILTER_VALIDATE_BOOLEAN);
+                        if ($studentChoice === (bool) $opt->is_correct) {
+                            $correctCount++;
+                        }
+                    }
+                }
+                $isAllCorrect = ($correctCount === $totalStatements);
+                $pts = round(($correctCount / $totalStatements) * (float) $question->points, 2);
+                $earnedPoints += $pts;
+                $answer->update([
+                    'is_correct' => $isAllCorrect,
+                    'score' => $pts,
+                ]);
             }
         }
 

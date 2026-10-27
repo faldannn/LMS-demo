@@ -134,12 +134,22 @@
                         $savedEssay = $userAnswer?->essay_answer;
                     @endphp
                     <div id="questionPane-{{ $idx }}" class="question-pane {{ $idx === 0 ? '' : 'hidden' }}" data-index="{{ $idx }}" data-qid="{{ $q->id }}">
+                        {{-- Gambar Soal Jika Ada --}}
+                        @if($q->image_path)
+                        <div class="mb-5">
+                            <div class="inline-block relative rounded-2xl overflow-hidden border border-slate-200 bg-white p-1.5 shadow-xs">
+                                <img src="{{ str_starts_with($q->image_path, 'data:') || str_starts_with($q->image_path, 'http') ? $q->image_path : asset($q->image_path) }}" alt="Gambar Soal {{ $idx + 1 }}" class="max-h-72 max-w-full rounded-xl object-contain cursor-pointer hover:opacity-95 transition" onclick="openExamImageLightbox(this.src)">
+                                <div class="text-[10px] text-slate-400 mt-1 text-center font-medium">Klik gambar untuk memperbesar</div>
+                            </div>
+                        </div>
+                        @endif
+
                         {{-- Teks Pertanyaan --}}
                         <div class="question-text math-render text-sm sm:text-base text-slate-800 font-medium leading-relaxed mb-6">
                             {!! nl2br(e($q->question_text)) !!}
                         </div>
 
-                        {{-- Opsi Pilihan Ganda --}}
+                        {{-- Opsi Pilihan Ganda Biasa --}}
                         @if($q->type === 'multiple_choice' && $q->options->isNotEmpty())
                         <div class="space-y-3">
                             @php $labels = ['A', 'B', 'C', 'D', 'E']; @endphp
@@ -154,6 +164,46 @@
                                 </div>
                             </label>
                             @endforeach
+                        </div>
+                        {{-- Opsi Pilihan Ganda Kompleks (Benar / Salah) --}}
+                        @elseif($q->type === 'complex_true_false' && $q->options->isNotEmpty())
+                        @php
+                            $savedMatching = $userAnswer?->matching_answer ?? [];
+                        @endphp
+                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 py-3 border-b border-purple-100 flex items-center justify-between">
+                                <div class="text-xs font-bold text-purple-900">
+                                    Pilihlah <span class="text-emerald-700 font-extrabold">BENAR</span> atau <span class="text-rose-700 font-extrabold">SALAH</span> untuk setiap pernyataan berikut:
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider bg-purple-200 text-purple-800 px-2 py-0.5 rounded-md">Model Kompleks</span>
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                @foreach($q->options as $optIdx => $opt)
+                                @php
+                                    $optSavedVal = isset($savedMatching[$opt->id]) ? filter_var($savedMatching[$opt->id], FILTER_VALIDATE_BOOLEAN) : null;
+                                @endphp
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 hover:bg-slate-50/60 transition">
+                                    <div class="flex items-start gap-3 flex-1">
+                                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600">
+                                            {{ $optIdx + 1 }}
+                                        </span>
+                                        <div class="option-text math-render text-xs sm:text-sm text-slate-800 font-medium">
+                                            {!! nl2br(e($opt->option_text)) !!}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 pl-9 sm:pl-0 shrink-0">
+                                        <label class="ctf-label flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer transition {{ $optSavedVal === true ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs ring-1 ring-emerald-400' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
+                                            <input type="radio" name="ctf_{{ $q->id }}_{{ $opt->id }}" value="true" @checked($optSavedVal === true) onchange="selectComplexAnswer({{ $idx }}, {{ $q->id }}, {{ $opt->id }}, true)" class="text-emerald-600 focus:ring-emerald-500">
+                                            <span>Benar</span>
+                                        </label>
+                                        <label class="ctf-label flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer transition {{ $optSavedVal === false ? 'border-rose-500 bg-rose-50 text-rose-800 shadow-xs ring-1 ring-rose-400' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
+                                            <input type="radio" name="ctf_{{ $q->id }}_{{ $opt->id }}" value="false" @checked($optSavedVal === false) onchange="selectComplexAnswer({{ $idx }}, {{ $q->id }}, {{ $opt->id }}, false)" class="text-rose-600 focus:ring-rose-500">
+                                            <span>Salah</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
                         </div>
                         @else
                         {{-- Essay Input --}}
@@ -199,7 +249,7 @@
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                     <h3 class="text-sm font-bold text-slate-900">Navigasi Nomor Soal</h3>
                     <span id="answeredStatsBadge" class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-                        {{ $savedAnswers->whereNotNull('question_option_id')->count() }} / {{ $questions->count() }}
+                        {{ $savedAnswers->filter(fn($a) => $a->question_option_id || $a->essay_answer || !empty($a->matching_answer))->count() }} / {{ $questions->count() }}
                     </span>
                 </div>
 
@@ -208,7 +258,7 @@
                     @foreach($questions as $idx => $q)
                     @php
                         $userAnswer = $savedAnswers->get($q->id);
-                        $isAnswered = $userAnswer && ($userAnswer->question_option_id || $userAnswer->essay_answer);
+                        $isAnswered = $userAnswer && ($userAnswer->question_option_id || $userAnswer->essay_answer || !empty($userAnswer->matching_answer));
                     @endphp
                     <button type="button" id="navBtn-{{ $idx }}" onclick="jumpToQuestion({{ $idx }})" class="nav-question-btn flex h-11 items-center justify-center rounded-xl text-xs font-bold transition {{ $idx === 0 ? 'ring-2 ring-emerald-500 ' : '' }} {{ $isAnswered ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
                         {{ $idx + 1 }}
@@ -292,10 +342,19 @@
         const doubtStates = {}; // key: index, value: boolean
         const answeredStates = {}; // key: index, value: boolean
 
+        const complexAnswers = {
+            @foreach($questions as $q)
+                @if($q->type === 'complex_true_false')
+                    @php $savedM = $savedAnswers->get($q->id)?->matching_answer; @endphp
+                    {{ $q->id }}: @json($savedM ?: new \stdClass()),
+                @endif
+            @endforeach
+        };
+
         @foreach($questions as $idx => $q)
             @php
                 $userAns = $savedAnswers->get($q->id);
-                $isAns = $userAns && ($userAns->question_option_id || $userAns->essay_answer);
+                $isAns = $userAns && ($userAns->question_option_id || $userAns->essay_answer || !empty($userAns->matching_answer));
             @endphp
             answeredStates[{{ $idx }}] = {{ $isAns ? 'true' : 'false' }};
         @endforeach
@@ -486,6 +545,82 @@
                     showSavedIndicator();
                 }
             });
+        }
+
+        // Autosave Pilihan Ganda Kompleks (Benar / Salah) via AJAX
+        function selectComplexAnswer(qIndex, questionId, optionId, boolVal) {
+            if (!complexAnswers[questionId]) {
+                complexAnswers[questionId] = {};
+            }
+            complexAnswers[questionId][optionId] = boolVal;
+
+            answeredStates[qIndex] = true;
+            updateNavButtonState(qIndex);
+
+            // Update styling radio button row
+            const pane = document.getElementById(`questionPane-${qIndex}`);
+            const radios = pane.querySelectorAll(`input[name="ctf_${questionId}_${optionId}"]`);
+            radios.forEach(r => {
+                const lbl = r.closest('.ctf-label');
+                if (lbl) {
+                    if (r.checked) {
+                        if (r.value === 'true') {
+                            lbl.className = 'ctf-label flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer transition border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs ring-1 ring-emerald-400';
+                        } else {
+                            lbl.className = 'ctf-label flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer transition border-rose-500 bg-rose-50 text-rose-800 shadow-xs ring-1 ring-rose-400';
+                        }
+                    } else {
+                        lbl.className = 'ctf-label flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold cursor-pointer transition border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+                    }
+                }
+            });
+
+            showSavingIndicator();
+
+            fetch("{{ route('cbt.student.save', $attempt->id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    matching_answer: complexAnswers[questionId]
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showSavedIndicator();
+                }
+            })
+            .catch(err => {
+                console.error("Autosave complex error:", err);
+            });
+        }
+
+        // Exam Lightbox Modal
+        function openExamImageLightbox(src) {
+            let modal = document.getElementById('examImageLightbox');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'examImageLightbox';
+                modal.className = 'fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md p-4 flex items-center justify-center';
+                modal.onclick = () => modal.classList.add('hidden');
+                modal.innerHTML = `
+                    <div class="relative max-w-4xl max-h-[90vh] p-2" onclick="event.stopPropagation()">
+                        <button type="button" onclick="document.getElementById('examImageLightbox').classList.add('hidden')" class="absolute -top-10 right-0 text-white hover:text-slate-300 text-2xl font-bold">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                        <img id="examLightboxImg" src="${src}" alt="Preview Gambar" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain bg-slate-900 border border-slate-700">
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } else {
+                document.getElementById('examLightboxImg').src = src;
+                modal.classList.remove('hidden');
+            }
         }
 
         function showSavingIndicator() {

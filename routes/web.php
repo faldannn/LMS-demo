@@ -86,6 +86,7 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::post('/', [\App\Http\Controllers\CbtController::class, 'store'])->name('store');
         Route::get('/detail/{id}', [\App\Http\Controllers\CbtController::class, 'show'])->name('show');
         Route::post('/detail/{id}/questions', [\App\Http\Controllers\CbtController::class, 'storeQuestion'])->name('questions.store');
+        Route::match(['PUT', 'POST'], '/detail/{quizId}/questions/{questionId}', [\App\Http\Controllers\CbtController::class, 'updateQuestion'])->name('questions.update');
         Route::delete('/detail/{quizId}/questions/{questionId}', [\App\Http\Controllers\CbtController::class, 'destroyQuestion'])->name('questions.destroy');
         Route::post('/detail/{id}/import', [\App\Http\Controllers\CbtController::class, 'importQuestions'])->name('questions.import');
         Route::get('/template/{format?}', [\App\Http\Controllers\CbtController::class, 'downloadTemplate'])->name('template.download');

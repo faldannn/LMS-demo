@@ -146,6 +146,7 @@ class CbtStudentController extends Controller
             'question_id' => 'required|exists:questions,id',
             'question_option_id' => 'nullable|exists:question_options,id',
             'essay_answer' => 'nullable|string',
+            'matching_answer' => 'nullable|array',
         ]);
 
         try {
@@ -153,13 +154,15 @@ class CbtStudentController extends Controller
                 $attempt,
                 (int) $request->question_id,
                 $request->question_option_id ? (int) $request->question_option_id : null,
-                $request->essay_answer
+                $request->essay_answer,
+                $request->matching_answer
             );
 
             $answeredCount = StudentAnswer::where('quiz_attempt_id', $attempt->id)
                 ->where(function ($q) {
                     $q->whereNotNull('question_option_id')
-                      ->orWhereNotNull('essay_answer');
+                      ->orWhereNotNull('essay_answer')
+                      ->orWhereNotNull('matching_answer');
                 })
                 ->count();
 

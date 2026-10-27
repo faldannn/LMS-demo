@@ -17,6 +17,7 @@ class StudentAnswer extends Model
         'question_id',
         'question_option_id',
         'essay_answer',
+        'matching_answer',
         'is_correct',
         'score',
         'feedback',
@@ -27,6 +28,7 @@ class StudentAnswer extends Model
     protected $casts = [
         'is_correct' => 'boolean',
         'score' => 'float',
+        'matching_answer' => 'array',
         'graded_at' => 'datetime',
     ];
 

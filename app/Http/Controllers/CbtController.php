@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class CbtController extends Controller
@@ -168,7 +169,47 @@ class CbtController extends Controller
     }
 
     /**
-     * Simpan 1 Soal Manual (Mendukung KaTeX Math & Arab)
+     * Upload / Proses file gambar soal dengan proteksi storage serverless
+     */
+    protected function handleQuestionImage(Request $request, ?string $currentImage = null): ?string
+    {
+        if ($request->boolean('remove_image')) {
+            if ($currentImage && !str_starts_with($currentImage, 'data:') && !str_starts_with($currentImage, 'http')) {
+                @unlink(public_path($currentImage));
+            }
+            return null;
+        }
+
+        if (!$request->hasFile('image')) {
+            return $currentImage;
+        }
+
+        $file = $request->file('image');
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $filename = 'q_' . time() . '_' . Str::random(8) . '.' . $ext;
+
+        $dir = public_path('uploads/questions');
+        try {
+            if (!file_exists($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $file->move($dir, $filename);
+
+            if ($currentImage && !str_starts_with($currentImage, 'data:') && !str_starts_with($currentImage, 'http')) {
+                @unlink(public_path($currentImage));
+            }
+
+            return 'uploads/questions/' . $filename;
+        } catch (\Throwable $e) {
+            // Serverless fallback: convert to base64
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $data = base64_encode(file_get_contents($file->getRealPath()));
+            return "data:{$mime};base64,{$data}";
+        }
+    }
+
+    /**
+     * Simpan 1 Soal Manual (Mendukung KaTeX Math, Arab, Gambar, dan Pilihan Ganda Kompleks)
      */
     public function storeQuestion(Request $request, int $quizId): RedirectResponse
     {
@@ -176,12 +217,16 @@ class CbtController extends Controller
 
         $request->validate([
             'question_text' => 'required|string',
-            'type' => 'required|in:multiple_choice,essay',
+            'type' => 'required|in:multiple_choice,complex_true_false,essay',
             'points' => 'required|integer|min:1',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'options' => 'nullable|array',
             'correct_option' => 'nullable|string',
+            'statements' => 'nullable|array',
+            'statement_answers' => 'nullable|array',
         ]);
 
+        $imagePath = $this->handleQuestionImage($request);
         $order = ($quiz->questions()->max('order_number') ?? 0) + 1;
 
         DB::beginTransaction();
@@ -190,6 +235,7 @@ class CbtController extends Controller
                 'quiz_id' => $quiz->id,
                 'created_by' => Auth::id(),
                 'question_text' => $request->question_text,
+                'image_path' => $imagePath,
                 'type' => $request->type,
                 'difficulty' => $request->input('difficulty', 'medium'),
                 'points' => $request->points,
@@ -212,6 +258,22 @@ class CbtController extends Controller
                         ]);
                     }
                 }
+            } elseif ($request->type === 'complex_true_false' && $request->has('statements')) {
+                $statementAnswers = $request->input('statement_answers', []);
+                $orderNum = 0;
+
+                foreach ($request->statements as $idx => $statementText) {
+                    $statementText = trim((string) $statementText);
+                    if ($statementText !== '') {
+                        $isTrue = isset($statementAnswers[$idx]) && ($statementAnswers[$idx] === 'true' || $statementAnswers[$idx] === '1');
+                        QuestionOption::create([
+                            'question_id' => $question->id,
+                            'option_text' => $statementText,
+                            'is_correct' => $isTrue,
+                            'order_number' => ++$orderNum,
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
@@ -225,12 +287,94 @@ class CbtController extends Controller
     }
 
     /**
-     * Hapus Soal dari Ujian
+     * Update Butir Soal (Teks, Gambar, Tipe, Opsi / Pernyataan Benar-Salah)
+     */
+    public function updateQuestion(Request $request, int $quizId, int $questionId): RedirectResponse
+    {
+        $quiz = Quiz::findOrFail($quizId);
+        $question = Question::where('quiz_id', $quiz->id)->findOrFail($questionId);
+
+        $request->validate([
+            'question_text' => 'required|string',
+            'type' => 'required|in:multiple_choice,complex_true_false,essay',
+            'points' => 'required|integer|min:1',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'options' => 'nullable|array',
+            'correct_option' => 'nullable|string',
+            'statements' => 'nullable|array',
+            'statement_answers' => 'nullable|array',
+        ]);
+
+        $imagePath = $this->handleQuestionImage($request, $question->image_path);
+
+        DB::beginTransaction();
+        try {
+            $question->update([
+                'question_text' => $request->question_text,
+                'image_path' => $imagePath,
+                'type' => $request->type,
+                'difficulty' => $request->input('difficulty', $question->difficulty ?: 'medium'),
+                'points' => $request->points,
+            ]);
+
+            // Re-sync options based on type
+            $question->options()->delete();
+
+            if ($request->type === 'multiple_choice' && $request->has('options')) {
+                $correctKey = $request->input('correct_option', 'A');
+                $orderNum = 0;
+
+                foreach ($request->options as $key => $optText) {
+                    $optText = trim((string) $optText);
+                    if ($optText !== '') {
+                        QuestionOption::create([
+                            'question_id' => $question->id,
+                            'option_text' => $optText,
+                            'is_correct' => ($key === $correctKey),
+                            'order_number' => ++$orderNum,
+                        ]);
+                    }
+                }
+            } elseif ($request->type === 'complex_true_false' && $request->has('statements')) {
+                $statementAnswers = $request->input('statement_answers', []);
+                $orderNum = 0;
+
+                foreach ($request->statements as $idx => $statementText) {
+                    $statementText = trim((string) $statementText);
+                    if ($statementText !== '') {
+                        $isTrue = isset($statementAnswers[$idx]) && ($statementAnswers[$idx] === 'true' || $statementAnswers[$idx] === '1');
+                        QuestionOption::create([
+                            'question_id' => $question->id,
+                            'option_text' => $statementText,
+                            'is_correct' => $isTrue,
+                            'order_number' => ++$orderNum,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('cbt.show', $quiz->id)
+                ->with('success', 'Butir soal berhasil diperbarui.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui soal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Hapus Soal dari Ujian beserta file gambarnya jika ada
      */
     public function destroyQuestion(int $quizId, int $questionId): RedirectResponse
     {
         $quiz = Quiz::findOrFail($quizId);
         $question = Question::where('quiz_id', $quiz->id)->findOrFail($questionId);
+
+        if ($question->image_path && !str_starts_with($question->image_path, 'data:') && !str_starts_with($question->image_path, 'http')) {
+            @unlink(public_path($question->image_path));
+        }
+
         $question->delete();
 
         return redirect()->route('cbt.show', $quiz->id)
