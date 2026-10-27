@@ -33,7 +33,7 @@ $_SERVER['VERCEL'] = '1';
 $defaults = [
     'APP_NAME' => 'LMS Sekolah Digital',
     'APP_ENV' => 'production',
-    'APP_DEBUG' => 'true',
+    'APP_DEBUG' => 'false',
     'APP_KEY' => 'base64:biqCuYXu4iPsb4IKWrlvFxV5cy6odGJV2AwAyk9+rAU=',
     'APP_PACKAGES_CACHE' => '/tmp/storage/bootstrap/cache/packages.php',
     'APP_SERVICES_CACHE' => '/tmp/storage/bootstrap/cache/services.php',
@@ -44,10 +44,11 @@ $defaults = [
     'DB_DATABASE' => 'lms_demo',
     'DB_USERNAME' => 'xeGakznEYY7uFXn.root',
     'DB_PASSWORD' => 'wE8wp0ZaE312350p',
+    'DB_PERSISTENT' => 'true',
     'MYSQL_ATTR_SSL_CA' => 'true',
     'MYSQL_ATTR_SSL_VERIFY_SERVER_CERT' => 'false',
     'SESSION_DRIVER' => 'cookie',
-    'CACHE_STORE' => 'array',
+    'CACHE_STORE' => 'file',
     'LOG_CHANNEL' => 'stderr',
 ];
 

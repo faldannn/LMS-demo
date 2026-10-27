@@ -60,6 +60,8 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_PERSISTENT => filter_var(env('DB_PERSISTENT', true), FILTER_VALIDATE_BOOLEAN),
+                PDO::ATTR_TIMEOUT => 5,
                 PDO::MYSQL_ATTR_SSL_CA => (function () {
                     $ca = env('MYSQL_ATTR_SSL_CA');
                     if (empty($ca)) {

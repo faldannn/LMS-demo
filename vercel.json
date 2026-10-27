@@ -2,6 +2,7 @@
   "version": 2,
   "framework": null,
   "outputDirectory": "public",
+  "regions": ["hnd1"],
   "builds": [
     {
       "src": "package.json",
@@ -12,20 +13,33 @@
     },
     {
       "src": "api/index.php",
-      "use": "vercel-php@0.7.3"
+      "use": "vercel-php@0.7.3",
+      "config": {
+        "memory": 1024,
+        "maxDuration": 15
+      }
     }
   ],
   "routes": [
     {
       "src": "/build/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
       "dest": "/build/$1"
     },
     {
       "src": "/images/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=86400, stale-while-revalidate=604800"
+      },
       "dest": "/images/$1"
     },
     {
       "src": "/favicon.ico",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      },
       "dest": "/favicon.ico"
     },
     {
@@ -40,7 +54,7 @@
   "env": {
     "APP_NAME": "LMS Sekolah Digital",
     "APP_ENV": "production",
-    "APP_DEBUG": "true",
+    "APP_DEBUG": "false",
     "APP_KEY": "base64:biqCuYXu4iPsb4IKWrlvFxV5cy6odGJV2AwAyk9+rAU=",
     "APP_PACKAGES_CACHE": "/tmp/storage/bootstrap/cache/packages.php",
     "APP_SERVICES_CACHE": "/tmp/storage/bootstrap/cache/services.php",
@@ -51,9 +65,10 @@
     "DB_DATABASE": "lms_demo",
     "DB_USERNAME": "xeGakznEYY7uFXn.root",
     "DB_PASSWORD": "wE8wp0ZaE312350p",
+    "DB_PERSISTENT": "true",
     "MYSQL_ATTR_SSL_CA": "true",
     "MYSQL_ATTR_SSL_VERIFY_SERVER_CERT": "false",
-    "CACHE_STORE": "array",
+    "CACHE_STORE": "file",
     "SESSION_DRIVER": "cookie",
     "LOG_CHANNEL": "stderr"
   }
