@@ -28,8 +28,8 @@ return [
         'primary_dark' => env('BRAND_PRIMARY_DARK', '#166534'),
         'primary_light' => env('BRAND_PRIMARY_LIGHT', '#dcfce7'),
         'logo_letter' => env('BRAND_LOGO_LETTER', 'A'),
-        'favicon' => '/images/logo.png',
-        'logo' => '/images/logo.png',
+        'favicon' => '/images/logo-sekolah.png',
+        'logo' => '/images/logo-sekolah.png',
     ],
 
     'developer' => env('SYSTEM_DEVELOPER', 'NexDigi System'),

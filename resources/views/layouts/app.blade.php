@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/png" href="{{ config('school.brand.favicon', '/images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ config('school.brand.favicon', '/images/logo-sekolah.png') }}">
     
     <!-- Dark mode removed -->
 
@@ -31,7 +31,7 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col overflow-y-auto text-white shadow-2xl transition-transform duration-300 lg:translate-x-0" style="background: linear-gradient(180deg, var(--color-brand-800), var(--color-brand-700));">
         
         <div class="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-            <img src="{{ config('school.brand.logo', '/images/logo.png') }}" alt="Logo" class="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-white/20">
+            <img src="{{ config('school.brand.logo', '/images/logo-sekolah.png') }}" alt="Logo" class="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-white/20">
             <div>
                 <div class="text-sm font-bold text-white">{{ config('school.system_name') }}</div>
             </div>
