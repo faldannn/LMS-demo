@@ -35,7 +35,7 @@
                 Pusat Generator Barcode &amp; Kartu
             </h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1 mb-0">
-                Generate kode barcode garis (Code128 untuk scanner laser USB/alat pink) dan QR Code untuk siswa maupun guru.
+                Generate kode barcode garis (Code128 untuk scanner laser USB) dan QR Code untuk siswa maupun guru.
             </p>
         </div>
 
@@ -53,10 +53,6 @@
                 <i class="bi bi-person-badge-fill"></i> Cetak Kartu Pelajar Digital
             </a>
             @endif
-
-            <a href="{{ route('attendance.tap-station') }}" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
-                <i class="bi bi-broadcast-pin"></i> Buka Stasiun Tap Pink
-            </a>
         </div>
     </div>
 

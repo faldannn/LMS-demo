@@ -66,13 +66,10 @@
                 Scanner Barcode, QR &amp; Kartu Siswa
             </h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Mendukung Scanner Laser USB, Alat Pink Tap Kartu, serta Kamera HP/Webcam untuk QR &amp; Barcode Code128.
+                Mendukung Scanner Laser USB serta Kamera HP/Webcam untuk QR &amp; Barcode Code128.
             </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('attendance.tap-station') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition">
-                <i class="bi bi-broadcast-pin"></i> Tap Kartu Pink
-            </a>
             <a href="{{ route('attendance.barcode-center') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold transition">
                 <i class="bi bi-printer"></i> Pusat Barcode
             </a>

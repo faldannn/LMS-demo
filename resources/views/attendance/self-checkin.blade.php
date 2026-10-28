@@ -336,15 +336,7 @@
                         </div>
 
                         <div class="flex items-start gap-3">
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700 font-bold text-xs">2</span>
-                            <div>
-                                <strong class="text-slate-800">Alat Pink / Tap Kartu RFID:</strong>
-                                <p class="text-[11px] text-slate-500 mb-0 mt-0.5">Jika Anda memiliki kartu fisik yang sudah didaftarkan nomor RFID-nya, cukup tempelkan kartu pada alat reader pink di gerbang sekolah.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-3">
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">3</span>
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">2</span>
                             <div>
                                 <strong class="text-slate-800">Barcode Tembak / Kamera Guru:</strong>
                                 <p class="text-[11px] text-slate-500 mb-0 mt-0.5">Tunjukkan layar Barcode atau QR Code ini kepada Guru / Petugas untuk ditembak scanner laser USB atau discan kamera.</p>

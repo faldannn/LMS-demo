@@ -273,8 +273,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             Route::get('attendance/scan-qr', [SelfAttendanceController::class, 'scanner'])->name('attendance.scan-qr');
             Route::post('attendance/scan-student-qr', [SelfAttendanceController::class, 'processScanStudentQr'])->name('attendance.scan-student-qr');
 
-            // Stasiun Tap Kartu / Pink RFID Reader Gate
-            Route::get('attendance/tap-station', [SelfAttendanceController::class, 'tapStation'])->name('attendance.tap-station');
+            // Redirect tap-station ke Scanner Presensi Multi-Alat
+            Route::get('attendance/tap-station', fn () => redirect()->route('attendance.scan-qr'))->name('attendance.tap-station');
             Route::post('attendance/update-student-rfid', [SelfAttendanceController::class, 'updateStudentRfid'])->name('attendance.update-student-rfid');
 
             // Pusat Generator Barcode & Kartu Siswa / Guru

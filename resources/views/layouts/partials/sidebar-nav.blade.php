@@ -43,9 +43,6 @@
     <a href="{{ route('attendance.teacher-checkin') }}" class="group mx-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all @active('attendance.teacher-checkin', 'sidebar-active-pill', 'text-white/75 hover:bg-white/10 hover:text-white')">
         <i class="bi bi-person-bounding-box text-base @active('attendance.teacher-checkin', 'text-white', 'text-white/70')"></i> Presensi Muka Guru (GPS)
     </a>
-    <a href="{{ route('attendance.tap-station') }}" class="group mx-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all @active('attendance.tap-station', 'sidebar-active-pill', 'text-white/75 hover:bg-white/10 hover:text-white')">
-        <i class="bi bi-credit-card-2-front-fill text-base @active('attendance.tap-station', 'text-rose-300', 'text-rose-400')"></i> Tap Kartu / Alat Pink
-    </a>
     <a href="{{ route('attendance.barcode-center') }}" class="group mx-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all @active('attendance.barcode-center', 'sidebar-active-pill', 'text-white/75 hover:bg-white/10 hover:text-white')">
         <i class="bi bi-upc-scan text-base @active('attendance.barcode-center', 'text-white', 'text-white/70')"></i> Pusat Barcode &amp; Kartu
     </a>
@@ -83,9 +80,6 @@
 @role('kepala_sekolah')
 <div class="py-2">
     <div class="px-5 py-2 text-[10px] font-extrabold uppercase tracking-widest text-white/40">Presensi &amp; Perangkat Pintar</div>
-    <a href="{{ route('attendance.tap-station') }}" class="group mx-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all @active('attendance.tap-station', 'sidebar-active-pill', 'text-white/75 hover:bg-white/10 hover:text-white')">
-        <i class="bi bi-credit-card-2-front-fill text-base @active('attendance.tap-station', 'text-rose-300', 'text-rose-400')"></i> Tap Kartu / Alat Pink
-    </a>
     <a href="{{ route('attendance.barcode-center') }}" class="group mx-3 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all @active('attendance.barcode-center', 'sidebar-active-pill', 'text-white/75 hover:bg-white/10 hover:text-white')">
         <i class="bi bi-upc-scan text-base @active('attendance.barcode-center', 'text-white', 'text-white/70')"></i> Pusat Barcode &amp; Kartu
     </a>
