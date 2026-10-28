@@ -209,11 +209,12 @@
 
         /* Headings */
         .login-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             color: var(--text-title);
-            margin: 0 0 2px;
+            margin: 0 0 4px;
             letter-spacing: -0.5px;
+            line-height: 1.3;
         }
 
         .login-subtitle {
@@ -610,7 +611,7 @@
         </div>
 
         <!-- Typography -->
-        <h1 class="login-title">Welcome Back</h1>
+        <h1 class="login-title">Sekolah Digital Nexus Creative</h1>
         <p class="login-subtitle">Sign in to continue</p>
 
         @if($errors->any())
