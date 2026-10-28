@@ -148,96 +148,204 @@
 
                     {{-- Collapsible Content Body --}}
                     <div id="content-section-{{ $classId }}" class="section-content p-4 pt-0">
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 pt-2 border-t border-slate-100">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 pt-3 border-t border-slate-100">
                             @foreach($subjects as $cs)
                             @php
                                 $attInfo = $todayAttendanceMap[$cs->id] ?? null;
                                 $attStatus = $attInfo['status'] ?? null;
+                                $sched = $cs->schedule ?? null;
+
+                                // Hari & Jam label
+                                if ($sched && $sched->start_time && $sched->end_time) {
+                                    $dayLabel = $sched->day_name ?: 'Reguler';
+                                    $timeText = $sched->day_name . ', ' . $sched->start_time->format('H:i') . ' - ' . $sched->end_time->format('H:i');
+                                } elseif (!empty($attInfo['time_str'])) {
+                                    $dayLabel = 'Hari Ini';
+                                    $timeText = 'Hari Ini, ' . $attInfo['time_str'];
+                                } else {
+                                    $dayLabel = 'Senin';
+                                    $timeText = 'Senin, 07:30 - 09:00';
+                                }
+
+                                // Kode Mapel
+                                $codeText = $cs->subject?->code ?: strtoupper(substr($cs->subject?->name ?? 'MPL', 0, 3)) . '.' . sprintf('%03d', $cs->subject_id ?? 1) . '.' . ($gradeVal ?? '10');
+
+                                // Ruang
+                                $roomText = $sched?->room ?: 'R. Kelas ' . $className;
+
+                                // URL Buka Kelas
+                                $openClassUrl = auth()->user()->isSiswa() 
+                                    ? route('student.class-subjects.show', $cs->id) 
+                                    : route('teacher.class-subjects.show', $cs->id);
                             @endphp
-                            <div data-subject-id="{{ $cs->subject_id }}" data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-xl bg-slate-50/50 p-3.5 ring-1 ring-slate-200/70 hover:bg-white hover:shadow-md hover:ring-brand-200 transition-all duration-200">
-                                <div class="mb-2">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <h5 class="text-xs font-extrabold text-slate-900 group-hover:text-brand-700 transition-colors">
-                                            @if(auth()->user()->isSiswa())
-                                                <a href="{{ route('student.class-subjects.show', $cs->id) }}" class="hover:underline">
-                                                    {{ $cs->subject?->name ?? '-' }}
-                                                </a>
-                                            @else
-                                                <a href="{{ route('teacher.class-subjects.show', $cs->id) }}" class="hover:underline">
-                                                    {{ $cs->subject?->name ?? '-' }}
-                                                </a>
-                                            @endif
-                                        </h5>
-                                        @if(auth()->user()->isSiswa())
-                                            @if(in_array($attStatus, ['hadir', 'terlambat'], true))
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold text-[10px] shrink-0">
-                                                    <i class="bi bi-check-circle-fill"></i> Hadir
-                                                </span>
-                                            @elseif($attStatus === 'alfa')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-extrabold text-[10px] shrink-0">
-                                                    <i class="bi bi-x-circle-fill"></i> Tidak Hadir
-                                                </span>
-                                            @elseif($attStatus === 'sakit')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-extrabold text-[10px] shrink-0">
-                                                    <i class="bi bi-bandaid-fill"></i> Sakit
-                                                </span>
-                                            @elseif($attStatus === 'izin')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 font-extrabold text-[10px] shrink-0">
-                                                    <i class="bi bi-file-earmark-text-fill"></i> Izin
-                                                </span>
-                                            @elseif(!empty($attInfo['has_schedule_today']))
-                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-600 font-semibold text-[9px] shrink-0">
-                                                    <i class="bi bi-calendar-check"></i> Hari Ini
-                                                </span>
-                                            @endif
-                                        @endif
+
+                            <div data-subject-id="{{ $cs->subject_id }}" data-teacher-id="{{ $cs->teacher_id ?? 0 }}" class="subject-card group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:border-purple-300 transition-all duration-300">
+                                
+                                {{-- Card Header Banner (Purple Gradient - Sesuai Gambar Contoh) --}}
+                                <div class="bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 p-5 text-white relative">
+                                    {{-- Badges Row --}}
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-xs ring-1 ring-white/25">
+                                            KELAS GABUNG
+                                        </span>
+                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-xs ring-1 ring-white/25">
+                                            <i class="bi bi-calendar3"></i> {{ $dayLabel }}
+                                        </span>
                                     </div>
-                                    <p class="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
-                                        <i class="bi bi-person text-slate-400"></i>
-                                        <span class="font-medium text-slate-600 truncate">{{ $cs->teacher?->name ?? 'Belum ditentukan' }}</span>
-                                    </p>
+
+                                    {{-- Subject Title (Bold, Uppercase, Prominent) --}}
+                                    <h3 class="subject-title mt-3.5 text-base sm:text-lg font-black uppercase tracking-wide text-white line-clamp-2 leading-snug group-hover:text-purple-100 transition-colors">
+                                        <a href="{{ $openClassUrl }}" class="hover:underline">
+                                            {{ $cs->subject?->name ?? 'Mata Pelajaran' }}
+                                        </a>
+                                    </h3>
+
+                                    {{-- Class Subtitle --}}
+                                    <div class="mt-2.5 flex items-center gap-2 text-xs font-semibold text-purple-100">
+                                        <i class="bi bi-mortarboard-fill text-white/90"></i>
+                                        <span>Kelas: {{ $className }} {{ $majorCode ? '• ' . $majorCode : '' }}</span>
+                                    </div>
                                 </div>
 
-                                {{-- Action Buttons --}}
-                                @if(auth()->user()->isSiswa())
-                                    <div class="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-slate-200/60 mt-2">
-                                        <a href="{{ route('student.class-subjects.show', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80" title="Presensi & Kehadiran Mapel">
-                                            <span class="text-xs font-extrabold text-emerald-600"><i class="bi bi-person-check text-[11px]"></i></span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Absen</span>
-                                        </a>
-                                        <a href="{{ route('materials.mine', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->materials_count }}</span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Materi</span>
-                                        </a>
-                                        <a href="{{ route('student.assignments.index', ['subject' => $cs->subject_id]) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-amber-50 hover:text-amber-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-amber-600">{{ $cs->assignments_count }}</span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Tugas</span>
-                                        </a>
-                                        <a href="{{ route('discussions.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-purple-50 hover:text-purple-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-purple-600"><i class="bi bi-chat-left-text text-[10px]"></i></span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Forum</span>
+                                {{-- Card Body (Metadata List - Sesuai Gambar Contoh) --}}
+                                <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                    <div class="space-y-2.5 text-xs text-slate-700">
+                                        {{-- Hari & Jam --}}
+                                        <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-clock-history text-slate-400"></i>
+                                                <span>Hari &amp; Jam:</span>
+                                            </div>
+                                            <div class="font-bold text-right {{ !empty($attInfo['has_schedule_today']) ? 'text-emerald-600' : 'text-slate-800' }}">
+                                                {{ $timeText }}
+                                            </div>
+                                        </div>
+
+                                        {{-- Dosen / Guru --}}
+                                        <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-person-badge text-slate-400"></i>
+                                                <span>Guru / Pengajar:</span>
+                                            </div>
+                                            <div class="teacher-name font-bold text-slate-900 text-right truncate max-w-[170px]" title="{{ $cs->teacher?->name }}">
+                                                {{ $cs->teacher?->name ?? 'Belum Ditentukan' }}
+                                            </div>
+                                        </div>
+
+                                        {{-- Kode Mapel --}}
+                                        <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-upc-scan text-slate-400"></i>
+                                                <span>Kode Mapel:</span>
+                                            </div>
+                                            <div class="font-mono font-bold text-slate-800 text-right">
+                                                {{ $codeText }}
+                                            </div>
+                                        </div>
+
+                                        {{-- Materi & Tugas --}}
+                                        <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-journal-bookmark text-slate-400"></i>
+                                                <span>Materi &amp; Tugas:</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 text-right font-bold">
+                                                <span class="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                                                    {{ $cs->materials_count }} Materi
+                                                </span>
+                                                <span class="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                                                    {{ $cs->assignments_count }} Tugas
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {{-- Ruang --}}
+                                        <div class="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-building text-slate-400"></i>
+                                                <span>Ruang:</span>
+                                            </div>
+                                            <div class="font-bold text-slate-800 text-right">
+                                                {{ $roomText }}
+                                            </div>
+                                        </div>
+
+                                        {{-- Status Presensi (Khusus Siswa) --}}
+                                        @if(auth()->user()->isSiswa())
+                                        <div class="flex items-center justify-between gap-3 pt-0.5">
+                                            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                                                <i class="bi bi-fingerprint text-slate-400"></i>
+                                                <span>Presensi Hari Ini:</span>
+                                            </div>
+                                            <div class="text-right">
+                                                @if(in_array($attStatus, ['hadir', 'terlambat'], true))
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                                                        <i class="bi bi-check-circle-fill"></i> Hadir
+                                                    </span>
+                                                @elseif($attStatus === 'sakit')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                                                        <i class="bi bi-bandaid-fill"></i> Sakit
+                                                    </span>
+                                                @elseif($attStatus === 'izin')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold text-[10px]">
+                                                        <i class="bi bi-file-earmark-text-fill"></i> Izin
+                                                    </span>
+                                                @elseif(!empty($attInfo['has_schedule_today']))
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                                                        <i class="bi bi-calendar-check"></i> Hari Ini
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px]">
+                                                        Terjadwal
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+
+                                    {{-- Card Footer Actions (Quick Links + Tombol Buka Kelas) --}}
+                                    <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                                        {{-- Quick action tabs --}}
+                                        @if(auth()->user()->isSiswa())
+                                        <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                                            <a href="{{ route('student.class-subjects.show', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition border border-slate-200" title="Presensi Mapel">
+                                                Absen
+                                            </a>
+                                            <a href="{{ route('materials.mine', ['subject' => $cs->subject_id]) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border border-slate-200" title="Materi">
+                                                Materi
+                                            </a>
+                                            <a href="{{ route('student.assignments.index', ['subject' => $cs->subject_id]) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition border border-slate-200" title="Tugas">
+                                                Tugas
+                                            </a>
+                                            <a href="{{ route('discussions.index', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition border border-slate-200" title="Forum Diskusi">
+                                                Forum
+                                            </a>
+                                        </div>
+                                        @else
+                                        <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+                                            <a href="{{ route('teacher.class-subjects.show', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition border border-slate-200" title="Presensi Siswa">
+                                                Presensi
+                                            </a>
+                                            <a href="{{ route('materials.index', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border border-slate-200" title="Materi">
+                                                Materi
+                                            </a>
+                                            <a href="{{ route('assignments.index', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition border border-slate-200" title="Tugas">
+                                                Tugas
+                                            </a>
+                                            <a href="{{ route('discussions.index', $cs->id) }}" class="rounded-lg bg-slate-50 py-1 font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition border border-slate-200" title="Forum Diskusi">
+                                                Forum
+                                            </a>
+                                        </div>
+                                        @endif
+
+                                        {{-- Main Big Button: Buka Kelas (Matches Image 2 exactly) --}}
+                                        <a href="{{ $openClassUrl }}" class="group/btn inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-500 bg-white py-2 px-4 text-xs sm:text-sm font-extrabold text-emerald-700 hover:bg-emerald-500 hover:text-white transition-all duration-200 shadow-xs">
+                                            <span>Buka Kelas</span>
+                                            <i class="bi bi-box-arrow-in-right text-base group-hover/btn:translate-x-1 transition-transform"></i>
                                         </a>
                                     </div>
-                                @else
-                                    <div class="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-slate-200/60 mt-2">
-                                        <a href="{{ route('teacher.class-subjects.show', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-emerald-50 hover:text-emerald-700 ring-1 ring-slate-200/80" title="Laporan Presensi Siswa">
-                                            <span class="text-xs font-extrabold text-emerald-600"><i class="bi bi-person-check text-[11px]"></i></span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Presensi</span>
-                                        </a>
-                                        <a href="{{ route('materials.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-blue-50 hover:text-blue-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-blue-600">{{ $cs->materials_count }}</span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Materi</span>
-                                        </a>
-                                        <a href="{{ route('assignments.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-amber-50 hover:text-amber-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-amber-600">{{ $cs->assignments_count }}</span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Tugas</span>
-                                        </a>
-                                        <a href="{{ route('discussions.index', $cs->id) }}" class="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-white py-1 transition hover:bg-purple-50 hover:text-purple-700 ring-1 ring-slate-200/80">
-                                            <span class="text-xs font-extrabold text-purple-600"><i class="bi bi-chat-left-text text-[10px]"></i></span>
-                                            <span class="text-[8px] font-bold text-slate-400 uppercase">Forum</span>
-                                        </a>
-                                    </div>
-                                @endif
+                                </div>
                             </div>
                             @endforeach
                         </div>
@@ -341,8 +449,8 @@
                     cards.forEach(card => {
                         const teacherId = card.getAttribute('data-teacher-id');
                         const subjectId = card.getAttribute('data-subject-id');
-                        const subjectName = card.querySelector('h5').textContent.toLowerCase();
-                        const teacherName = card.querySelector('.truncate').textContent.toLowerCase();
+                        const subjectName = (card.querySelector('.subject-title') || card.querySelector('h3') || card.querySelector('h5'))?.textContent.toLowerCase() || '';
+                        const teacherName = (card.querySelector('.teacher-name') || card.querySelector('.truncate'))?.textContent.toLowerCase() || '';
 
                         const matchesGrade = (selectedGrade === 'all' || gradeVal === selectedGrade);
                         const matchesClass = (selectedClassId === 'all' || classId === selectedClassId);

@@ -66,6 +66,23 @@ class DashboardController extends Controller
             $classSubjects = $query->get();
         }
 
+        $allClassIds = $classSubjects->pluck('class_id')->unique()->filter();
+        $allSchedules = \App\Models\Schedule::whereIn('class_id', $allClassIds)
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
+
+        foreach ($classSubjects as $cs) {
+            $subName = $cs->subject?->name;
+            $matched = $allSchedules->first(function ($s) use ($cs, $subName) {
+                if ($s->class_id != $cs->class_id) return false;
+                if ($cs->teacher_id && $s->teacher_id == $cs->teacher_id) return true;
+                if ($subName && ($s->subject === $subName || stripos($s->subject, $subName) !== false)) return true;
+                return false;
+            });
+            $cs->schedule = $matched;
+        }
+
         $todayAttendanceMap = [];
         if ($user->isSiswa() && isset($student) && $student?->class_id) {
             $dayOfWeek = today()->dayOfWeekIso;
