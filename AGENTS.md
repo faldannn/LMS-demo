@@ -19,13 +19,13 @@ Project folder ini adalah **LMS Demo System** yang berdiri sendiri (standalone) 
 ---
 
 ## 3. Version Control (Repository Demo LMS)
-- Remote repository demo resmi: `https://github.com/NexusDevWeb/LMS-Demo.git`
+- Remote repository demo resmi: `https://github.com/faldannn/LMS-demo.git`
 - **Persetujuan Push Wajib**: DILARANG melakukan `git push` secara otomatis. `git push` HANYA boleh dijalankan setelah mendapatkan persetujuan eksplisit dari pengguna.
 - Alur kerja commit & push saat diminta/disetujui:
   ```powershell
   git add -A
   git commit -m "<tipe>: <deskripsi perubahan>"
-  # Push HANYA setelah persetujuan pengguna:
+  # Push HANYA setelah persetujuan pengguna (khusus ke https://github.com/faldannn/LMS-demo.git):
   git push origin main
   ```
 
