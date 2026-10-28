@@ -336,37 +336,11 @@ class SelfAttendanceController extends Controller
     }
 
     /**
-     * Tampilan Stasiun Tap Kartu RFID / Pink Reader Gate (Kiosk / Gate Display)
+     * Stasiun Tap Kartu dialihkan ke Scanner Presensi Multi-Alat
      */
     public function tapStation(Request $request)
     {
-        $this->authorizeStaff();
-
-        $today = today()->toDateString();
-        $recentTaps = $this->tapService->getRecentTaps(25);
-        $todayCount = AttendanceDetail::whereHas('attendance', fn ($q) => $q->where('date', $today))->count();
-
-        // Sample siswa untuk fitur simulasi tap kartu
-        $students = Student::with('class')
-            ->where('status', true)
-            ->orderBy('name')
-            ->take(100)
-            ->get();
-
-        $classes = Classes::orderBy('name')->get();
-        $apiKey = $this->tapService->getApiKey();
-        $lateLimit = Setting::get('late_threshold', config('attendance.late_limit', '07:15'));
-        $schoolName = Setting::get('school_name', config('school.name', 'Sekolah Digital'));
-
-        return view('attendance.tap-station', compact(
-            'recentTaps',
-            'todayCount',
-            'students',
-            'classes',
-            'apiKey',
-            'lateLimit',
-            'schoolName'
-        ));
+        return redirect()->route('attendance.scan-qr');
     }
 
     /**
