@@ -36,7 +36,7 @@
 @endpush
 
 @section('content')
-<div class="print-container mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+<div class="print-container mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
     {{-- BREADCRUMB --}}
     <div class="no-print flex items-center gap-2 text-xs font-semibold text-slate-500">
         <a href="{{ route('cbt.index') }}" class="hover:text-emerald-600 transition">Ujian CBT</a>
@@ -197,47 +197,105 @@
             {{-- Lampiran Gambar --}}
             @if($q->image_path)
             <div class="my-2">
-                <img src="{{ asset($q->image_path) }}" alt="Gambar Soal" class="max-h-64 rounded-xl border border-slate-200 object-contain bg-slate-50">
+                <img src="{{ str_starts_with($q->image_path, 'http') || str_starts_with($q->image_path, 'data:') ? $q->image_path : asset($q->image_path) }}" alt="Gambar Soal" class="max-h-64 rounded-xl border border-slate-200 object-contain bg-slate-50" onerror="this.onerror=null; this.closest('div').style.display='none';">
             </div>
             @endif
 
             {{-- PILIHAN GANDA --}}
             @if($q->type === 'multiple_choice')
-            <div class="space-y-2 pt-2">
+            <div class="space-y-2.5 pt-1">
                 @php
                     $letters = ['A', 'B', 'C', 'D', 'E'];
+                    $studentOptionId = $ans?->question_option_id;
+                    $correctOption = $q->options->firstWhere('is_correct', true);
+                    $studentOption = $studentOptionId ? $q->options->firstWhere('id', $studentOptionId) : null;
                 @endphp
-                @foreach($q->options as $optIdx => $opt)
-                @php
-                    $isStudentChoice = $ans && $ans->question_option_id === $opt->id;
-                    $isCorrectKey = (bool) $opt->is_correct;
-                    $letter = $letters[$optIdx] ?? chr(65 + $optIdx);
 
-                    // Styling container
-                    if ($isStudentChoice && $isCorrectKey) {
-                        $boxClass = 'border-emerald-500 bg-emerald-50/60 text-emerald-950 font-semibold shadow-2xs';
-                        $badgeBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shrink-0"><i class="bi bi-check-lg"></i> Jawaban Siswa &amp; Kunci Benar</span>';
-                    } elseif ($isStudentChoice && !$isCorrectKey) {
-                        $boxClass = 'border-rose-400 bg-rose-50/60 text-rose-950 font-semibold shadow-2xs';
-                        $badgeBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white shrink-0"><i class="bi bi-x-lg"></i> Jawaban Siswa (Salah)</span>';
-                    } elseif ($isCorrectKey) {
-                        $boxClass = 'border-emerald-300 bg-emerald-50/30 text-emerald-900 font-semibold';
-                        $badgeBadge = '<span class="inline-flex items-center gap-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold shrink-0"><i class="bi bi-key-fill text-emerald-600"></i> Kunci Jawaban Benar</span>';
-                    } else {
-                        $boxClass = 'border-slate-200 bg-slate-50/50 text-slate-700';
-                        $badgeBadge = '';
-                    }
-                @endphp
-                <div class="flex items-center justify-between gap-3 rounded-xl border p-3 text-xs {{ $boxClass }} transition">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="flex h-6 w-6 items-center justify-center rounded-lg {{ $isStudentChoice ? ($isCorrectKey ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') : ($isCorrectKey ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-white border border-slate-200 text-slate-600') }} font-bold text-xs shrink-0">
-                            {{ $letter }}
+                @if($isCorrect && $studentOption)
+                    {{-- Siswa Benar: Tampilkan HANYA jawaban benarnya saja --}}
+                    @php
+                        $optIdx = $q->options->search(fn($o) => $o->id === $studentOption->id);
+                        $letter = $letters[$optIdx !== false ? $optIdx : 0] ?? 'A';
+                    @endphp
+                    <div class="flex items-center justify-between gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 p-3.5 text-xs text-emerald-950 font-medium shadow-xs">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xs shrink-0 shadow-xs">
+                                {{ $letter }}
+                            </span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="math-content break-words font-semibold text-slate-900">{{ $studentOption->option_text }}</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-[11px] font-bold text-white shrink-0 shadow-2xs">
+                            <i class="bi bi-check-circle-fill"></i> Jawaban Benar (Dipilih Siswa)
                         </span>
-                        <span class="math-content break-words">{{ $opt->option_text }}</span>
                     </div>
-                    {!! $badgeBadge !!}
-                </div>
-                @endforeach
+
+                @elseif(!$isCorrect && $studentOption)
+                    {{-- Siswa Salah: Tampilkan Jawaban Pilihan Siswa dan Kunci Jawaban Benar --}}
+                    @php
+                        $studentIdx = $q->options->search(fn($o) => $o->id === $studentOption->id);
+                        $studentLetter = $letters[$studentIdx !== false ? $studentIdx : 0] ?? 'A';
+
+                        $correctIdx = $correctOption ? $q->options->search(fn($o) => $o->id === $correctOption->id) : false;
+                        $correctLetter = $letters[$correctIdx !== false ? $correctIdx : 0] ?? 'B';
+                    @endphp
+
+                    {{-- 1. Jawaban Pilihan Siswa (Salah) --}}
+                    <div class="flex items-center justify-between gap-3 rounded-2xl border-2 border-rose-400 bg-rose-50/70 p-3.5 text-xs text-rose-950 font-medium shadow-xs">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-rose-600 text-white font-bold text-xs shrink-0 shadow-xs">
+                                {{ $studentLetter }}
+                            </span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="math-content break-words font-semibold text-slate-900">{{ $studentOption->option_text }}</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-[11px] font-bold text-white shrink-0 shadow-2xs">
+                            <i class="bi bi-x-circle-fill"></i> Jawaban Pilihan Siswa (Salah)
+                        </span>
+                    </div>
+
+                    {{-- 2. Kunci Jawaban Benar --}}
+                    @if($correctOption)
+                    <div class="flex items-center justify-between gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-50/60 p-3.5 text-xs text-emerald-950 font-medium shadow-xs">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xs shrink-0 shadow-xs">
+                                {{ $correctLetter }}
+                            </span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="math-content break-words font-semibold text-slate-900">{{ $correctOption->option_text }}</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 px-3 py-1 text-[11px] font-bold shrink-0">
+                            <i class="bi bi-key-fill text-emerald-600"></i> Kunci Jawaban Benar
+                        </span>
+                    </div>
+                    @endif
+
+                @else
+                    {{-- Tidak Dijawab: Tampilkan Kunci Jawaban Benar --}}
+                    @if($correctOption)
+                    @php
+                        $correctIdx = $q->options->search(fn($o) => $o->id === $correctOption->id);
+                        $correctLetter = $letters[$correctIdx !== false ? $correctIdx : 0] ?? 'A';
+                    @endphp
+                    <div class="flex items-center justify-between gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-50/60 p-3.5 text-xs text-emerald-950 font-medium shadow-xs">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xs shrink-0 shadow-xs">
+                                {{ $correctLetter }}
+                            </span>
+                            <div class="space-y-0.5 min-w-0">
+                                <span class="math-content break-words font-semibold text-slate-900">{{ $correctOption->option_text }}</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 px-3 py-1 text-[11px] font-bold shrink-0">
+                            <i class="bi bi-key-fill text-emerald-600"></i> Kunci Jawaban Benar
+                        </span>
+                    </div>
+                    @endif
+                    <div class="text-[11px] text-slate-400 italic pl-1">Siswa tidak memilih jawaban pada nomor ini.</div>
+                @endif
             </div>
 
             {{-- KOMPLEKS BENAR / SALAH --}}
