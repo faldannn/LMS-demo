@@ -111,17 +111,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- Progress Bar Waktu 5 Menit --}}
-        <div class="mt-6">
-            <div class="flex justify-between text-[11px] font-medium text-slate-300 mb-1">
-                <span>Interval Periode Token (300 Detik / 5 Menit)</span>
-                <span id="progressPercent">0%</span>
-            </div>
-            <div class="h-2 w-full overflow-hidden rounded-full bg-white/15">
-                <div id="tokenProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-linear" style="width: 100%;"></div>
-            </div>
-        </div>
     </div>
 
     {{-- STATISTIK KARTU CBT --}}
@@ -338,8 +327,6 @@
     const intervalSeconds = {{ $tokenInfo['interval_seconds'] }};
     const tokenDisplay = document.getElementById('liveTokenDisplay');
     const countdownText = document.getElementById('countdownText');
-    const tokenProgressBar = document.getElementById('tokenProgressBar');
-    const progressPercent = document.getElementById('progressPercent');
 
     function updateTimerUI() {
         if (remainingSeconds < 0) remainingSeconds = 0;
@@ -348,16 +335,10 @@
         const seconds = remainingSeconds % 60;
         countdownText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-        const percent = Math.round((remainingSeconds / intervalSeconds) * 100);
-        tokenProgressBar.style.width = percent + '%';
-        progressPercent.textContent = percent + '%';
-
         // Warning color bila sisa waktu < 1 menit
         if (remainingSeconds <= 60) {
-            tokenProgressBar.className = "h-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-1000 ease-linear";
             countdownText.className = "text-rose-400 font-mono text-sm font-bold animate-pulse";
         } else {
-            tokenProgressBar.className = "h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-linear";
             countdownText.className = "text-emerald-300 font-mono text-sm";
         }
     }
