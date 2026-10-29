@@ -58,8 +58,9 @@ class AcademicYearController extends Controller
     public function index(Request $request)
     {
         $academicYears = $this->service->paginate($request->all());
+        $allYears = AcademicYear::orderByDesc('year')->get();
 
-        return view('academic-years.index', compact('academicYears'));
+        return view('academic-years.index', compact('academicYears', 'allYears'));
     }
 
     public function create()
@@ -76,9 +77,36 @@ class AcademicYearController extends Controller
 
     public function show(AcademicYear $academicYear)
     {
-        $academicYear->load(['semesters', 'classes']);
+        $academicYear->load([
+            'semesters',
+            'classes' => fn ($q) => $q->with(['homeroomTeacher', 'major'])->withCount('students')->orderBy('grade')->orderBy('name'),
+        ]);
 
-        return view('academic-years.show', compact('academicYear'));
+        $allYears = AcademicYear::where('id', '!=', $academicYear->id)->orderByDesc('year')->get();
+
+        return view('academic-years.show', compact('academicYear', 'allYears'));
+    }
+
+    public function duplicateClasses(Request $request, AcademicYear $academicYear)
+    {
+        $data = $request->validate([
+            'source_academic_year_id' => 'required|exists:academic_years,id|different:academic_year_id',
+            'copy_homeroom' => 'nullable|boolean',
+        ], [
+            'source_academic_year_id.different' => 'Tahun ajaran sumber tidak boleh sama dengan tahun ajaran tujuan.',
+        ]);
+
+        try {
+            $res = $this->service->duplicateClasses(
+                (int) $data['source_academic_year_id'],
+                $academicYear->id,
+                $request->boolean('copy_homeroom', true)
+            );
+
+            return back()->with('success', "Struktur kelas untuk {$academicYear->year} berhasil disiapkan: {$res['created']} kelas disalin ({$res['skipped']} kelas sudah ada).");
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function edit(AcademicYear $academicYear)

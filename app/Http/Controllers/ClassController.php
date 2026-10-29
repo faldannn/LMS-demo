@@ -188,26 +188,110 @@ class ClassController extends Controller
         $data = $request->validate([
             'student_ids' => 'required|array',
             'student_ids.*' => 'exists:students,id',
+            'action_type' => 'nullable|in:naik,tinggal,lulus',
             'target_class_id' => 'required|string',
+            'notes' => 'nullable|string|max:255',
         ]);
 
-        if ($data['target_class_id'] === 'lulus') {
-            $students = \App\Models\Student::whereIn('id', $data['student_ids'])->get();
+        $actionType = $data['action_type'] ?? ($data['target_class_id'] === 'lulus' ? 'lulus' : 'naik');
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $actionType) {
+            $students = \App\Models\Student::with(['class', 'user'])->whereIn('id', $data['student_ids'])->get();
+
+            if ($actionType === 'lulus' || $data['target_class_id'] === 'lulus') {
+                foreach ($students as $student) {
+                    $currentAyId = $student->class?->academic_year_id ?? \App\Models\AcademicYear::active()?->id;
+
+                    if ($currentAyId) {
+                        \App\Models\StudentAcademicHistory::updateOrCreate(
+                            [
+                                'student_id' => $student->id,
+                                'academic_year_id' => $currentAyId,
+                            ],
+                            [
+                                'class_id' => $student->class_id,
+                                'status' => 'lulus',
+                                'notes' => $data['notes'] ?: 'Dinyatakan Lulus / Alumni',
+                            ]
+                        );
+                    }
+
+                    $student->update([
+                        'status' => false,
+                        'student_status' => 'lulus',
+                        'exit_date' => now()->toDateString(),
+                        'exit_reason' => 'Lulus Pendidikan / Alumni',
+                    ]);
+
+                    if ($student->user) {
+                        $student->user->update(['status' => false]);
+                    }
+                }
+
+                return back()->with('success', count($students) . ' siswa berhasil diluluskan (status alumni tercatat di riwayat akademik).');
+            }
+
+            // Target class validation
+            $targetClass = \App\Models\Classes::with('academicYear')->findOrFail((int) $data['target_class_id']);
+
             foreach ($students as $student) {
-                $student->update(['status' => false]);
-                if ($student->user) {
-                    $student->user->update(['status' => false]);
+                $oldClass = $student->class;
+                $sourceAyId = $oldClass?->academic_year_id ?? \App\Models\AcademicYear::active()?->id;
+                $targetAyId = $targetClass->academic_year_id;
+
+                // 1. Record historical completion on source academic year if source and target differ
+                if ($sourceAyId && $sourceAyId != $targetAyId) {
+                    $histStatus = ($actionType === 'tinggal') ? 'tinggal_kelas' : 'naik_kelas';
+                    $histNote = ($actionType === 'tinggal')
+                        ? ('Tinggal Kelas (Mengulang). ' . ($data['notes'] ?? ''))
+                        : ('Naik ke kelas ' . $targetClass->name . '. ' . ($data['notes'] ?? ''));
+
+                    \App\Models\StudentAcademicHistory::updateOrCreate(
+                        [
+                            'student_id' => $student->id,
+                            'academic_year_id' => $sourceAyId,
+                        ],
+                        [
+                            'class_id' => $student->class_id,
+                            'status' => $histStatus,
+                            'notes' => trim($histNote),
+                        ]
+                    );
+                }
+
+                // 2. Update current student placement
+                $student->update([
+                    'class_id' => $targetClass->id,
+                    'status' => true,
+                    'student_status' => 'aktif',
+                ]);
+
+                // 3. Record new academic year placement as active
+                if ($targetAyId) {
+                    $newPlacementNote = ($actionType === 'tinggal')
+                        ? ('Tinggal Kelas di ' . $targetClass->name)
+                        : ('Ditempatkan di ' . $targetClass->name . ($oldClass ? ' dari ' . $oldClass->name : ''));
+
+                    \App\Models\StudentAcademicHistory::updateOrCreate(
+                        [
+                            'student_id' => $student->id,
+                            'academic_year_id' => $targetAyId,
+                        ],
+                        [
+                            'class_id' => $targetClass->id,
+                            'status' => 'aktif',
+                            'notes' => trim($newPlacementNote . ($data['notes'] ? ' - ' . $data['notes'] : '')),
+                        ]
+                    );
                 }
             }
-            return back()->with('success', count($data['student_ids']) . ' siswa berhasil diluluskan (akun dinonaktifkan).');
-        }
 
-        // Validate target class
-        $targetClass = \App\Models\Classes::findOrFail((int) $data['target_class_id']);
-        
-        \App\Models\Student::whereIn('id', $data['student_ids'])
-            ->update(['class_id' => $targetClass->id]);
+            $actionLabel = match ($actionType) {
+                'tinggal' => 'Tinggal kelas (mengulang)',
+                default => 'Naik/pindah kelas',
+            };
 
-        return back()->with('success', count($data['student_ids']) . ' siswa berhasil dipindahkan/dinaikkan kelas.');
+            return back()->with('success', count($students) . " siswa berhasil diproses {$actionLabel} ke {$targetClass->name} beserta pembaruan riwayat akademik.");
+        });
     }
 }

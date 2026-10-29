@@ -36,6 +36,11 @@ class AcademicYear extends Model
         return $this->hasMany(ReportCard::class);
     }
 
+    public function studentAcademicHistories(): HasMany
+    {
+        return $this->hasMany(StudentAcademicHistory::class);
+    }
+
     protected static function booted(): void
     {
         static::saved(function () {

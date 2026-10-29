@@ -3,7 +3,10 @@
 namespace App\Services\MasterData;
 
 use App\Enums\UserRole;
+use App\Models\AcademicYear;
+use App\Models\Classes;
 use App\Models\Student;
+use App\Models\StudentAcademicHistory;
 use App\Models\User;
 use App\Repositories\StudentRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +27,16 @@ class StudentService extends BaseMasterDataService
     public function create(array $data): Model
     {
         return DB::transaction(function () use ($data) {
+            if (empty($data['registration_type'])) {
+                $data['registration_type'] = 'baru';
+            }
+            if (empty($data['entry_date'])) {
+                $data['entry_date'] = now()->toDateString();
+            }
+            if (empty($data['student_status'])) {
+                $data['student_status'] = 'aktif';
+            }
+
             if (isset($data['photo']) && is_object($data['photo'])) {
                 $data['photo'] = $data['photo']->store('students/photos', 'public');
             }
@@ -74,6 +87,8 @@ class StudentService extends BaseMasterDataService
                 $restoredStudent->restoreQuietly();
                 $restoredStudent->update($data);
 
+                $this->syncAcademicHistory($restoredStudent);
+
                 if ($password) {
                     $restoredStudent->setAttribute('generated_password', $password);
                 }
@@ -109,6 +124,9 @@ class StudentService extends BaseMasterDataService
             unset($data['create_account'], $data['password']);
 
             $student = parent::create($data);
+
+            $this->syncAcademicHistory($student);
+
             if ($password) {
                 $student->setAttribute('generated_password', $password);
             }
@@ -216,6 +234,90 @@ class StudentService extends BaseMasterDataService
             ]);
         }
 
+        $this->syncAcademicHistory($student);
+
         return $student;
+    }
+
+    public function syncAcademicHistory(Student $student, ?string $status = null, ?string $notes = null): ?StudentAcademicHistory
+    {
+        if (!$student->class_id) {
+            return null;
+        }
+
+        $class = Classes::find($student->class_id);
+        $academicYearId = $class?->academic_year_id ?? AcademicYear::active()?->id;
+
+        if (!$academicYearId) {
+            return null;
+        }
+
+        $finalStatus = $status ?? ($student->student_status ?: 'aktif');
+        $defaultNote = ($student->registration_type === 'pindahan')
+            ? ('Siswa Pindahan dari: ' . ($student->origin_school ?: 'Tidak dicantumkan'))
+            : 'Pendaftaran Siswa Baru';
+
+        return StudentAcademicHistory::updateOrCreate(
+            [
+                'student_id' => $student->id,
+                'academic_year_id' => $academicYearId,
+            ],
+            [
+                'class_id' => $student->class_id,
+                'status' => $finalStatus,
+                'notes' => $notes ?? $defaultNote,
+            ]
+        );
+    }
+
+    public function recordMutation(Student $student, array $data): Student
+    {
+        return DB::transaction(function () use ($student, $data) {
+            $statusType = $data['student_status'] ?? 'mutasi_keluar';
+            $exitDate = $data['exit_date'] ?? now()->toDateString();
+            $exitReason = $data['exit_reason'] ?? 'Pindah sekolah / Mengundurkan diri';
+            $destSchool = $data['destination_school'] ?? null;
+
+            $student->update([
+                'status' => false,
+                'student_status' => $statusType,
+                'exit_date' => $exitDate,
+                'exit_reason' => $exitReason,
+                'destination_school' => $destSchool,
+            ]);
+
+            if ($student->user) {
+                $student->user->update(['status' => false]);
+            }
+
+            $note = ($statusType === 'mutasi_keluar')
+                ? ("Mutasi Keluar ke: " . ($destSchool ?: 'Lainnya') . ". Alasan: " . $exitReason)
+                : ("Mengundurkan diri / DO. Alasan: " . $exitReason);
+
+            $this->syncAcademicHistory($student, $statusType, $note);
+
+            return $student;
+        });
+    }
+
+    public function cancelMutation(Student $student): Student
+    {
+        return DB::transaction(function () use ($student) {
+            $student->update([
+                'status' => true,
+                'student_status' => 'aktif',
+                'exit_date' => null,
+                'exit_reason' => null,
+                'destination_school' => null,
+            ]);
+
+            if ($student->user) {
+                $student->user->update(['status' => true]);
+            }
+
+            $this->syncAcademicHistory($student, 'aktif', 'Status mutasi dibatalkan, siswa kembali aktif.');
+
+            return $student;
+        });
     }
 }

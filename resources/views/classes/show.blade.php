@@ -140,24 +140,60 @@
                 </div>
                 
                 @if($class->students->isNotEmpty())
-                    <div class="card-footer bg-light py-3">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-7 text-muted small">
-                                <i class="bi bi-info-circle me-1"></i> Centang siswa di atas, pilih kelas tujuan, lalu klik "Pindahkan Kelas" untuk menaikkan/memindahkan kelas secara massal.
+                    <div class="card-footer bg-light py-3 border-top">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-xs uppercase text-slate-600 mb-2">
+                                <i class="bi bi-gear-fill me-1 text-primary"></i> Tindakan Kenaikan / Transisi Kelas Massal
+                            </label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action_type" id="action_naik" value="naik" checked onchange="toggleActionFields('naik')">
+                                    <label class="form-check-label text-sm fw-semibold text-slate-800" for="action_naik">
+                                        📈 Naik / Pindah Kelas
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action_type" id="action_tinggal" value="tinggal" onchange="toggleActionFields('tinggal')">
+                                    <label class="form-check-label text-sm fw-semibold text-amber-800" for="action_tinggal">
+                                        🔁 Tinggal Kelas (Mengulang)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action_type" id="action_lulus" value="lulus" onchange="toggleActionFields('lulus')">
+                                    <label class="form-check-label text-sm fw-semibold text-danger" for="action_lulus">
+                                        🎓 Luluskan Siswa (Alumni)
+                                    </label>
+                                </div>
                             </div>
-                            <div class="col-md-5 d-flex gap-2">
-                                <select name="target_class_id" class="form-select form-select-sm" required>
+                        </div>
+
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5" id="col-target-class">
+                                <label class="form-label text-xs fw-semibold text-slate-500 mb-1">Kelas Tujuan</label>
+                                <select name="target_class_id" id="target_class_id" class="form-select form-select-sm" required>
                                     <option value="">-- Pilih Kelas Tujuan --</option>
-                                    <option value="lulus" class="text-danger fw-bold">🎓 Luluskan / Non-Aktifkan Siswa</option>
                                     @php
                                         $allClasses = \App\Models\Classes::with('academicYear')->where('id', '!=', $class->id)->orderBy('grade')->orderBy('name')->get();
+                                        $groupedClasses = $allClasses->groupBy(fn($c) => $c->academicYear?->year ?? 'Lainnya');
                                     @endphp
-                                    @foreach($allClasses as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }} (Thn: {{ $c->academicYear?->year }})</option>
+                                    @foreach($groupedClasses as $ayYear => $clsList)
+                                        <optgroup label="Tahun Ajaran: {{ $ayYear }}">
+                                            @foreach($clsList as $c)
+                                                <option value="{{ $c->id }}" data-grade="{{ $c->grade }}">
+                                                    {{ $c->name }} (Kelas {{ $c->grade }} - {{ $c->major?->code ?? 'Umum' }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
-                                <button type="submit" class="btn btn-sm btn-warning text-nowrap" id="btn-promote-submit" disabled>
-                                    <i class="bi bi-arrow-right-short"></i> Pindahkan Kelas
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-xs fw-semibold text-slate-500 mb-1">Catatan Riwayat (Opsional)</label>
+                                <input type="text" name="notes" class="form-control form-control-sm" placeholder="Contoh: Kenaikan reguler semester genap">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end pt-3">
+                                <button type="submit" class="btn btn-sm btn-primary w-100 text-nowrap" id="btn-promote-submit" disabled onclick="return confirmPromotion()">
+                                    <i class="bi bi-arrow-right-circle me-1"></i> Proses Siswa Terpilih
                                 </button>
                             </div>
                         </div>
@@ -343,6 +379,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+function toggleActionFields(action) {
+    const targetSelect = document.getElementById('target_class_id');
+    const colTarget = document.getElementById('col-target-class');
+
+    if (action === 'lulus') {
+        if (targetSelect) {
+            targetSelect.value = 'lulus';
+            targetSelect.removeAttribute('required');
+        }
+        if (colTarget) {
+            colTarget.style.opacity = '0.5';
+            colTarget.style.pointerEvents = 'none';
+        }
+    } else {
+        if (targetSelect) {
+            if (targetSelect.value === 'lulus') {
+                targetSelect.value = '';
+            }
+            targetSelect.setAttribute('required', 'required');
+        }
+        if (colTarget) {
+            colTarget.style.opacity = '1';
+            colTarget.style.pointerEvents = 'auto';
+        }
+    }
+}
+
+function confirmPromotion() {
+    const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
+    if (checkedCount === 0) {
+        alert('Pilih minimal 1 siswa!');
+        return false;
+    }
+
+    const action = document.querySelector('input[name="action_type"]:checked')?.value || 'naik';
+    const actionText = (action === 'lulus') 
+        ? 'MELULUSKAN (status alumni)' 
+        : (action === 'tinggal' ? 'MENETAPKAN TINGGAL KELAS pada' : 'MENAIKKAN/MEMINDAHKAN');
+
+    return confirm(`Apakah Anda yakin ingin memproses ${checkedCount} siswa terpilih untuk ${actionText}? Riwayat akademik siswa akan otomatis dicatat.`);
+}
 </script>
 @endpush
 

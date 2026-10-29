@@ -13,7 +13,39 @@
 
     <form method="POST" action="{{ route('students.store') }}" enctype="multipart/form-data" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         @csrf
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-2 space-y-6">
+            {{-- Status Pendaftaran --}}
+            <x-card title="Jalur Pendaftaran & Mutasi" icon="bi-signpost-split" glass="true">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Jenis Pendaftaran</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="radio" name="registration_type" value="baru" {{ old('registration_type', 'baru') === 'baru' ? 'checked' : '' }} onchange="toggleTransferFields('baru')" class="h-4 w-4 text-brand-600 focus:ring-brand-500">
+                                <div>
+                                    <div class="text-sm font-bold text-slate-800">Siswa Baru</div>
+                                    <div class="text-xs text-slate-500">Pendaftaran reguler awal tahun ajaran</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="radio" name="registration_type" value="pindahan" {{ old('registration_type') === 'pindahan' ? 'checked' : '' }} onchange="toggleTransferFields('pindahan')" class="h-4 w-4 text-brand-600 focus:ring-brand-500">
+                                <div>
+                                    <div class="text-sm font-bold text-indigo-700">Siswa Pindahan (Mutasi Masuk)</div>
+                                    <div class="text-xs text-slate-500">Pindahan dari sekolah lain</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <x-form-input name="entry_date" type="date" label="Tanggal Masuk / Terdaftar" value="{{ old('entry_date', date('Y-m-d')) }}" required />
+                        <div id="origin_school_wrapper" class="{{ old('registration_type') === 'pindahan' ? '' : 'hidden' }}">
+                            <x-form-input name="origin_school" label="Sekolah Asal" value="{{ old('origin_school') }}" placeholder="Nama sekolah asal siswa pindahan" />
+                        </div>
+                    </div>
+                </div>
+            </x-card>
+
             <x-card title="Data Siswa" icon="bi-person-plus" glass="true">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <x-form-input name="nis" label="NIS" value="{{ old('nis') }}" placeholder="Nomor Induk Siswa" required />
@@ -97,6 +129,17 @@ function previewPhoto(input) {
             document.getElementById('photo-preview').classList.add('border-solid', 'border-brand-500');
         };
         reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function toggleTransferFields(type) {
+    const originWrapper = document.getElementById('origin_school_wrapper');
+    if (originWrapper) {
+        if (type === 'pindahan') {
+            originWrapper.classList.remove('hidden');
+        } else {
+            originWrapper.classList.add('hidden');
+        }
     }
 }
 </script>

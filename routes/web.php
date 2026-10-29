@@ -145,6 +145,10 @@ Route::middleware(['auth', 'check.active'])->group(function () {
             ->name('students.print-card');
         Route::post('students/{student}/reset-password', [StudentController::class, 'resetPassword'])
             ->name('students.reset-password');
+        Route::post('students/{student}/mutate-out', [StudentController::class, 'mutateOut'])
+            ->name('students.mutate-out');
+        Route::post('students/{student}/cancel-mutation', [StudentController::class, 'cancelMutation'])
+            ->name('students.cancel-mutation');
         Route::resource('students', StudentController::class);
 
         Route::get('teachers/import/template', [TeacherController::class, 'importTemplate'])->name('teachers.import.template');
@@ -169,6 +173,8 @@ Route::middleware(['auth', 'check.active'])->group(function () {
         Route::resource('subjects', SubjectController::class);
 
         registerMasterDataRoutes('academic-years', AcademicYearController::class, false);
+        Route::post('academic-years/{academicYear}/duplicate-classes', [AcademicYearController::class, 'duplicateClasses'])
+            ->name('academic-years.duplicate-classes');
         Route::resource('academic-years', AcademicYearController::class);
 
         registerMasterDataRoutes('semesters', SemesterController::class, false);

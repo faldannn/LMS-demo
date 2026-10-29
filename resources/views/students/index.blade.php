@@ -25,8 +25,8 @@
 
     {{-- Filter --}}
     <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/60">
-        <form method="GET" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div>
+        <form method="GET" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <div class="lg:col-span-2">
                 <label class="mb-1 block text-xs font-bold text-slate-500">Pencarian</label>
                 <div class="relative">
                     <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
@@ -44,25 +44,32 @@
                 </select>
             </div>
             <div>
-                <label class="mb-1 block text-xs font-bold text-slate-500">Jenis Kelamin</label>
-                <select name="gender" class="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20">
-                    <option value="">Semua</option>
-                    <option value="L" {{ request('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                    <option value="P" {{ request('gender') == 'P' ? 'selected' : '' }}>Perempuan</option>
+                <label class="mb-1 block text-xs font-bold text-slate-500">Jalur Masuk</label>
+                <select name="registration_type" class="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20">
+                    <option value="">Semua Jalur</option>
+                    <option value="baru" {{ request('registration_type') === 'baru' ? 'selected' : '' }}>Siswa Baru</option>
+                    <option value="pindahan" {{ request('registration_type') === 'pindahan' ? 'selected' : '' }}>Siswa Pindahan</option>
                 </select>
             </div>
             <div>
-                <label class="mb-1 block text-xs font-bold text-slate-500">Status</label>
-                <select name="status" class="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20">
+                <label class="mb-1 block text-xs font-bold text-slate-500">Status Siswa</label>
+                <select name="student_status" class="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20">
                     <option value="">Semua Status</option>
-                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Aktif</option>
-                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Non-Aktif</option>
+                    <option value="aktif" {{ request('student_status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                    <option value="lulus" {{ request('student_status') === 'lulus' ? 'selected' : '' }}>Lulus (Alumni)</option>
+                    <option value="mutasi_keluar" {{ request('student_status') === 'mutasi_keluar' ? 'selected' : '' }}>Mutasi Keluar</option>
+                    <option value="drop_out" {{ request('student_status') === 'drop_out' ? 'selected' : '' }}>Drop Out</option>
                 </select>
             </div>
-            <div class="flex items-end">
+            <div class="flex items-end gap-2">
                 <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                     <i class="bi bi-funnel"></i>Filter
                 </button>
+                @if(request()->hasAny(['search', 'class_id', 'registration_type', 'student_status', 'gender']))
+                    <a href="{{ route('students.index') }}" class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Reset
+                    </a>
+                @endif
             </div>
         </form>
     </div>
@@ -128,11 +135,16 @@
                             </div>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3">
-                            @if($student->status)
-                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase text-emerald-700">Aktif</span>
-                            @else
-                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase text-slate-500">Non-Aktif</span>
-                            @endif
+                            <div class="flex flex-col gap-1 items-start">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold border {{ $student->student_status_badge }}">
+                                    {{ $student->student_status_label }}
+                                </span>
+                                @if($student->isPindahan())
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        Pindahan
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             <div class="inline-flex items-center divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">

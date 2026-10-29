@@ -31,6 +31,8 @@ class StudentRepository extends BaseRepository
             ->withCount(['attendanceDetails as present_count' => fn ($q) => $q->whereIn('status', ['hadir', 'terlambat'])])
             ->when($filters['class_id'] ?? null, fn ($q, $v) => $q->where('class_id', $v))
             ->when($filters['gender'] ?? null, fn ($q, $v) => $q->where('gender', $v))
+            ->when($filters['student_status'] ?? null, fn ($q, $v) => $q->where('student_status', $v))
+            ->when($filters['registration_type'] ?? null, fn ($q, $v) => $q->where('registration_type', $v))
             ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
             ->when($filters['trashed'] ?? false, fn ($q) => $q->onlyTrashed());
     }

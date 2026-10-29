@@ -39,6 +39,15 @@
                     
                     <x-form-input name="dob" type="date" label="Tanggal Lahir" value="{{ old('dob', $student->dob?->toDateString()) }}" />
                     
+                    <x-form-input name="registration_type" type="select" label="Jenis Pendaftaran">
+                        <option value="baru" {{ old('registration_type', $student->registration_type ?? 'baru') === 'baru' ? 'selected' : '' }}>Siswa Baru</option>
+                        <option value="pindahan" {{ old('registration_type', $student->registration_type) === 'pindahan' ? 'selected' : '' }}>Siswa Pindahan</option>
+                    </x-form-input>
+
+                    <x-form-input name="entry_date" type="date" label="Tanggal Masuk" value="{{ old('entry_date', $student->entry_date?->toDateString()) }}" />
+
+                    <x-form-input name="origin_school" label="Sekolah Asal (Jika Pindahan)" value="{{ old('origin_school', $student->origin_school) }}" placeholder="Nama sekolah asal" />
+
                     <x-form-input name="class_id" type="select" label="Kelas" required>
                         @foreach($classes as $c)
                             <option value="{{ $c->id }}" {{ old('class_id', $student->class_id) == $c->id ? 'selected' : '' }}>
@@ -47,9 +56,16 @@
                         @endforeach
                     </x-form-input>
 
-                    <x-form-input name="status" type="select" label="Status">
-                        <option value="1" {{ old('status', $student->status) ? 'selected' : '' }}>Aktif</option>
-                        <option value="0" {{ !old('status', $student->status) ? 'selected' : '' }}>Non-Aktif</option>
+                    <x-form-input name="student_status" type="select" label="Status Siswa">
+                        <option value="aktif" {{ old('student_status', $student->student_status ?? 'aktif') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                        <option value="lulus" {{ old('student_status', $student->student_status) === 'lulus' ? 'selected' : '' }}>Lulus (Alumni)</option>
+                        <option value="mutasi_keluar" {{ old('student_status', $student->student_status) === 'mutasi_keluar' ? 'selected' : '' }}>Mutasi Keluar / Pindah Sekolah</option>
+                        <option value="drop_out" {{ old('student_status', $student->student_status) === 'drop_out' ? 'selected' : '' }}>Drop Out / Mengundurkan Diri</option>
+                    </x-form-input>
+
+                    <x-form-input name="status" type="select" label="Status Akun LMS">
+                        <option value="1" {{ old('status', $student->status) ? 'selected' : '' }}>Aktif (Bisa Login)</option>
+                        <option value="0" {{ !old('status', $student->status) ? 'selected' : '' }}>Non-Aktif (Diblokir)</option>
                     </x-form-input>
                     
                     <x-form-input name="parent_name" label="Nama Orang Tua" value="{{ old('parent_name', $student->parent_name) }}" />

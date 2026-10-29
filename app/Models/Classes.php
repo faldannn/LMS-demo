@@ -45,6 +45,11 @@ class Classes extends Model
         return $this->hasMany(Student::class, 'class_id');
     }
 
+    public function studentAcademicHistories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StudentAcademicHistory::class, 'class_id');
+    }
+
     public function schedules(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Schedule::class, 'class_id');

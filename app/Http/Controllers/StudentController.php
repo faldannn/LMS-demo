@@ -95,7 +95,12 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['class.homeroomTeacher']);
+        $student->load([
+            'class.homeroomTeacher',
+            'class.major',
+            'class.academicYear',
+            'academicHistories' => fn ($q) => $q->with(['academicYear', 'class.homeroomTeacher', 'class.major'])->orderByDesc('academic_year_id'),
+        ]);
 
         $recentAttendance = $student->attendanceDetails()
             ->with('attendance')
@@ -236,5 +241,27 @@ class StudentController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function mutateOut(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'student_status' => 'required|in:mutasi_keluar,drop_out',
+            'exit_date' => 'required|date',
+            'exit_reason' => 'required|string|max:255',
+            'destination_school' => 'nullable|string|max:150',
+        ]);
+
+        $this->service->recordMutation($student, $data);
+
+        $actionLabel = $data['student_status'] === 'mutasi_keluar' ? 'Pindah Sekolah' : 'Keluar / Mengundurkan Diri';
+        return back()->with('success', "Status mutasi siswa {$student->name} ({$actionLabel}) berhasil dicatat.");
+    }
+
+    public function cancelMutation(Student $student)
+    {
+        $this->service->cancelMutation($student);
+
+        return back()->with('success', "Status siswa {$student->name} berhasil dikembalikan menjadi Aktif.");
     }
 }
